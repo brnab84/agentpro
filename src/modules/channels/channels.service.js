@@ -63,6 +63,8 @@ export async function handleIncomingMessage({ tenantId, channel, externalId, dis
 
 // Looks up tenantId by the Meta phone_number_id stored on Tenant.
 export async function resolveTenantByWhatsapp(phoneNumberId) {
+  const all = await Tenant.find({}, 'name channels').lean();
+  console.log('[WA resolve] looking for:', phoneNumberId, '| tenants:', JSON.stringify(all.map(t => ({ id: t._id, wa: t.channels?.whatsappPhoneNumberId }))));
   const tenant = await Tenant.findOne({ 'channels.whatsappPhoneNumberId': phoneNumberId });
   return tenant;
 }
