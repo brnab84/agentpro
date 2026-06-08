@@ -3,6 +3,8 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { handleIncomingMessage, resolveTenantByWhatsapp, resolveTenantByInstagram } from './channels.service.js';
 import { parseWhatsAppWebhook, sendWhatsAppMessage } from './whatsapp.service.js';
 import { parseInstagramWebhook, sendInstagramMessage } from './instagram.service.js';
+import { findActiveByKeyword, findRunningExecution } from '../funnels/funnels.service.js';
+import { startFunnelExecution, continueFunnelExecution } from '../funnels/execution.engine.js';
 
 // ── WhatsApp ─────────────────────────────────────────────────────────────────
 
@@ -30,16 +32,37 @@ export const receiveWhatsApp = asyncHandler(async (req, res) => {
     console.log('[WA tenant]', tenant ? tenant._id : 'NOT FOUND');
     if (!tenant) continue;
 
-    const reply = await handleIncomingMessage({
-      tenantId: tenant._id,
-      channel: 'whatsapp',
-      externalId: msg.from,
-      displayName: msg.name,
-      text: msg.text,
-    });
-
     const sendPhoneNumberId = tenant.channels?.whatsappPhoneNumberId || msg.phoneNumberId;
-    await sendWhatsAppMessage(sendPhoneNumberId, msg.from, reply);
+    let reply;
+
+    // Check for running funnel execution first
+    const runningExec = await findRunningExecution(tenant._id, msg.from);
+    if (runningExec) {
+      reply = await continueFunnelExecution({ execution: runningExec, text: msg.text });
+    } else {
+      // Check if text matches a funnel keyword trigger
+      const funnel = await findActiveByKeyword(tenant._id, msg.text?.trim());
+      if (funnel) {
+        reply = await startFunnelExecution({
+          tenantId: tenant._id,
+          funnel,
+          externalId: msg.from,
+          displayName: msg.name,
+          channel: 'whatsapp',
+          initialText: msg.text,
+        });
+      } else {
+        reply = await handleIncomingMessage({
+          tenantId: tenant._id,
+          channel: 'whatsapp',
+          externalId: msg.from,
+          displayName: msg.name,
+          text: msg.text,
+        });
+      }
+    }
+
+    if (reply) await sendWhatsAppMessage(sendPhoneNumberId, msg.from, reply);
   }
 });
 

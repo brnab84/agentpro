@@ -14,6 +14,7 @@ import aiRoutes from './modules/ai/ai.routes.js';
 import channelRoutes from './modules/channels/channels.routes.js';
 import analyticsRoutes from './modules/analytics/analytics.routes.js';
 import userRoutes from './modules/users/users.routes.js';
+import funnelRoutes from './modules/funnels/funnels.routes.js';
 
 let indexHtml;
 try {
@@ -42,6 +43,7 @@ export function createApp() {
   app.use('/api/webhooks', channelRoutes);
   app.use('/api/analytics', analyticsRoutes);
   app.use('/api/users', userRoutes);
+  app.use('/api/funnels', funnelRoutes);
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
   app.use(errorHandler);

@@ -126,6 +126,10 @@
         <span>Mensajes</span>
         <span id="inboxBadge" class="hidden ml-auto bg-green-400 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
       </a>
+      <a onclick="showTab('funnels')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="funnels">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+        Funnels
+      </a>
       <a id="teamNavItem" onclick="showTab('team')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="team">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         Equipo
@@ -407,6 +411,46 @@
       </div>
 
       <!-- ── EQUIPO ── -->
+      <!-- ── Funnels ── -->
+      <div id="tab-funnels" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Funnels / Perfilamientos</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Automatizá la calificación de leads con IA</p>
+          </div>
+          <button onclick="openFunnelWizard()" class="gradient-bg text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition flex items-center gap-2 shadow">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Nuevo Funnel
+          </button>
+        </div>
+
+        <!-- Stats row -->
+        <div id="funnelStats" class="grid grid-cols-3 gap-4 mb-6 hidden">
+          <div class="card p-4 text-center">
+            <p class="text-2xl font-bold text-blue-600" id="fsTotal">0</p>
+            <p class="text-xs text-gray-500 mt-1">Total ejecuciones</p>
+          </div>
+          <div class="card p-4 text-center">
+            <p class="text-2xl font-bold text-green-600" id="fsCompleted">0</p>
+            <p class="text-xs text-gray-500 mt-1">Completadas</p>
+          </div>
+          <div class="card p-4 text-center">
+            <p class="text-2xl font-bold text-orange-500" id="fsRunning">0</p>
+            <p class="text-xs text-gray-500 mt-1">En curso</p>
+          </div>
+        </div>
+
+        <div id="funnelList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="funnelEmpty" class="hidden text-center py-16">
+          <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+          </div>
+          <p class="text-gray-500 font-medium">No hay funnels todavía</p>
+          <p class="text-gray-400 text-sm mt-1">Creá uno para empezar a calificar leads automáticamente</p>
+          <button onclick="openFunnelWizard()" class="mt-4 gradient-bg text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition">Crear mi primer funnel</button>
+        </div>
+      </div>
+
       <div id="tab-team" class="tab-content hidden fade-in">
         <div class="flex items-center justify-between mb-6">
           <div>
@@ -711,10 +755,82 @@
   </div>
 </div>
 
+<!-- ══ Funnel Wizard Modal ══ -->
+<div id="funnelWizardModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+      <div>
+        <h2 id="wizardTitle" class="text-lg font-bold text-gray-900">Nuevo Funnel</h2>
+        <div class="flex gap-1 mt-2" id="wizardDots"></div>
+      </div>
+      <button onclick="closeFunnelWizard()" class="text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="wizardBody" class="flex-1 overflow-y-auto px-6 py-5"></div>
+    <div class="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+      <button id="wizardBack" onclick="wizardPrev()" class="px-5 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition hidden">Atrás</button>
+      <button id="wizardNext" onclick="wizardNext()" class="flex-1 gradient-bg text-white text-sm font-semibold py-2.5 rounded-xl hover:opacity-90 transition">Siguiente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Funnel Detail Modal ══ -->
+<div id="funnelDetailModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+      <div>
+        <h2 id="fdTitle" class="text-lg font-bold text-gray-900"></h2>
+        <p id="fdSubtitle" class="text-xs text-gray-400 mt-0.5"></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="fdToggleBtn" onclick="toggleFunnelStatus()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition"></button>
+        <button onclick="deleteFunnelFromDetail()" class="text-xs text-red-500 hover:text-red-700 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition">Eliminar</button>
+        <button onclick="closeFunnelDetail()" class="text-gray-400 hover:text-gray-600 ml-2 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5">
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="bg-blue-50 rounded-xl p-4 text-center">
+          <p class="text-2xl font-bold text-blue-600" id="fdTotal">0</p>
+          <p class="text-xs text-gray-500 mt-1">Total</p>
+        </div>
+        <div class="bg-green-50 rounded-xl p-4 text-center">
+          <p class="text-2xl font-bold text-green-600" id="fdCompleted">0</p>
+          <p class="text-xs text-gray-500 mt-1">Completadas</p>
+        </div>
+        <div class="bg-orange-50 rounded-xl p-4 text-center">
+          <p class="text-2xl font-bold text-orange-500" id="fdRunning">0</p>
+          <p class="text-xs text-gray-500 mt-1">En curso</p>
+        </div>
+      </div>
+      <!-- Profiles distribution -->
+      <div id="fdProfiles" class="mb-6"></div>
+      <!-- Leads table -->
+      <h3 class="font-semibold text-gray-900 mb-3">Leads calificados</h3>
+      <div id="fdLeads" class="space-y-2"></div>
+      <p id="fdLeadsEmpty" class="text-sm text-gray-400 hidden">Aún no hay leads calificados por este funnel.</p>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.4.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.5.0'; // fallback; authoritative value fetched from /api/version
+
+// ── Toast notifications ───────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = `fixed bottom-5 right-5 z-[9999] px-4 py-3 rounded-xl text-sm font-medium shadow-lg transition-all transform translate-y-2 opacity-0 ${type === 'error' ? 'bg-red-600 text-white' : 'bg-gray-900 text-white'}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { t.style.transform = 'translateY(0)'; t.style.opacity = '1'; });
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let token = localStorage.getItem('agentpro_token') || '';
@@ -828,6 +944,7 @@ function showTab(tab) {
   if (tab === 'properties') loadProperties();
   if (tab === 'pipeline') loadPipeline();
   if (tab === 'inbox') loadInbox();
+  if (tab === 'funnels') loadFunnels();
   if (tab === 'team') loadTeam();
 }
 
@@ -1678,6 +1795,362 @@ function fmtMoney(n) {
   if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
   if (n >= 1_000) return '$' + (n / 1_000).toFixed(0) + 'K';
   return '$' + n.toLocaleString();
+}
+
+// ── Funnels ───────────────────────────────────────────────────────────────────
+let allFunnels = [];
+let currentFunnelId = null;
+
+// Wizard state
+let wizardStep = 0;
+let wizardData = { name: '', channel: 'whatsapp', keyword: '', context: '', requireEmail: false, cancelMinutes: 60, profiles: [] };
+const WIZARD_STEPS = ['Básico', 'Contexto', 'Perfiles', 'Activar'];
+
+async function loadFunnels() {
+  try {
+    allFunnels = await api('GET', '/api/funnels');
+    renderFunnels();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function renderFunnels() {
+  const list = document.getElementById('funnelList');
+  const empty = document.getElementById('funnelEmpty');
+  if (!allFunnels.length) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = allFunnels.map(f => {
+    const statusColor = f.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
+    const statusLabel = f.status === 'active' ? 'Activo' : 'Pausado';
+    const channelIcon = f.channel === 'whatsapp'
+      ? `<svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>`
+      : `<svg class="w-4 h-4 text-pink-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
+    return `<div class="card p-5 cursor-pointer hover:shadow-md transition" onclick="openFunnelDetail('${f._id}')">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          ${channelIcon}
+          <span class="font-semibold text-gray-900 text-sm">${f.name}</span>
+        </div>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${statusColor}">${statusLabel}</span>
+      </div>
+      <p class="text-xs text-gray-400 mb-3">Keyword: <span class="text-gray-600 font-medium">"${f.trigger?.keyword || ''}"</span></p>
+      <div class="flex items-center gap-3 text-xs text-gray-500">
+        <span>${f.profiles?.length || 0} perfiles</span>
+        <span>·</span>
+        <span>${f.totalExecutions || 0} ejecuciones</span>
+        <span>·</span>
+        <span>${f.completedExecutions || 0} completadas</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Wizard ────────────────────────────────────────────────────────────────────
+function openFunnelWizard() {
+  wizardStep = 0;
+  wizardData = { name: '', channel: 'whatsapp', keyword: '', context: '', requireEmail: false, cancelMinutes: 60, profiles: [] };
+  document.getElementById('funnelWizardModal').classList.remove('hidden');
+  renderWizardStep();
+}
+
+function closeFunnelWizard() {
+  document.getElementById('funnelWizardModal').classList.add('hidden');
+}
+
+function renderWizardDots() {
+  const dots = document.getElementById('wizardDots');
+  dots.innerHTML = WIZARD_STEPS.map((s, i) =>
+    `<div class="flex items-center gap-1">
+      <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition ${i <= wizardStep ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'}">${i+1}</div>
+      <span class="text-xs ${i === wizardStep ? 'text-blue-600 font-semibold' : 'text-gray-400'} hidden sm:inline">${s}</span>
+      ${i < WIZARD_STEPS.length-1 ? '<div class="w-4 h-px bg-gray-200 mx-1"></div>' : ''}
+    </div>`
+  ).join('');
+}
+
+function renderWizardStep() {
+  renderWizardDots();
+  document.getElementById('wizardTitle').textContent = WIZARD_STEPS[wizardStep];
+  const back = document.getElementById('wizardBack');
+  const next = document.getElementById('wizardNext');
+  back.classList.toggle('hidden', wizardStep === 0);
+  next.textContent = wizardStep === WIZARD_STEPS.length - 1 ? 'Crear Funnel' : 'Siguiente';
+
+  const body = document.getElementById('wizardBody');
+  if (wizardStep === 0) {
+    body.innerHTML = `
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Nombre del funnel <span class="text-red-400">*</span></label>
+          <input id="wName" type="text" value="${wizardData.name}" placeholder="Ej: Calificación Torre Mirador"
+            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Canal</label>
+          <div class="grid grid-cols-2 gap-3 mt-2">
+            <label class="flex items-center gap-3 border-2 rounded-xl p-3 cursor-pointer transition ${wizardData.channel==='whatsapp'?'border-blue-500 bg-blue-50':'border-gray-200 hover:border-gray-300'}">
+              <input type="radio" name="wChannel" value="whatsapp" ${wizardData.channel==='whatsapp'?'checked':''} class="sr-only" onchange="wizardData.channel='whatsapp';renderWizardStep()" />
+              <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+              <span class="text-sm font-medium">WhatsApp</span>
+            </label>
+            <label class="flex items-center gap-3 border-2 rounded-xl p-3 cursor-pointer transition ${wizardData.channel==='instagram'?'border-blue-500 bg-blue-50':'border-gray-200 hover:border-gray-300'}">
+              <input type="radio" name="wChannel" value="instagram" ${wizardData.channel==='instagram'?'checked':''} class="sr-only" onchange="wizardData.channel='instagram';renderWizardStep()" />
+              <svg class="w-5 h-5 text-pink-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+              <span class="text-sm font-medium">Instagram</span>
+            </label>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Keyword disparadora <span class="text-red-400">*</span></label>
+          <input id="wKeyword" type="text" value="${wizardData.keyword}" placeholder="Ej: INFO, HOLA, COTIZAR"
+            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <p class="text-xs text-gray-400 mt-1">Cuando un lead envíe esta palabra exacta, el funnel se activa.</p>
+        </div>
+      </div>`;
+  } else if (wizardStep === 1) {
+    body.innerHTML = `
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Contexto del proyecto</label>
+          <textarea id="wContext" rows="5" placeholder="Ej: Somos una desarrolladora inmobiliaria. El proyecto Torre Mirador ofrece departamentos de 1, 2 y 3 ambientes en el barrio de Palermo. Entrega en diciembre 2026. Precios desde USD 85.000."
+            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">${wizardData.context}</textarea>
+          <p class="text-xs text-gray-400 mt-1">La IA usará este contexto para responder preguntas del lead.</p>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+          <div>
+            <p class="text-sm font-medium text-gray-900">Solicitar email</p>
+            <p class="text-xs text-gray-400">La IA pedirá el correo antes de finalizar</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="wRequireEmail" ${wizardData.requireEmail?'checked':''} class="sr-only peer" />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Cancelar conversación inactiva después de (minutos)</label>
+          <input id="wCancel" type="number" min="10" max="1440" value="${wizardData.cancelMinutes}"
+            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+      </div>`;
+  } else if (wizardStep === 2) {
+    const profilesHtml = wizardData.profiles.map((p, i) => `
+      <div class="border border-gray-200 rounded-xl p-4 space-y-3 relative">
+        <button onclick="removeWizardProfile(${i})" class="absolute top-3 right-3 text-gray-300 hover:text-red-400 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-400">Nombre del perfil</label>
+            <input type="text" value="${p.name}" oninput="wizardData.profiles[${i}].name=this.value"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Calificado" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400">Etapa CRM</label>
+            <select oninput="wizardData.profiles[${i}].stage=this.value"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Sin cambiar</option>
+              <option value="new" ${p.stage==='new'?'selected':''}>Nuevo</option>
+              <option value="contacted" ${p.stage==='contacted'?'selected':''}>Contactado</option>
+              <option value="qualified" ${p.stage==='qualified'?'selected':''}>Calificado</option>
+              <option value="proposal" ${p.stage==='proposal'?'selected':''}>Propuesta</option>
+              <option value="closed" ${p.stage==='closed'?'selected':''}>Cerrado</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-gray-400">Descripción (para la IA)</label>
+          <input type="text" value="${p.description||''}" oninput="wizardData.profiles[${i}].description=this.value"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Tiene budget >100k y urgencia alta" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-400">Mensaje al clasificar</label>
+          <textarea rows="2" oninput="wizardData.profiles[${i}].message=this.value"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            placeholder="Mensaje que recibirá el lead al ser clasificado...">${p.message||''}</textarea>
+        </div>
+      </div>`).join('');
+    body.innerHTML = `
+      <div class="space-y-3">
+        <p class="text-sm text-gray-500">Definí los perfiles posibles. La IA clasificará a cada lead en uno de ellos.</p>
+        ${profilesHtml}
+        <button onclick="addWizardProfile()" class="w-full border-2 border-dashed border-gray-300 rounded-xl py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Agregar perfil
+        </button>
+      </div>`;
+  } else if (wizardStep === 3) {
+    body.innerHTML = `
+      <div class="space-y-4">
+        <div class="bg-blue-50 rounded-xl p-4">
+          <p class="text-sm font-semibold text-blue-900 mb-2">Resumen del funnel</p>
+          <div class="space-y-1 text-sm text-gray-600">
+            <p><span class="font-medium">Nombre:</span> ${wizardData.name}</p>
+            <p><span class="font-medium">Canal:</span> ${wizardData.channel}</p>
+            <p><span class="font-medium">Keyword:</span> <span class="font-mono bg-white px-1.5 py-0.5 rounded text-blue-600">${wizardData.keyword}</span></p>
+            <p><span class="font-medium">Perfiles:</span> ${wizardData.profiles.length} (${wizardData.profiles.map(p=>p.name).join(', ')||'ninguno'})</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
+          <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p class="text-sm text-green-800">El funnel se creará en estado <strong>activo</strong>. Podés pausarlo desde el detalle.</p>
+        </div>
+      </div>`;
+  }
+}
+
+function addWizardProfile() {
+  wizardData.profiles.push({ name: '', description: '', message: '', stage: '', tag: '' });
+  renderWizardStep();
+}
+
+function removeWizardProfile(i) {
+  wizardData.profiles.splice(i, 1);
+  renderWizardStep();
+}
+
+function wizardPrev() {
+  captureWizardInputs();
+  if (wizardStep > 0) { wizardStep--; renderWizardStep(); }
+}
+
+function wizardNext() {
+  captureWizardInputs();
+  if (wizardStep === 0) {
+    if (!wizardData.name.trim()) { showToast('El nombre es obligatorio', 'error'); return; }
+    if (!wizardData.keyword.trim()) { showToast('La keyword es obligatoria', 'error'); return; }
+  }
+  if (wizardStep === 2 && wizardData.profiles.length === 0) {
+    showToast('Agregá al menos un perfil', 'error'); return;
+  }
+  if (wizardStep < WIZARD_STEPS.length - 1) {
+    wizardStep++;
+    renderWizardStep();
+  } else {
+    saveFunnel();
+  }
+}
+
+function captureWizardInputs() {
+  if (wizardStep === 0) {
+    wizardData.name = document.getElementById('wName')?.value || wizardData.name;
+    wizardData.keyword = document.getElementById('wKeyword')?.value || wizardData.keyword;
+  } else if (wizardStep === 1) {
+    wizardData.context = document.getElementById('wContext')?.value || wizardData.context;
+    wizardData.requireEmail = document.getElementById('wRequireEmail')?.checked ?? wizardData.requireEmail;
+    wizardData.cancelMinutes = parseInt(document.getElementById('wCancel')?.value) || wizardData.cancelMinutes;
+  }
+}
+
+async function saveFunnel() {
+  try {
+    const payload = {
+      name: wizardData.name,
+      channel: wizardData.channel,
+      trigger: { keyword: wizardData.keyword },
+      context: wizardData.context,
+      requireEmail: wizardData.requireEmail,
+      cancelMinutes: wizardData.cancelMinutes,
+      profiles: wizardData.profiles,
+      status: 'active',
+    };
+    await api('POST', '/api/funnels', payload);
+    closeFunnelWizard();
+    showToast('Funnel creado exitosamente');
+    loadFunnels();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── Funnel Detail ─────────────────────────────────────────────────────────────
+async function openFunnelDetail(id) {
+  currentFunnelId = id;
+  const funnel = allFunnels.find(f => f._id === id);
+  if (!funnel) return;
+  document.getElementById('fdTitle').textContent = funnel.name;
+  document.getElementById('fdSubtitle').textContent = `${funnel.channel} · keyword: "${funnel.trigger?.keyword}"`;
+  const btn = document.getElementById('fdToggleBtn');
+  if (funnel.status === 'active') {
+    btn.textContent = 'Pausar';
+    btn.className = 'text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-300 text-orange-600 hover:bg-orange-50 transition';
+  } else {
+    btn.textContent = 'Activar';
+    btn.className = 'text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-300 text-green-600 hover:bg-green-50 transition';
+  }
+  document.getElementById('funnelDetailModal').classList.remove('hidden');
+  // Load stats & leads
+  try {
+    const [stats, leads] = await Promise.all([
+      api('GET', `/api/funnels/${id}/stats`),
+      api('GET', `/api/funnels/${id}/leads`),
+    ]);
+    document.getElementById('fdTotal').textContent = stats.total;
+    document.getElementById('fdCompleted').textContent = stats.completed;
+    document.getElementById('fdRunning').textContent = stats.running;
+    // Profiles distribution
+    const pfDiv = document.getElementById('fdProfiles');
+    if (Object.keys(stats.profiles || {}).length) {
+      pfDiv.innerHTML = `<h3 class="font-semibold text-gray-900 mb-3">Distribución por perfil</h3>
+        <div class="flex flex-wrap gap-2">
+          ${Object.entries(stats.profiles).map(([name,count]) =>
+            `<span class="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">${name}: ${count}</span>`
+          ).join('')}
+        </div>`;
+    } else { pfDiv.innerHTML = ''; }
+    // Leads
+    const leadsDiv = document.getElementById('fdLeads');
+    const leadsEmpty = document.getElementById('fdLeadsEmpty');
+    if (!leads.length) { leadsEmpty.classList.remove('hidden'); leadsDiv.innerHTML = ''; }
+    else {
+      leadsEmpty.classList.add('hidden');
+      leadsDiv.innerHTML = leads.map(e => {
+        const lead = e.leadId || {};
+        const profileBadge = e.profile ? `<span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">${e.profile}</span>` : '';
+        const statusColor = e.status === 'completed' ? 'text-green-600' : e.status === 'running' ? 'text-orange-500' : 'text-gray-400';
+        return `<div class="flex items-center justify-between py-2.5 px-3 bg-gray-50 rounded-xl">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700">${(lead.name||'?')[0].toUpperCase()}</div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">${lead.name||e.externalId}</p>
+              <p class="text-xs text-gray-400">${lead.contact||''}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            ${profileBadge}
+            <span class="text-xs font-medium ${statusColor}">${e.status}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function closeFunnelDetail() {
+  document.getElementById('funnelDetailModal').classList.add('hidden');
+  currentFunnelId = null;
+}
+
+async function toggleFunnelStatus() {
+  const funnel = allFunnels.find(f => f._id === currentFunnelId);
+  if (!funnel) return;
+  const newStatus = funnel.status === 'active' ? 'paused' : 'active';
+  try {
+    await api('PATCH', `/api/funnels/${currentFunnelId}`, { status: newStatus });
+    showToast(newStatus === 'active' ? 'Funnel activado' : 'Funnel pausado');
+    closeFunnelDetail();
+    loadFunnels();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteFunnelFromDetail() {
+  if (!confirm('¿Eliminar este funnel? Esta acción no se puede deshacer.')) return;
+  try {
+    await api('DELETE', `/api/funnels/${currentFunnelId}`);
+    showToast('Funnel eliminado');
+    closeFunnelDetail();
+    loadFunnels();
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
