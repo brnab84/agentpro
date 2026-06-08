@@ -20,6 +20,7 @@ export function createApp() {
   if (env.nodeEnv !== 'test') app.use(morgan('dev'));
 
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
+  app.get('/', (req, res) => res.json({ name: 'AgentPro API', version: '1.0.0', status: 'ok' }));
 
   app.use('/api/auth', authRoutes);
   app.use('/api/leads', leadRoutes);
