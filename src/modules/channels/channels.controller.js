@@ -21,9 +21,13 @@ export const receiveWhatsApp = asyncHandler(async (req, res) => {
   // Acknowledge immediately (Meta requires 200 within 20s)
   res.status(200).json({ status: 'ok' });
 
+  console.log('[WA webhook]', JSON.stringify(req.body).slice(0, 300));
   const messages = parseWhatsAppWebhook(req.body);
+  console.log('[WA parsed]', messages.length, 'messages');
   for (const msg of messages) {
+    console.log('[WA msg] phoneNumberId:', msg.phoneNumberId, 'from:', msg.from);
     const tenant = await resolveTenantByWhatsapp(msg.phoneNumberId);
+    console.log('[WA tenant]', tenant ? tenant._id : 'NOT FOUND');
     if (!tenant) continue;
 
     const reply = await handleIncomingMessage({

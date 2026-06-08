@@ -1,6 +1,6 @@
 import { env } from '../../config/env.js';
 
-const GRAPH_URL = 'https://graph.facebook.com/v19.0';
+const GRAPH_URL = 'https://graph.facebook.com/v21.0';
 
 export async function sendWhatsAppMessage(phoneNumberId, to, text) {
   const token = env.whatsappAccessToken;
