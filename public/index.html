@@ -820,7 +820,7 @@
 <script>
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.5.1'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.5.2'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1803,8 +1803,57 @@ let currentFunnelId = null;
 
 // Wizard state
 let wizardStep = 0;
-let wizardData = { name: '', channel: 'whatsapp', keyword: '', context: '', requireEmail: false, cancelMinutes: 60, profiles: [] };
-const WIZARD_STEPS = ['Básico', 'Contexto', 'Perfiles', 'Activar'];
+const WIZARD_STEPS = ['Plantilla', 'Básico', 'Perfilamiento', 'Contexto', 'Activar'];
+const EMPTY_WIZARD_DATA = () => ({ template: '', name: '', channel: 'whatsapp', keyword: '', context: '', requireEmail: false, cancelMinutes: 60, profiles: [], questions: [] });
+let wizardData = EMPTY_WIZARD_DATA();
+
+// Profile color palette
+const PROFILE_PALETTE = [
+  { dot: 'bg-red-500',    border: 'border-red-200',    bg: 'bg-red-50',    text: 'text-red-700'    },
+  { dot: 'bg-orange-500', border: 'border-orange-200', bg: 'bg-orange-50', text: 'text-orange-700' },
+  { dot: 'bg-yellow-500', border: 'border-yellow-200', bg: 'bg-yellow-50', text: 'text-yellow-700' },
+  { dot: 'bg-green-500',  border: 'border-green-200',  bg: 'bg-green-50',  text: 'text-green-700'  },
+  { dot: 'bg-blue-500',   border: 'border-blue-200',   bg: 'bg-blue-50',   text: 'text-blue-700'   },
+  { dot: 'bg-purple-500', border: 'border-purple-200', bg: 'bg-purple-50', text: 'text-purple-700' },
+];
+
+// Funnel templates
+const FUNNEL_TEMPLATES = {
+  compradores: {
+    label: 'Perfilamiento para Compradores',
+    description: 'Calificá leads que buscan comprar una propiedad. 4 preguntas, 4 perfiles.',
+    icon: '🏠',
+    profiles: [
+      { name: 'Caliente A', description: 'Presupuesto >$250k + plazo inmediato/1-3 meses', message: '¡Excelente perfil! Un asesor te contacta hoy para coordinar una visita personalizada. 🔥', stage: 'qualified', color: 0, notifyWhatsapp: true, notifyEmail: false, priority: true },
+      { name: 'Calificado B', description: 'Presupuesto $100k-$250k, plazo 3-6 meses', message: 'Perfecto, te enviamos información detallada del proyecto y te contactamos pronto.', stage: 'contacted', color: 1, notifyWhatsapp: false, notifyEmail: false, priority: false },
+      { name: 'Largo Plazo', description: 'Interés real pero plazo mayor a 6 meses', message: 'Gracias por comunicarte. Te agregamos a nuestra lista y te mantenemos informado de novedades.', stage: 'new', color: 3, notifyWhatsapp: false, notifyEmail: false, priority: false },
+      { name: 'No Calificado', description: 'Presupuesto bajo o sin interés claro de compra', message: 'Gracias por tu consulta. Si en el futuro tu situación cambia, no dudes en escribirnos.', stage: 'new', color: 5, notifyWhatsapp: false, notifyEmail: false, priority: false },
+    ],
+    questions: [
+      { text: '¿Cuál es tu presupuesto disponible para invertir?', type: 'selection', options: ['Menos de $100,000', 'Entre $100,000 y $250,000', 'Entre $250,000 y $500,000', 'Más de $500,000'], required: true },
+      { text: '¿En qué plazo estás pensando tomar una decisión?', type: 'selection', options: ['Inmediatamente', 'En 1 a 3 meses', 'En 3 a 6 meses', 'Más de 6 meses'], required: true },
+      { text: '¿Buscás para uso propio o inversión?', type: 'selection', options: ['Uso propio / vivienda', 'Inversión / alquiler', 'Ambos'], required: false },
+      { text: '¿Ya contás con financiamiento o capital disponible?', type: 'selection', options: ['Sí, capital propio', 'Sí, financiamiento aprobado', 'Todavía no, estoy evaluando'], required: false },
+    ],
+  },
+  vendedores: {
+    label: 'Perfilamiento para Vendedores',
+    description: 'Calificá leads que quieren vender una propiedad. 5 preguntas, 3 perfiles.',
+    icon: '📋',
+    profiles: [
+      { name: 'Vendedor Urgente', description: 'Necesita vender en menos de 3 meses, propiedad clara', message: 'Perfecto, coordinamos una tasación gratuita esta semana. Un asesor te contacta hoy. 🚀', stage: 'qualified', color: 0, notifyWhatsapp: true, notifyEmail: false, priority: true },
+      { name: 'Vendedor Regular', description: 'Quiere vender en 3 a 6 meses, sin urgencia extrema', message: 'Genial, te enviamos información sobre nuestro proceso de venta y te contactamos pronto.', stage: 'contacted', color: 1, notifyWhatsapp: false, notifyEmail: false, priority: false },
+      { name: 'Vendedor Eventual', description: 'Sin plazo definido, explorando opciones del mercado', message: 'Gracias, te agregamos a nuestra base y te mantenemos informado de oportunidades del mercado.', stage: 'new', color: 4, notifyWhatsapp: false, notifyEmail: false, priority: false },
+    ],
+    questions: [
+      { text: '¿Qué tipo de propiedad deseás vender?', type: 'selection', options: ['Casa', 'Departamento / Apartamento', 'Terreno', 'Local comercial', 'Otro'], required: true },
+      { text: '¿Cuál es el precio estimado de tu propiedad?', type: 'selection', options: ['Menos de $100,000', 'Entre $100,000 y $300,000', 'Más de $300,000'], required: true },
+      { text: '¿En qué plazo necesitás vender?', type: 'selection', options: ['Urgente (menos de 3 meses)', 'En 3 a 6 meses', 'Cuando surja la oportunidad'], required: true },
+      { text: '¿La propiedad está libre de gravámenes o hipotecas?', type: 'selection', options: ['Sí, está libre', 'Tiene hipoteca', 'No estoy seguro/a'], required: false },
+      { text: '¿Ya tasaste la propiedad anteriormente?', type: 'selection', options: ['Sí, tengo tasación reciente', 'No, necesito tasación', 'Está desactualizada'], required: false },
+    ],
+  },
+};
 
 async function loadFunnels() {
   try {
@@ -1851,7 +1900,7 @@ function renderFunnels() {
 // ── Wizard ────────────────────────────────────────────────────────────────────
 function openFunnelWizard() {
   wizardStep = 0;
-  wizardData = { name: '', channel: 'whatsapp', keyword: '', context: '', requireEmail: false, cancelMinutes: 60, profiles: [] };
+  wizardData = EMPTY_WIZARD_DATA();
   document.getElementById('funnelWizardModal').classList.remove('hidden');
   renderWizardStep();
 }
@@ -1864,11 +1913,16 @@ function renderWizardDots() {
   const dots = document.getElementById('wizardDots');
   dots.innerHTML = WIZARD_STEPS.map((s, i) =>
     `<div class="flex items-center gap-1">
-      <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition ${i <= wizardStep ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'}">${i+1}</div>
+      <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition ${i <= wizardStep ? 'gradient-bg text-white' : 'bg-gray-200 text-gray-400'}">${i+1}</div>
       <span class="text-xs ${i === wizardStep ? 'text-blue-600 font-semibold' : 'text-gray-400'} hidden sm:inline">${s}</span>
-      ${i < WIZARD_STEPS.length-1 ? '<div class="w-4 h-px bg-gray-200 mx-1"></div>' : ''}
+      ${i < WIZARD_STEPS.length-1 ? '<div class="w-5 h-px bg-gray-200 mx-1"></div>' : ''}
     </div>`
   ).join('');
+  // Widen modal for Perfilamiento step (step 2)
+  const modalBox = document.querySelector('#funnelWizardModal > div');
+  if (modalBox) {
+    modalBox.className = modalBox.className.replace(/max-w-\w+/, wizardStep === 2 ? 'max-w-4xl' : 'max-w-2xl');
+  }
 }
 
 function renderWizardStep() {
@@ -1877,10 +1931,45 @@ function renderWizardStep() {
   const back = document.getElementById('wizardBack');
   const next = document.getElementById('wizardNext');
   back.classList.toggle('hidden', wizardStep === 0);
-  next.textContent = wizardStep === WIZARD_STEPS.length - 1 ? 'Crear Funnel' : 'Siguiente';
+  next.textContent = wizardStep === WIZARD_STEPS.length - 1 ? '🚀 Crear Funnel' : 'Siguiente →';
 
   const body = document.getElementById('wizardBody');
+
+  // ── Step 0: Plantilla ──────────────────────────────────────────────────────
   if (wizardStep === 0) {
+    body.innerHTML = `
+      <div class="space-y-3">
+        <p class="text-sm text-gray-500">Elegí una plantilla precargada o empezá desde cero.</p>
+        ${Object.entries(FUNNEL_TEMPLATES).map(([key, tpl]) => `
+        <button onclick="applyFunnelTemplate('${key}')" class="w-full text-left border-2 rounded-xl p-4 transition hover:shadow-md ${wizardData.template===key ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}">
+          <div class="flex items-start gap-3">
+            <span class="text-2xl">${tpl.icon}</span>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <p class="font-semibold text-gray-900 text-sm">${tpl.label}</p>
+                ${wizardData.template===key ? '<span class="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Seleccionada</span>' : ''}
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">${tpl.description}</p>
+              <div class="flex gap-3 mt-2 text-xs text-gray-400">
+                <span>✦ ${tpl.questions.length} preguntas</span>
+                <span>✦ ${tpl.profiles.length} perfiles</span>
+              </div>
+            </div>
+          </div>
+        </button>`).join('')}
+        <button onclick="applyFunnelTemplate('blank')" class="w-full text-left border-2 rounded-xl p-4 transition hover:shadow-md ${wizardData.template==='' || wizardData.template==='blank' ? '' : ''} border-dashed border-gray-300 hover:border-blue-300">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">✚</span>
+            <div>
+              <p class="font-semibold text-gray-700 text-sm">Empezar en blanco</p>
+              <p class="text-xs text-gray-400">Definís preguntas y perfiles desde cero.</p>
+            </div>
+          </div>
+        </button>
+      </div>`;
+
+  // ── Step 1: Básico ─────────────────────────────────────────────────────────
+  } else if (wizardStep === 1) {
     body.innerHTML = `
       <div class="space-y-4">
         <div>
@@ -1910,14 +1999,105 @@ function renderWizardStep() {
           <p class="text-xs text-gray-400 mt-1">Cuando un lead envíe esta palabra exacta, el funnel se activa.</p>
         </div>
       </div>`;
-  } else if (wizardStep === 1) {
+  // ── Step 2: Perfilamiento (2-column: profiles + questions) ────────────────────
+  } else if (wizardStep === 2) {
+    const profilesHtml = wizardData.profiles.map((p, i) => {
+      const c = PROFILE_PALETTE[p.color ?? i % PROFILE_PALETTE.length];
+      return `<div class="border-2 ${c.border} ${c.bg} rounded-xl p-3 space-y-2">
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full flex-shrink-0 ${c.dot}"></div>
+          <input type="text" value="${p.name}" oninput="wizardData.profiles[${i}].name=this.value"
+            class="flex-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Nombre del perfil *" />
+          <button onclick="removeWizardProfile(${i})" class="text-gray-300 hover:text-red-400 transition flex-shrink-0">✕</button>
+        </div>
+        <input type="text" value="${p.description||''}" oninput="wizardData.profiles[${i}].description=this.value"
+          class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Condición de asignación (guía para la IA)" />
+        <textarea rows="2" oninput="wizardData.profiles[${i}].message=this.value"
+          class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
+          placeholder="Mensaje automático al lead al clasificarlo...">${p.message||''}</textarea>
+        <div class="flex items-center gap-2">
+          <select onchange="wizardData.profiles[${i}].stage=this.value"
+            class="flex-1 bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none">
+            <option value="">Etapa CRM...</option>
+            <option value="new" ${p.stage==='new'?'selected':''}>Nuevo</option>
+            <option value="contacted" ${p.stage==='contacted'?'selected':''}>Contactado</option>
+            <option value="qualified" ${p.stage==='qualified'?'selected':''}>Calificado</option>
+            <option value="proposal" ${p.stage==='proposal'?'selected':''}>Propuesta</option>
+            <option value="closed" ${p.stage==='closed'?'selected':''}>Cerrado</option>
+          </select>
+          <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+            <input type="checkbox" ${p.notifyWhatsapp?'checked':''} onchange="wizardData.profiles[${i}].notifyWhatsapp=this.checked" class="rounded" />
+            <svg class="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+            Avisar
+          </label>
+          <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+            <input type="checkbox" ${p.priority?'checked':''} onchange="wizardData.profiles[${i}].priority=this.checked" class="rounded" />
+            ⭐
+          </label>
+        </div>
+      </div>`;
+    }).join('');
+
+    const questionsHtml = wizardData.questions.map((q, i) => `
+      <div class="border border-gray-200 rounded-xl p-3 space-y-2 bg-white">
+        <div class="flex items-start gap-2">
+          <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">${i+1}</span>
+          <input type="text" value="${q.text}" oninput="wizardData.questions[${i}].text=this.value"
+            class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Pregunta *" />
+          <button onclick="removeWizardQuestion(${i})" class="text-gray-300 hover:text-red-400 transition flex-shrink-0">✕</button>
+        </div>
+        <div id="qOpts_${i}" class="space-y-1 pl-7">
+          ${q.options.map((opt, j) => `
+            <div class="flex gap-1">
+              <input type="text" value="${opt}" oninput="wizardData.questions[${i}].options[${j}]=this.value"
+                class="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Opción ${j+1}" />
+              <button onclick="removeWizardQuestionOption(${i},${j})" class="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
+            </div>`).join('')}
+          <button onclick="addWizardQuestionOption(${i})" class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1 mt-1">+ Agregar opción</button>
+        </div>
+        <div class="flex items-center gap-3 pl-7">
+          <label class="flex items-center gap-1 text-xs text-gray-400 cursor-pointer">
+            <input type="checkbox" ${q.required?'checked':''} onchange="wizardData.questions[${i}].required=this.checked" class="rounded" />
+            Obligatoria
+          </label>
+        </div>
+      </div>`).join('');
+
+    body.innerHTML = `
+      <div class="grid grid-cols-2 gap-4 h-full">
+        <div class="overflow-y-auto space-y-2 pr-1">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h3 class="text-sm font-bold text-gray-900">Perfiles</h3>
+              <p class="text-xs text-gray-400">¿Dónde cae el lead?</p>
+            </div>
+            <button onclick="addWizardProfile()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded-lg transition">+ Perfil</button>
+          </div>
+          ${profilesHtml}
+          ${!wizardData.profiles.length ? '<p class="text-xs text-gray-400 text-center py-4">Sin perfiles. Agregá uno o aplicá una plantilla.</p>' : ''}
+        </div>
+        <div class="overflow-y-auto space-y-2 pl-1 border-l border-gray-100">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h3 class="text-sm font-bold text-gray-900">Preguntas</h3>
+              <p class="text-xs text-gray-400">Qué le pregunta la IA al lead</p>
+            </div>
+            <button onclick="addWizardQuestion()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded-lg transition">+ Pregunta</button>
+          </div>
+          ${questionsHtml}
+          ${!wizardData.questions.length ? '<p class="text-xs text-gray-400 text-center py-4">Sin preguntas. La IA hará una conversación libre.</p>' : ''}
+        </div>
+      </div>`;
+
+  // ── Step 3: Contexto ───────────────────────────────────────────────────────
+  } else if (wizardStep === 3) {
     body.innerHTML = `
       <div class="space-y-4">
         <div>
-          <label class="text-xs text-gray-500 font-medium">Contexto del proyecto</label>
-          <textarea id="wContext" rows="5" placeholder="Ej: Somos una desarrolladora inmobiliaria. El proyecto Torre Mirador ofrece departamentos de 1, 2 y 3 ambientes en el barrio de Palermo. Entrega en diciembre 2026. Precios desde USD 85.000."
+          <label class="text-xs text-gray-500 font-medium">Contexto del proyecto para la IA</label>
+          <textarea id="wContext" rows="5" placeholder="Ej: Somos una desarrolladora inmobiliaria. El proyecto Torre Mirador ofrece departamentos de 1, 2 y 3 ambientes en Palermo. Entrega diciembre 2026. Precios desde USD 85.000."
             class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">${wizardData.context}</textarea>
-          <p class="text-xs text-gray-400 mt-1">La IA usará este contexto para responder preguntas del lead.</p>
+          <p class="text-xs text-gray-400 mt-1">La IA usa este texto para responder preguntas del lead sobre el proyecto.</p>
         </div>
         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
           <div>
@@ -1926,7 +2106,7 @@ function renderWizardStep() {
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" id="wRequireEmail" ${wizardData.requireEmail?'checked':''} class="sr-only peer" />
-            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition peer-checked:bg-blue-600"></div>
+            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition peer-checked:bg-blue-600"></div>
           </label>
         </div>
         <div>
@@ -1935,121 +2115,73 @@ function renderWizardStep() {
             class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>`;
-  } else if (wizardStep === 2) {
-    const PROFILE_COLORS = ['bg-blue-100 text-blue-700 border-blue-200','bg-green-100 text-green-700 border-green-200','bg-orange-100 text-orange-700 border-orange-200','bg-purple-100 text-purple-700 border-purple-200','bg-red-100 text-red-700 border-red-200'];
-    const profilesHtml = wizardData.profiles.map((p, i) => {
-      const col = PROFILE_COLORS[i % PROFILE_COLORS.length];
-      return `
-      <div class="border-2 rounded-xl p-4 space-y-3 relative ${col.split(' ')[2]} ${col.split(' ')[0]}">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-bold uppercase tracking-wide ${col.split(' ')[1]}">Resultado ${i+1}</span>
-          <button onclick="removeWizardProfile(${i})" class="text-gray-400 hover:text-red-400 transition p-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs text-gray-500 font-medium">Nombre <span class="text-red-400">*</span></label>
-            <input type="text" value="${p.name}" oninput="wizardData.profiles[${i}].name=this.value"
-              class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Calificado A" />
-          </div>
-          <div>
-            <label class="text-xs text-gray-500 font-medium">Mover a etapa CRM</label>
-            <select onchange="wizardData.profiles[${i}].stage=this.value"
-              class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">— Sin cambio —</option>
-              <option value="new" ${p.stage==='new'?'selected':''}>Nuevo</option>
-              <option value="contacted" ${p.stage==='contacted'?'selected':''}>Contactado</option>
-              <option value="qualified" ${p.stage==='qualified'?'selected':''}>Calificado</option>
-              <option value="proposal" ${p.stage==='proposal'?'selected':''}>Propuesta</option>
-              <option value="closed" ${p.stage==='closed'?'selected':''}>Cerrado</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="text-xs text-gray-500 font-medium">¿Qué características tiene este lead? <span class="text-gray-400">(guía para la IA)</span></label>
-          <input type="text" value="${p.description||''}" oninput="wizardData.profiles[${i}].description=this.value"
-            class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Presupuesto mayor a USD 100k, compra en menos de 3 meses" />
-        </div>
-        <div>
-          <label class="text-xs text-gray-500 font-medium">Mensaje automático al clasificar</label>
-          <textarea rows="2" oninput="wizardData.profiles[${i}].message=this.value"
-            class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            placeholder="Mensaje que la IA envía al lead cuando lo clasifica aquí...">${p.message||''}</textarea>
-        </div>
-      </div>`;
-    }).join('');
 
-    const hasProfiles = wizardData.profiles.length > 0;
-    body.innerHTML = `
-      <div class="space-y-3">
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2">
-          <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <p class="text-xs text-amber-700"><strong>¿Qué es un perfil?</strong> Es la "etiqueta" que la IA asignará al lead según la conversación. Por ejemplo: <em>Calificado A</em> (listo para comprar) o <em>No calificado</em> (sin presupuesto). La IA elige el más adecuado y envía el mensaje de ese perfil.</p>
-        </div>
-        ${!hasProfiles ? `
-        <div>
-          <p class="text-xs text-gray-500 font-medium mb-2">Plantillas rápidas</p>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="applyProfileTemplate('simple')" class="text-left border-2 border-dashed border-gray-300 rounded-xl p-3 hover:border-blue-400 hover:bg-blue-50 transition">
-              <p class="text-sm font-semibold text-gray-700">Básico (2 perfiles)</p>
-              <p class="text-xs text-gray-400 mt-0.5">Calificado / No calificado</p>
-            </button>
-            <button onclick="applyProfileTemplate('abc')" class="text-left border-2 border-dashed border-gray-300 rounded-xl p-3 hover:border-blue-400 hover:bg-blue-50 transition">
-              <p class="text-sm font-semibold text-gray-700">ABC (3 perfiles)</p>
-              <p class="text-xs text-gray-400 mt-0.5">Lead A / Lead B / Lead C</p>
-            </button>
-          </div>
-        </div>` : ''}
-        ${profilesHtml}
-        <button onclick="addWizardProfile()" class="w-full border-2 border-dashed border-gray-300 rounded-xl py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Agregar otro resultado posible
-        </button>
-      </div>`;
-  } else if (wizardStep === 3) {
+  // ── Step 4: Activar ────────────────────────────────────────────────────────
+  } else if (wizardStep === 4) {
+    const profileNames = wizardData.profiles.filter(p=>p.name).map(p=>`<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full ${PROFILE_PALETTE[p.color??0].dot}"></span>${p.name}</span>`).join(', ') || 'ninguno';
     body.innerHTML = `
       <div class="space-y-4">
-        <div class="bg-blue-50 rounded-xl p-4">
-          <p class="text-sm font-semibold text-blue-900 mb-2">Resumen del funnel</p>
-          <div class="space-y-1 text-sm text-gray-600">
-            <p><span class="font-medium">Nombre:</span> ${wizardData.name}</p>
-            <p><span class="font-medium">Canal:</span> ${wizardData.channel}</p>
-            <p><span class="font-medium">Keyword:</span> <span class="font-mono bg-white px-1.5 py-0.5 rounded text-blue-600">${wizardData.keyword}</span></p>
-            <p><span class="font-medium">Perfiles:</span> ${wizardData.profiles.length} (${wizardData.profiles.map(p=>p.name).join(', ')||'ninguno'})</p>
+        <div class="bg-blue-50 rounded-xl p-4 space-y-2">
+          <p class="text-sm font-bold text-blue-900 mb-1">Resumen</p>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-700">
+            <p><span class="font-medium text-gray-500">Nombre</span><br/>${wizardData.name}</p>
+            <p><span class="font-medium text-gray-500">Canal</span><br/>${wizardData.channel}</p>
+            <p><span class="font-medium text-gray-500">Keyword</span><br/><span class="font-mono bg-white px-1.5 py-0.5 rounded text-blue-600 text-xs">${wizardData.keyword}</span></p>
+            <p><span class="font-medium text-gray-500">Perfiles</span><br/><span class="text-xs">${profileNames}</span></p>
           </div>
+          <p class="text-xs text-gray-500 mt-2"><span class="font-medium">Preguntas:</span> ${wizardData.questions.length} definidas</p>
         </div>
-        <div class="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
-          <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <p class="text-sm text-green-800">El funnel se creará en estado <strong>activo</strong>. Podés pausarlo desde el detalle.</p>
+        <div class="flex items-start gap-3 p-4 bg-green-50 rounded-xl">
+          <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p class="text-sm text-green-800">El funnel se creará en estado <strong>activo</strong>. En cuanto un lead envíe <strong>${wizardData.keyword||'la keyword'}</strong>, la IA empezará a calificarlo automáticamente.</p>
         </div>
       </div>`;
   }
 }
 
-function applyProfileTemplate(tpl) {
-  if (tpl === 'simple') {
-    wizardData.profiles = [
-      { name: 'Calificado', description: 'Tiene presupuesto, interés real y urgencia', message: 'Genial, un asesor se va a comunicar con vos pronto para darte toda la información. ¡Gracias por tu interés!', stage: 'qualified', tag: '' },
-      { name: 'No calificado', description: 'Sin presupuesto o sin interés real de compra', message: 'Gracias por comunicarte. Si en el futuro cambia tu situación, no dudes en escribirnos.', stage: 'contacted', tag: '' },
-    ];
-  } else if (tpl === 'abc') {
-    wizardData.profiles = [
-      { name: 'Lead A', description: 'Compra en menos de 3 meses, presupuesto confirmado', message: '¡Excelente! Un asesor te va a contactar hoy para coordinar una visita.', stage: 'qualified', tag: '' },
-      { name: 'Lead B', description: 'Interesado pero en etapa de evaluación, 3-6 meses', message: 'Perfecto, te vamos a enviar información detallada y te contactamos próximamente.', stage: 'contacted', tag: '' },
-      { name: 'Lead C', description: 'Interés bajo o plazo mayor a 6 meses', message: 'Gracias por tu consulta. Te agregamos a nuestra lista para informarte de novedades.', stage: 'new', tag: '' },
-    ];
+function applyFunnelTemplate(key) {
+  if (key === 'blank') {
+    wizardData.template = 'blank';
+    wizardData.profiles = [];
+    wizardData.questions = [];
+  } else if (FUNNEL_TEMPLATES[key]) {
+    wizardData.template = key;
+    const tpl = FUNNEL_TEMPLATES[key];
+    wizardData.profiles = tpl.profiles.map(p => ({ ...p }));
+    wizardData.questions = tpl.questions.map(q => ({ ...q, options: [...q.options] }));
+    if (!wizardData.name) wizardData.name = tpl.label;
   }
   renderWizardStep();
 }
 
 function addWizardProfile() {
-  wizardData.profiles.push({ name: '', description: '', message: '', stage: '', tag: '' });
+  const color = wizardData.profiles.length % PROFILE_PALETTE.length;
+  wizardData.profiles.push({ name: '', description: '', message: '', stage: '', tag: '', color, notifyWhatsapp: false, notifyEmail: false, priority: false });
   renderWizardStep();
 }
 
 function removeWizardProfile(i) {
   wizardData.profiles.splice(i, 1);
+  renderWizardStep();
+}
+
+function addWizardQuestion() {
+  wizardData.questions.push({ text: '', type: 'selection', options: ['', ''], required: true });
+  renderWizardStep();
+}
+
+function removeWizardQuestion(i) {
+  wizardData.questions.splice(i, 1);
+  renderWizardStep();
+}
+
+function addWizardQuestionOption(qi) {
+  wizardData.questions[qi].options.push('');
+  renderWizardStep();
+}
+
+function removeWizardQuestionOption(qi, oi) {
+  wizardData.questions[qi].options.splice(oi, 1);
   renderWizardStep();
 }
 
@@ -2060,12 +2192,12 @@ function wizardPrev() {
 
 function wizardNext() {
   captureWizardInputs();
-  if (wizardStep === 0) {
+  if (wizardStep === 1) {
     if (!wizardData.name.trim()) { showToast('El nombre es obligatorio', 'error'); return; }
     if (!wizardData.keyword.trim()) { showToast('La keyword es obligatoria', 'error'); return; }
   }
-  if (wizardStep === 2 && wizardData.profiles.length === 0) {
-    showToast('Agregá al menos un perfil', 'error'); return;
+  if (wizardStep === 2 && wizardData.profiles.filter(p=>p.name?.trim()).length === 0) {
+    showToast('Agregá al menos un perfil con nombre', 'error'); return;
   }
   if (wizardStep < WIZARD_STEPS.length - 1) {
     wizardStep++;
@@ -2076,11 +2208,11 @@ function wizardNext() {
 }
 
 function captureWizardInputs() {
-  if (wizardStep === 0) {
-    wizardData.name = document.getElementById('wName')?.value || wizardData.name;
-    wizardData.keyword = document.getElementById('wKeyword')?.value || wizardData.keyword;
-  } else if (wizardStep === 1) {
-    wizardData.context = document.getElementById('wContext')?.value || wizardData.context;
+  if (wizardStep === 1) {
+    wizardData.name = document.getElementById('wName')?.value ?? wizardData.name;
+    wizardData.keyword = document.getElementById('wKeyword')?.value ?? wizardData.keyword;
+  } else if (wizardStep === 3) {
+    wizardData.context = document.getElementById('wContext')?.value ?? wizardData.context;
     wizardData.requireEmail = document.getElementById('wRequireEmail')?.checked ?? wizardData.requireEmail;
     wizardData.cancelMinutes = parseInt(document.getElementById('wCancel')?.value) || wizardData.cancelMinutes;
   }
@@ -2096,6 +2228,7 @@ async function saveFunnel() {
       requireEmail: wizardData.requireEmail,
       cancelMinutes: wizardData.cancelMinutes,
       profiles: wizardData.profiles.filter(p => p.name?.trim()),
+      questions: wizardData.questions.filter(q => q.text?.trim()),
       status: 'active',
     };
     await api('POST', '/api/funnels', payload);
