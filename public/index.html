@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentPro — CRM Inmobiliario</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .gradient-bg { background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); }
+    .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06); }
+    .stage-new { background: #dbeafe; color: #1d4ed8; }
+    .stage-qualified { background: #d1fae5; color: #065f46; }
+    .stage-visit { background: #fef3c7; color: #92400e; }
+    .stage-closed { background: #dcfce7; color: #166534; }
+    .stage-lost { background: #fee2e2; color: #991b1b; }
+    .score-bar { height: 6px; border-radius: 3px; background: #e5e7eb; }
+    .score-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); }
+    .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; }
+    .fade-in { animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .spinner { border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; width: 20px; height: 20px; animation: spin .7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .kanban-col { min-height: 300px; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #f1f5f9; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="loginPage" class="min-h-screen flex items-center justify-center gradient-bg p-4">
+  <div class="card w-full max-w-md p-8 fade-in">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl gradient-bg mb-4">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900">AgentPro</h1>
+      <p class="text-gray-500 text-sm mt-1">CRM Predictivo Inmobiliario</p>
+    </div>
+
+    <div id="loginError" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4"></div>
+
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input id="loginEmail" type="email" required placeholder="tu@email.com"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+        <input id="loginPassword" type="password" required placeholder="••••••••"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+      </div>
+      <button type="submit" id="loginBtn"
+        class="w-full gradient-bg text-white font-semibold py-2.5 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2">
+        Ingresar
+      </button>
+    </form>
+
+    <div class="mt-6 pt-6 border-t border-gray-100 text-center">
+      <p class="text-sm text-gray-500 mb-3">¿No tenés cuenta?</p>
+      <button onclick="showRegister()" class="text-blue-600 text-sm font-medium hover:underline">Crear cuenta gratis</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ REGISTER ══════════════ -->
+<div id="registerPage" class="hidden min-h-screen flex items-center justify-center gradient-bg p-4">
+  <div class="card w-full max-w-md p-8 fade-in">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Crear cuenta</h1>
+      <p class="text-gray-500 text-sm mt-1">Empezá gratis en 30 segundos</p>
+    </div>
+    <div id="registerError" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4"></div>
+    <form id="registerForm" class="space-y-4">
+      <input id="regTenant" type="text" required placeholder="Nombre de tu agencia"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <input id="regName" type="text" required placeholder="Tu nombre"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <input id="regEmail" type="email" required placeholder="Email"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <input id="regPassword" type="password" required placeholder="Contraseña (mín. 6 caracteres)"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <button type="submit"
+        class="w-full gradient-bg text-white font-semibold py-2.5 rounded-lg hover:opacity-90 transition">
+        Crear cuenta
+      </button>
+    </form>
+    <div class="mt-4 text-center">
+      <button onclick="showLogin()" class="text-blue-600 text-sm hover:underline">Ya tengo cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="appPage" class="hidden min-h-screen">
+
+  <!-- Sidebar -->
+  <div class="fixed inset-y-0 left-0 w-60 gradient-bg flex flex-col z-20">
+    <div class="px-6 py-5 border-b border-blue-700/40">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        </div>
+        <span class="text-white font-bold text-lg">AgentPro</span>
+      </div>
+      <p class="text-blue-200 text-xs mt-1" id="tenantLabel">Cargando...</p>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-1">
+      <a onclick="showTab('dashboard')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="dashboard">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Dashboard
+      </a>
+      <a onclick="showTab('leads')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="leads">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        Leads
+      </a>
+      <a onclick="showTab('properties')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="properties">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        Propiedades
+      </a>
+      <a onclick="showTab('pipeline')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="pipeline">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Pipeline
+      </a>
+    </nav>
+    <div class="px-3 py-4 border-t border-blue-700/40">
+      <button onclick="logout()" class="flex items-center gap-2 text-blue-200 hover:text-white text-sm px-3 py-2 rounded-lg hover:bg-white/10 w-full transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="ml-60 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between">
+        <h2 id="pageTitle" class="text-lg font-semibold text-gray-900">Dashboard</h2>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-500" id="userLabel"></span>
+          <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-white text-sm font-bold" id="userAvatar">B</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="p-8">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="tab-dashboard" class="tab-content fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="statsCards">
+          <div class="card p-6"><p class="text-sm text-gray-500 mb-1">Total Leads</p><p class="text-3xl font-bold text-gray-900" id="statLeads">—</p></div>
+          <div class="card p-6"><p class="text-sm text-gray-500 mb-1">Calificados</p><p class="text-3xl font-bold text-blue-600" id="statQualified">—</p></div>
+          <div class="card p-6"><p class="text-sm text-gray-500 mb-1">Score Prom.</p><p class="text-3xl font-bold text-purple-600" id="statScore">—</p></div>
+          <div class="card p-6"><p class="text-sm text-gray-500 mb-1">Propiedades</p><p class="text-3xl font-bold text-green-600" id="statProps">—</p></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Leads recientes</h3>
+            <div id="recentLeads" class="space-y-3"></div>
+          </div>
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Distribución del pipeline</h3>
+            <div id="pipelineChart" class="space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LEADS ── -->
+      <div id="tab-leads" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex gap-2">
+            <input id="leadSearch" type="text" placeholder="Buscar lead..." onkeyup="filterLeads()"
+              class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64" />
+            <select id="stageFilter" onchange="loadLeads()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Todos los stages</option>
+              <option value="new">Nuevo</option>
+              <option value="qualified">Calificado</option>
+              <option value="visit">Visita</option>
+              <option value="closed">Cerrado</option>
+              <option value="lost">Perdido</option>
+            </select>
+          </div>
+          <button onclick="openNewLeadModal()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Nuevo Lead
+          </button>
+        </div>
+        <div class="card overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-6 py-3 text-gray-500 font-medium">Nombre</th>
+                <th class="text-left px-6 py-3 text-gray-500 font-medium">Contacto</th>
+                <th class="text-left px-6 py-3 text-gray-500 font-medium">Stage</th>
+                <th class="text-left px-6 py-3 text-gray-500 font-medium">Score</th>
+                <th class="text-left px-6 py-3 text-gray-500 font-medium">Prob. Cierre</th>
+                <th class="text-left px-6 py-3 text-gray-500 font-medium">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="leadsTable"></tbody>
+          </table>
+          <div id="leadsEmpty" class="hidden text-center py-12 text-gray-400">No hay leads aún.</div>
+        </div>
+      </div>
+
+      <!-- ── PROPERTIES ── -->
+      <div id="tab-properties" class="tab-content hidden fade-in">
+        <div class="flex justify-between mb-6">
+          <h3 class="text-gray-700 text-sm">Inventario de propiedades</h3>
+          <button onclick="openNewPropertyModal()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Nueva Propiedad
+          </button>
+        </div>
+        <div id="propertiesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="propsEmpty" class="hidden text-center py-12 text-gray-400">No hay propiedades aún.</div>
+      </div>
+
+      <!-- ── PIPELINE ── -->
+      <div id="tab-pipeline" class="tab-content hidden fade-in">
+        <p class="text-sm text-gray-500 mb-6">Vista kanban del pipeline de ventas</p>
+        <div class="flex gap-4 overflow-x-auto pb-4" id="kanbanBoard"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- Lead Modal -->
+<div id="leadModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="card w-full max-w-lg p-6 fade-in max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 id="leadModalTitle" class="text-lg font-semibold text-gray-900">Nuevo Lead</h3>
+      <button onclick="closeLeadModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <form id="leadForm" class="space-y-3">
+      <input id="leadId" type="hidden" />
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs text-gray-500 font-medium">Nombre *</label>
+          <input id="leadName" type="text" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Contacto</label>
+          <input id="leadContact" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Fuente</label>
+          <select id="leadSource" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="manual">Manual</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="instagram">Instagram</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Presupuesto</label>
+          <input id="leadBudget" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Urgencia (días)</label>
+          <input id="leadUrgency" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="30" />
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs text-gray-500 font-medium">Intención / Qué busca</label>
+          <input id="leadIntent" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Casa en Polanco, 3 recámaras..." />
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs text-gray-500 font-medium">Stage</label>
+          <select id="leadStage" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="new">Nuevo</option>
+            <option value="qualified">Calificado</option>
+            <option value="visit">Visita</option>
+            <option value="closed">Cerrado</option>
+            <option value="lost">Perdido</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="flex-1 gradient-bg text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition">Guardar</button>
+        <button type="button" onclick="closeLeadModal()" class="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- AI Qualify Modal -->
+<div id="aiModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="card w-full max-w-lg p-6 fade-in">
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900">Calificar con IA</h3>
+        <p class="text-xs text-gray-500 mt-0.5" id="aiLeadName"></p>
+      </div>
+      <button onclick="closeAiModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="space-y-3">
+      <label class="text-xs text-gray-500 font-medium">Pegá la conversación o descripción del lead</label>
+      <textarea id="aiText" rows="5" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Ej: Hola, busco casa en Polanco 4 recámaras, presupuesto 4.5M, necesito mudarme en 30 días..."></textarea>
+      <div id="aiResult" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm"></div>
+      <button onclick="runAiQualify()" id="aiBtn" class="w-full gradient-bg text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Calificar con IA
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Property Modal -->
+<div id="propertyModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="card w-full max-w-lg p-6 fade-in">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-lg font-semibold text-gray-900">Nueva Propiedad</h3>
+      <button onclick="closePropModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <form id="propertyForm" class="space-y-3">
+      <input id="propId" type="hidden" />
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs text-gray-500 font-medium">Título *</label>
+          <input id="propTitle" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Casa en Polanco" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Zona</label>
+          <input id="propZone" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Polanco" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Precio</label>
+          <input id="propPrice" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Recámaras</label>
+          <input id="propBeds" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Baños</label>
+          <input id="propBaths" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Tipo</label>
+          <select id="propType" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="house">Casa</option>
+            <option value="apartment">Departamento</option>
+            <option value="land">Terreno</option>
+            <option value="commercial">Comercial</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Status</label>
+          <select id="propStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="available">Disponible</option>
+            <option value="reserved">Reservada</option>
+            <option value="sold">Vendida</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="flex-1 gradient-bg text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition">Guardar</button>
+        <button type="button" onclick="closePropModal()" class="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+let token = localStorage.getItem('agentpro_token') || '';
+let currentUser = JSON.parse(localStorage.getItem('agentpro_user') || 'null');
+let allLeads = [];
+let currentAiLeadId = null;
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+async function api(method, path, body) {
+  const res = await fetch(API + path, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || data.error || 'Error');
+  return data;
+}
+
+function showLogin() {
+  document.getElementById('loginPage').classList.remove('hidden');
+  document.getElementById('registerPage').classList.add('hidden');
+  document.getElementById('appPage').classList.add('hidden');
+}
+function showRegister() {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('registerPage').classList.remove('hidden');
+}
+function showApp() {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('registerPage').classList.add('hidden');
+  document.getElementById('appPage').classList.remove('hidden');
+  document.getElementById('userLabel').textContent = currentUser?.name || '';
+  document.getElementById('userAvatar').textContent = (currentUser?.name || 'U')[0].toUpperCase();
+  document.getElementById('tenantLabel').textContent = 'Mi Agencia';
+  showTab('dashboard');
+}
+function logout() {
+  token = ''; currentUser = null;
+  localStorage.removeItem('agentpro_token');
+  localStorage.removeItem('agentpro_user');
+  showLogin();
+}
+
+document.getElementById('loginForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  btn.innerHTML = '<span class="spinner"></span> Ingresando...';
+  btn.disabled = true;
+  try {
+    const data = await api('POST', '/api/auth/login', {
+      email: document.getElementById('loginEmail').value,
+      password: document.getElementById('loginPassword').value,
+    });
+    token = data.token; currentUser = data.user;
+    localStorage.setItem('agentpro_token', token);
+    localStorage.setItem('agentpro_user', JSON.stringify(currentUser));
+    showApp();
+  } catch (err) {
+    const el = document.getElementById('loginError');
+    el.textContent = err.message; el.classList.remove('hidden');
+  } finally {
+    btn.innerHTML = 'Ingresar'; btn.disabled = false;
+  }
+};
+
+document.getElementById('registerForm').onsubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const data = await api('POST', '/api/auth/register', {
+      tenantName: document.getElementById('regTenant').value,
+      name: document.getElementById('regName').value,
+      email: document.getElementById('regEmail').value,
+      password: document.getElementById('regPassword').value,
+    });
+    token = data.token; currentUser = data.user;
+    localStorage.setItem('agentpro_token', token);
+    localStorage.setItem('agentpro_user', JSON.stringify(currentUser));
+    showApp();
+  } catch (err) {
+    const el = document.getElementById('registerError');
+    el.textContent = err.message; el.classList.remove('hidden');
+  }
+};
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+
+const tabTitles = { dashboard: 'Dashboard', leads: 'Leads', properties: 'Propiedades', pipeline: 'Pipeline' };
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById('tab-' + tab)?.classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('bg-white/20', el.dataset.tab === tab);
+    el.classList.toggle('text-white', el.dataset.tab === tab);
+    el.classList.toggle('text-blue-100', el.dataset.tab !== tab);
+  });
+  document.getElementById('pageTitle').textContent = tabTitles[tab];
+  if (tab === 'dashboard') loadDashboard();
+  if (tab === 'leads') loadLeads();
+  if (tab === 'properties') loadProperties();
+  if (tab === 'pipeline') loadPipeline();
+}
+
+// ── Dashboard ────────────────────────────────────────────────────────────────
+
+async function loadDashboard() {
+  const [leads, props] = await Promise.all([
+    api('GET', '/api/leads').catch(() => []),
+    api('GET', '/api/properties').catch(() => []),
+  ]);
+  const qualified = leads.filter(l => l.stage !== 'new').length;
+  const avgScore = leads.length ? Math.round(leads.reduce((s, l) => s + l.score, 0) / leads.length) : 0;
+  document.getElementById('statLeads').textContent = leads.length;
+  document.getElementById('statQualified').textContent = qualified;
+  document.getElementById('statScore').textContent = avgScore;
+  document.getElementById('statProps').textContent = props.length;
+
+  const recent = leads.slice(-5).reverse();
+  document.getElementById('recentLeads').innerHTML = recent.length
+    ? recent.map(l => `
+      <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+        <div>
+          <p class="text-sm font-medium text-gray-900">${l.name}</p>
+          <p class="text-xs text-gray-400">${l.intent || l.source || '—'}</p>
+        </div>
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium stage-${l.stage}">${stageLabel(l.stage)}</span>
+      </div>`).join('')
+    : '<p class="text-sm text-gray-400">Sin leads aún.</p>';
+
+  const stages = ['new','qualified','visit','closed','lost'];
+  const counts = stages.map(s => ({ s, n: leads.filter(l => l.stage === s).length }));
+  const max = Math.max(...counts.map(c => c.n), 1);
+  document.getElementById('pipelineChart').innerHTML = counts.map(({s, n}) => `
+    <div class="flex items-center gap-3">
+      <span class="text-xs text-gray-500 w-20">${stageLabel(s)}</span>
+      <div class="flex-1 score-bar"><div class="score-fill" style="width:${(n/max)*100}%"></div></div>
+      <span class="text-xs font-medium text-gray-700 w-4">${n}</span>
+    </div>`).join('');
+}
+
+// ── Leads ────────────────────────────────────────────────────────────────────
+
+async function loadLeads() {
+  const stage = document.getElementById('stageFilter')?.value || '';
+  allLeads = await api('GET', '/api/leads' + (stage ? '?stage=' + stage : '')).catch(() => []);
+  renderLeads(allLeads);
+}
+
+function filterLeads() {
+  const q = document.getElementById('leadSearch').value.toLowerCase();
+  renderLeads(allLeads.filter(l => l.name.toLowerCase().includes(q) || (l.contact||'').includes(q)));
+}
+
+function renderLeads(leads) {
+  const tbody = document.getElementById('leadsTable');
+  const empty = document.getElementById('leadsEmpty');
+  if (!leads.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  tbody.innerHTML = leads.map(l => `
+    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+      <td class="px-6 py-3">
+        <p class="font-medium text-gray-900">${l.name}</p>
+        <p class="text-xs text-gray-400">${l.aiSummary || l.intent || '—'}</p>
+      </td>
+      <td class="px-6 py-3 text-gray-600">${l.contact || '—'}</td>
+      <td class="px-6 py-3"><span class="text-xs px-2 py-0.5 rounded-full font-medium stage-${l.stage}">${stageLabel(l.stage)}</span></td>
+      <td class="px-6 py-3">
+        <div class="flex items-center gap-2">
+          <div class="score-bar w-16"><div class="score-fill" style="width:${l.score}%"></div></div>
+          <span class="text-xs font-medium text-gray-700">${l.score}</span>
+        </div>
+      </td>
+      <td class="px-6 py-3 text-sm text-gray-700">${l.predictedCloseProb ? Math.round(l.predictedCloseProb*100)+'%' : '—'}</td>
+      <td class="px-6 py-3">
+        <div class="flex gap-2">
+          <button onclick="openEditLeadModal('${l._id}')" class="text-xs text-blue-600 hover:underline">Editar</button>
+          <button onclick="openAiModal('${l._id}','${l.name}')" class="text-xs text-purple-600 hover:underline">IA</button>
+          <button onclick="deleteLead('${l._id}')" class="text-xs text-red-400 hover:underline">Eliminar</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function openNewLeadModal() {
+  document.getElementById('leadId').value = '';
+  document.getElementById('leadModalTitle').textContent = 'Nuevo Lead';
+  ['leadName','leadContact','leadIntent'].forEach(id => document.getElementById(id).value = '');
+  ['leadBudget','leadUrgency'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('leadSource').value = 'manual';
+  document.getElementById('leadStage').value = 'new';
+  document.getElementById('leadModal').classList.remove('hidden');
+}
+
+function openEditLeadModal(id) {
+  const l = allLeads.find(x => x._id === id); if (!l) return;
+  document.getElementById('leadId').value = l._id;
+  document.getElementById('leadModalTitle').textContent = 'Editar Lead';
+  document.getElementById('leadName').value = l.name || '';
+  document.getElementById('leadContact').value = l.contact || '';
+  document.getElementById('leadSource').value = l.source || 'manual';
+  document.getElementById('leadBudget').value = l.budget || '';
+  document.getElementById('leadUrgency').value = l.urgencyDays || '';
+  document.getElementById('leadIntent').value = l.intent || '';
+  document.getElementById('leadStage').value = l.stage || 'new';
+  document.getElementById('leadModal').classList.remove('hidden');
+}
+
+function closeLeadModal() { document.getElementById('leadModal').classList.add('hidden'); }
+
+document.getElementById('leadForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('leadId').value;
+  const body = {
+    name: document.getElementById('leadName').value,
+    contact: document.getElementById('leadContact').value,
+    source: document.getElementById('leadSource').value,
+    budget: Number(document.getElementById('leadBudget').value) || undefined,
+    urgencyDays: Number(document.getElementById('leadUrgency').value) || undefined,
+    intent: document.getElementById('leadIntent').value,
+    stage: document.getElementById('leadStage').value,
+  };
+  await (id ? api('PATCH', '/api/leads/' + id, body) : api('POST', '/api/leads', body));
+  closeLeadModal();
+  loadLeads();
+};
+
+async function deleteLead(id) {
+  if (!confirm('¿Eliminar este lead?')) return;
+  await api('DELETE', '/api/leads/' + id);
+  loadLeads();
+}
+
+// ── AI Qualify ────────────────────────────────────────────────────────────────
+
+function openAiModal(leadId, name) {
+  currentAiLeadId = leadId;
+  document.getElementById('aiLeadName').textContent = name;
+  document.getElementById('aiText').value = '';
+  document.getElementById('aiResult').classList.add('hidden');
+  document.getElementById('aiModal').classList.remove('hidden');
+}
+function closeAiModal() { document.getElementById('aiModal').classList.add('hidden'); }
+
+async function runAiQualify() {
+  const text = document.getElementById('aiText').value.trim();
+  if (!text) return alert('Escribí o pegá una conversación.');
+  const btn = document.getElementById('aiBtn');
+  btn.innerHTML = '<span class="spinner"></span> Analizando...'; btn.disabled = true;
+  try {
+    const data = await api('POST', '/api/ai/leads/' + currentAiLeadId + '/qualify', { conversationText: text });
+    const l = data.lead;
+    const result = document.getElementById('aiResult');
+    result.innerHTML = `
+      <p class="font-semibold text-blue-900 mb-2">Resultado IA</p>
+      <p class="text-blue-800 mb-1">📊 Score: <strong>${l.score}/100</strong> · Prob. cierre: <strong>${Math.round((l.predictedCloseProb||0)*100)}%</strong></p>
+      <p class="text-blue-800 mb-1">💡 ${l.nextAction || '—'}</p>
+      <p class="text-gray-600 text-xs mt-2">${l.aiSummary || ''}</p>`;
+    result.classList.remove('hidden');
+    loadLeads();
+  } catch (err) {
+    alert('Error IA: ' + err.message);
+  } finally {
+    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Calificar con IA';
+    btn.disabled = false;
+  }
+}
+
+// ── Properties ───────────────────────────────────────────────────────────────
+
+async function loadProperties() {
+  const props = await api('GET', '/api/properties').catch(() => []);
+  const grid = document.getElementById('propertiesGrid');
+  const empty = document.getElementById('propsEmpty');
+  if (!props.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  const typeLabel = { house: 'Casa', apartment: 'Depto', land: 'Terreno', commercial: 'Comercial' };
+  const statusColor = { available: 'bg-green-100 text-green-700', reserved: 'bg-yellow-100 text-yellow-700', sold: 'bg-gray-100 text-gray-500' };
+  grid.innerHTML = props.map(p => `
+    <div class="card p-5 hover:shadow-md transition">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <p class="font-semibold text-gray-900">${p.title}</p>
+          <p class="text-sm text-gray-500">${p.zone || '—'}</p>
+        </div>
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[p.status] || 'bg-gray-100 text-gray-500'}">${p.status}</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
+        <span>🛏 ${p.beds || '—'}</span>
+        <span>🚿 ${p.baths || '—'}</span>
+        <span>${typeLabel[p.type] || p.type || '—'}</span>
+      </div>
+      <p class="text-lg font-bold text-blue-700">${p.price ? '$' + p.price.toLocaleString() : '—'}</p>
+      <div class="flex gap-2 mt-3">
+        <button onclick="deleteProp('${p._id}')" class="text-xs text-red-400 hover:underline">Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+function openNewPropertyModal() { document.getElementById('propertyModal').classList.remove('hidden'); }
+function closePropModal() { document.getElementById('propertyModal').classList.add('hidden'); }
+
+document.getElementById('propertyForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const body = {
+    title: document.getElementById('propTitle').value,
+    zone: document.getElementById('propZone').value,
+    price: Number(document.getElementById('propPrice').value) || undefined,
+    beds: Number(document.getElementById('propBeds').value) || undefined,
+    baths: Number(document.getElementById('propBaths').value) || undefined,
+    type: document.getElementById('propType').value,
+    status: document.getElementById('propStatus').value,
+  };
+  await api('POST', '/api/properties', body);
+  closePropModal();
+  loadProperties();
+};
+
+async function deleteProp(id) {
+  if (!confirm('¿Eliminar esta propiedad?')) return;
+  await api('DELETE', '/api/properties/' + id);
+  loadProperties();
+}
+
+// ── Pipeline Kanban ───────────────────────────────────────────────────────────
+
+async function loadPipeline() {
+  const leads = await api('GET', '/api/leads').catch(() => []);
+  const stages = [
+    { id: 'new', label: 'Nuevos', color: 'bg-blue-100 border-blue-200' },
+    { id: 'qualified', label: 'Calificados', color: 'bg-emerald-100 border-emerald-200' },
+    { id: 'visit', label: 'Visita', color: 'bg-amber-100 border-amber-200' },
+    { id: 'closed', label: 'Cerrados', color: 'bg-green-100 border-green-200' },
+    { id: 'lost', label: 'Perdidos', color: 'bg-red-100 border-red-200' },
+  ];
+  document.getElementById('kanbanBoard').innerHTML = stages.map(st => {
+    const group = leads.filter(l => l.stage === st.id);
+    return `
+      <div class="kanban-col flex-shrink-0 w-60">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-semibold text-gray-700">${st.label}</span>
+          <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">${group.length}</span>
+        </div>
+        <div class="space-y-2">
+          ${group.map(l => `
+            <div class="card p-3 hover:shadow-md transition cursor-pointer border ${st.color}">
+              <p class="text-sm font-medium text-gray-900 mb-1">${l.name}</p>
+              <p class="text-xs text-gray-500 mb-2">${l.intent || l.contact || '—'}</p>
+              <div class="flex items-center justify-between">
+                <div class="score-bar w-16"><div class="score-fill" style="width:${l.score}%"></div></div>
+                <span class="text-xs font-bold text-gray-700">${l.score}</span>
+              </div>
+              ${l.nextAction ? `<p class="text-xs text-blue-600 mt-1.5">💡 ${l.nextAction}</p>` : ''}
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+
+function stageLabel(s) {
+  return { new:'Nuevo', qualified:'Calificado', visit:'Visita', closed:'Cerrado', lost:'Perdido' }[s] || s;
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+
+if (token && currentUser) showApp(); else showLogin();
+</script>
+</body>
+</html>

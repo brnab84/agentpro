@@ -2,8 +2,12 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import authRoutes from './modules/auth/auth.routes.js';
 import leadRoutes from './modules/leads/leads.routes.js';
 import propertyRoutes from './modules/properties/properties.routes.js';
@@ -14,13 +18,15 @@ import channelRoutes from './modules/channels/channels.routes.js';
 export function createApp() {
   const app = express();
 
-  app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors());
   app.use(express.json());
   if (env.nodeEnv !== 'test') app.use(morgan('dev'));
 
+  // Serve frontend
+  app.use(express.static(join(__dirname, '..', 'public')));
+
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
-  app.get('/', (req, res) => res.json({ name: 'AgentPro API', version: '1.0.0', status: 'ok' }));
 
   app.use('/api/auth', authRoutes);
   app.use('/api/leads', leadRoutes);
