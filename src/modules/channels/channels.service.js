@@ -61,12 +61,15 @@ export async function handleIncomingMessage({ tenantId, channel, externalId, dis
   return reply;
 }
 
+const META_TEST_PHONE_ID = '123456123';
+
 // Looks up tenantId by the Meta phone_number_id stored on Tenant.
 export async function resolveTenantByWhatsapp(phoneNumberId) {
-  const all = await Tenant.find({}, 'name channels').lean();
-  console.log('[WA resolve] looking for:', phoneNumberId, '| tenants:', JSON.stringify(all.map(t => ({ id: t._id, wa: t.channels?.whatsappPhoneNumberId }))));
-  const tenant = await Tenant.findOne({ 'channels.whatsappPhoneNumberId': phoneNumberId });
-  return tenant;
+  // Meta's test panel always sends phoneNumberId '123456123' — fall back to first configured tenant
+  if (phoneNumberId === META_TEST_PHONE_ID) {
+    return Tenant.findOne({ 'channels.whatsappPhoneNumberId': { $exists: true, $ne: '' } });
+  }
+  return Tenant.findOne({ 'channels.whatsappPhoneNumberId': phoneNumberId });
 }
 
 // Looks up tenantId by the Meta instagram_page_id stored on Tenant.

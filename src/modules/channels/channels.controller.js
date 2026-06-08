@@ -38,7 +38,8 @@ export const receiveWhatsApp = asyncHandler(async (req, res) => {
       text: msg.text,
     });
 
-    await sendWhatsAppMessage(msg.phoneNumberId, msg.from, reply);
+    const sendPhoneNumberId = tenant.channels?.whatsappPhoneNumberId || msg.phoneNumberId;
+    await sendWhatsAppMessage(sendPhoneNumberId, msg.from, reply);
   }
 });
 
