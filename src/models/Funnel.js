@@ -9,9 +9,32 @@ const profileSchema = new Schema(
     message: { type: String, trim: true },
     stage: { type: String, trim: true },
     tag: { type: String, trim: true },
+    color: { type: Number, default: 0 },
     notifyWhatsapp: { type: Boolean, default: false },
     notifyEmail: { type: Boolean, default: false },
     priority: { type: Boolean, default: false },
+  },
+  { _id: true },
+);
+
+const questionSchema = new Schema(
+  {
+    text: { type: String, required: true, trim: true },
+    type: { type: String, enum: ['selection', 'open'], default: 'selection' },
+    options: { type: [String], default: [] },
+    required: { type: Boolean, default: true },
+    aiContext: { type: String, trim: true },
+  },
+  { _id: true },
+);
+
+const flowStepSchema = new Schema(
+  {
+    type: { type: String, enum: ['message', 'profiling', 'wait', 'move_stage', 'add_tag'], required: true },
+    text: { type: String, trim: true },
+    minutes: { type: Number },
+    stage: { type: String, trim: true },
+    tag: { type: String, trim: true },
   },
   { _id: true },
 );
@@ -29,6 +52,8 @@ const funnelSchema = new Schema(
     requireEmail: { type: Boolean, default: false },
     cancelMinutes: { type: Number, default: 60 },
     profiles: { type: [profileSchema], default: [] },
+    questions: { type: [questionSchema], default: [] },
+    flow: { type: [flowStepSchema], default: [] },
     totalExecutions: { type: Number, default: 0 },
     completedExecutions: { type: Number, default: 0 },
     cancelledExecutions: { type: Number, default: 0 },

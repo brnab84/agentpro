@@ -820,7 +820,7 @@
 <script>
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.5.2'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.5.3'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1803,8 +1803,8 @@ let currentFunnelId = null;
 
 // Wizard state
 let wizardStep = 0;
-const WIZARD_STEPS = ['Plantilla', 'Básico', 'Perfilamiento', 'Contexto', 'Activar'];
-const EMPTY_WIZARD_DATA = () => ({ template: '', name: '', channel: 'whatsapp', keyword: '', context: '', requireEmail: false, cancelMinutes: 60, profiles: [], questions: [] });
+const WIZARD_STEPS = ['Plantilla', 'Básico', 'Perfilamiento', 'Flujo', 'Contexto', 'Activar'];
+const EMPTY_WIZARD_DATA = () => ({ template: '', name: '', channel: 'whatsapp', keyword: '', context: '', requireEmail: false, cancelMinutes: 60, profiles: [], questions: [], flow: [] });
 let wizardData = EMPTY_WIZARD_DATA();
 
 // Profile color palette
@@ -1921,7 +1921,7 @@ function renderWizardDots() {
   // Widen modal for Perfilamiento step (step 2)
   const modalBox = document.querySelector('#funnelWizardModal > div');
   if (modalBox) {
-    modalBox.className = modalBox.className.replace(/max-w-\w+/, wizardStep === 2 ? 'max-w-4xl' : 'max-w-2xl');
+    modalBox.className = modalBox.className.replace(/max-w-\w+/, (wizardStep === 2 || wizardStep === 3) ? 'max-w-4xl' : 'max-w-2xl');
   }
 }
 
@@ -2089,8 +2089,117 @@ function renderWizardStep() {
         </div>
       </div>`;
 
-  // ── Step 3: Contexto ───────────────────────────────────────────────────────
+  // ── Step 3: Flujo ─────────────────────────────────────────────────────────
   } else if (wizardStep === 3) {
+    const BLOCK_TYPES = [
+      { type: 'message',    icon: '💬', label: 'Mensaje',         color: 'border-blue-200 bg-blue-50',   badge: 'bg-blue-100 text-blue-700'   },
+      { type: 'profiling',  icon: '🤖', label: 'Perfilamiento IA',color: 'border-purple-200 bg-purple-50',badge: 'bg-purple-100 text-purple-700'},
+      { type: 'wait',       icon: '⏱️', label: 'Espera',          color: 'border-orange-200 bg-orange-50',badge: 'bg-orange-100 text-orange-700'},
+      { type: 'move_stage', icon: '📊', label: 'Mover etapa CRM', color: 'border-teal-200 bg-teal-50',   badge: 'bg-teal-100 text-teal-700'   },
+      { type: 'add_tag',    icon: '🏷️', label: 'Agregar tag',     color: 'border-gray-200 bg-gray-50',   badge: 'bg-gray-100 text-gray-700'   },
+    ];
+    const typeMap = Object.fromEntries(BLOCK_TYPES.map(b => [b.type, b]));
+
+    const flowHtml = wizardData.flow.map((step, i) => {
+      const bt = typeMap[step.type] || BLOCK_TYPES[0];
+      let config = '';
+      if (step.type === 'message') {
+        config = `<textarea rows="2" oninput="wizardData.flow[${i}].text=this.value"
+          class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs mt-1 focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
+          placeholder="Escribí el mensaje que la IA envía al lead...">${step.text||''}</textarea>`;
+      } else if (step.type === 'wait') {
+        config = `<div class="flex items-center gap-2 mt-1">
+          <input type="number" min="1" max="10080" value="${step.minutes||60}" oninput="wizardData.flow[${i}].minutes=parseInt(this.value)"
+            class="w-24 bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400" />
+          <span class="text-xs text-gray-400">minutos antes del siguiente paso</span>
+        </div>`;
+      } else if (step.type === 'move_stage') {
+        config = `<select onchange="wizardData.flow[${i}].stage=this.value"
+          class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs mt-1 focus:outline-none focus:ring-1 focus:ring-blue-400">
+          <option value="">Elegí etapa...</option>
+          <option value="new" ${step.stage==='new'?'selected':''}>Nuevo</option>
+          <option value="contacted" ${step.stage==='contacted'?'selected':''}>Contactado</option>
+          <option value="qualified" ${step.stage==='qualified'?'selected':''}>Calificado</option>
+          <option value="proposal" ${step.stage==='proposal'?'selected':''}>Propuesta</option>
+          <option value="closed" ${step.stage==='closed'?'selected':''}>Cerrado</option>
+        </select>`;
+      } else if (step.type === 'add_tag') {
+        config = `<input type="text" value="${step.tag||''}" oninput="wizardData.flow[${i}].tag=this.value"
+          class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs mt-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          placeholder="Nombre del tag..." />`;
+      } else if (step.type === 'profiling') {
+        config = `<p class="text-xs text-purple-600 mt-1">Usa los perfiles y preguntas configurados en el paso anterior.</p>`;
+      }
+      return `
+        <div class="relative">
+          <div class="border-2 ${bt.color} rounded-xl p-3">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center gap-2">
+                <span class="text-sm">${bt.icon}</span>
+                <span class="text-xs font-bold ${bt.badge.split(' ')[1]} px-2 py-0.5 rounded-full ${bt.badge}">${bt.label}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                ${i > 0 ? `<button onclick="moveFlowStep(${i},-1)" class="text-gray-300 hover:text-gray-500 text-sm px-1">↑</button>` : ''}
+                ${i < wizardData.flow.length-1 ? `<button onclick="moveFlowStep(${i},1)" class="text-gray-300 hover:text-gray-500 text-sm px-1">↓</button>` : ''}
+                <button onclick="removeFlowStep(${i})" class="text-gray-300 hover:text-red-400 text-sm px-1">✕</button>
+              </div>
+            </div>
+            ${config}
+          </div>
+          ${i < wizardData.flow.length-1 ? '<div class="flex justify-center my-1"><div class="w-px h-4 bg-gray-300"></div></div>' : ''}
+        </div>`;
+    }).join('');
+
+    const hasProfiling = wizardData.flow.some(s => s.type === 'profiling');
+
+    body.innerHTML = `
+      <div class="grid grid-cols-5 gap-4 h-full">
+        <div class="col-span-2 space-y-2">
+          <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Bloques disponibles</p>
+          ${BLOCK_TYPES.map(bt => `
+            <button onclick="addFlowStep('${bt.type}')" ${bt.type==='profiling'&&hasProfiling?'disabled title="Ya hay un bloque de perfilamiento"':''}
+              class="w-full text-left border-2 ${bt.color} rounded-xl px-3 py-2.5 transition hover:shadow-sm ${bt.type==='profiling'&&hasProfiling?'opacity-40 cursor-not-allowed':'hover:border-opacity-80'}">
+              <div class="flex items-center gap-2">
+                <span>${bt.icon}</span>
+                <div>
+                  <p class="text-xs font-semibold text-gray-700">${bt.label}</p>
+                  <p class="text-xs text-gray-400">${{
+                    message: 'Envía un mensaje al lead',
+                    profiling: 'IA califica con preguntas',
+                    wait: 'Pausa antes del siguiente paso',
+                    move_stage: 'Cambia etapa en el CRM',
+                    add_tag: 'Etiqueta al lead',
+                  }[bt.type]}</p>
+                </div>
+              </div>
+            </button>`).join('')}
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">Los bloques se ejecutan en orden de arriba a abajo cuando el lead inicia el funnel.</p>
+        </div>
+        <div class="col-span-3 overflow-y-auto pl-1">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Canvas de flujo</p>
+            ${wizardData.flow.length === 0 ? '' : `<button onclick="wizardData.flow=[];renderWizardStep()" class="text-xs text-red-400 hover:text-red-600">Limpiar todo</button>`}
+          </div>
+          <div class="border-2 border-dashed border-green-300 bg-green-50 rounded-xl px-3 py-2 mb-2 flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">▶</span>
+            <span class="text-xs font-semibold text-green-700">Inicio — keyword: <span class="font-mono">${wizardData.keyword||'...'}</span></span>
+          </div>
+          ${wizardData.flow.length === 0 ? `
+            <div class="border-2 border-dashed border-gray-200 rounded-xl py-8 text-center">
+              <p class="text-sm text-gray-400">Hacé click en un bloque para agregarlo al flujo</p>
+              <p class="text-xs text-gray-300 mt-1">El bloque <strong>Perfilamiento IA</strong> es el más común para calificar leads</p>
+            </div>` : flowHtml}
+          ${wizardData.flow.length > 0 ? `
+            <div class="flex justify-center my-1"><div class="w-px h-4 bg-gray-300"></div></div>
+            <div class="border-2 border-dashed border-gray-300 rounded-xl px-3 py-2 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs">■</span>
+              <span class="text-xs text-gray-500">Fin del flujo</span>
+            </div>` : ''}
+        </div>
+      </div>`;
+
+  // ── Step 4: Contexto ───────────────────────────────────────────────────────
+  } else if (wizardStep === 4) {
     body.innerHTML = `
       <div class="space-y-4">
         <div>
@@ -2116,8 +2225,8 @@ function renderWizardStep() {
         </div>
       </div>`;
 
-  // ── Step 4: Activar ────────────────────────────────────────────────────────
-  } else if (wizardStep === 4) {
+  // ── Step 5: Activar ────────────────────────────────────────────────────────
+  } else if (wizardStep === 5) {
     const profileNames = wizardData.profiles.filter(p=>p.name).map(p=>`<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full ${PROFILE_PALETTE[p.color??0].dot}"></span>${p.name}</span>`).join(', ') || 'ninguno';
     body.innerHTML = `
       <div class="space-y-4">
@@ -2129,7 +2238,8 @@ function renderWizardStep() {
             <p><span class="font-medium text-gray-500">Keyword</span><br/><span class="font-mono bg-white px-1.5 py-0.5 rounded text-blue-600 text-xs">${wizardData.keyword}</span></p>
             <p><span class="font-medium text-gray-500">Perfiles</span><br/><span class="text-xs">${profileNames}</span></p>
           </div>
-          <p class="text-xs text-gray-500 mt-2"><span class="font-medium">Preguntas:</span> ${wizardData.questions.length} definidas</p>
+          <p class="text-xs text-gray-500 mt-1"><span class="font-medium">Preguntas:</span> ${wizardData.questions.length} definidas</p>
+          <p class="text-xs text-gray-500 mt-1"><span class="font-medium">Flujo:</span> ${wizardData.flow.length} bloque${wizardData.flow.length !== 1 ? 's' : ''} (${wizardData.flow.map(s=>({message:'💬',profiling:'🤖',wait:'⏱️',move_stage:'📊',add_tag:'🏷️'})[s.type]||'?').join(' → ')||'vacío'})</p>
         </div>
         <div class="flex items-start gap-3 p-4 bg-green-50 rounded-xl">
           <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -2144,13 +2254,32 @@ function applyFunnelTemplate(key) {
     wizardData.template = 'blank';
     wizardData.profiles = [];
     wizardData.questions = [];
+    wizardData.flow = [];
   } else if (FUNNEL_TEMPLATES[key]) {
     wizardData.template = key;
     const tpl = FUNNEL_TEMPLATES[key];
     wizardData.profiles = tpl.profiles.map(p => ({ ...p }));
     wizardData.questions = tpl.questions.map(q => ({ ...q, options: [...q.options] }));
+    wizardData.flow = [{ type: 'profiling' }];
     if (!wizardData.name) wizardData.name = tpl.label;
   }
+  renderWizardStep();
+}
+
+function addFlowStep(type) {
+  wizardData.flow.push({ type, text: '', minutes: 60, stage: '', tag: '' });
+  renderWizardStep();
+}
+
+function removeFlowStep(i) {
+  wizardData.flow.splice(i, 1);
+  renderWizardStep();
+}
+
+function moveFlowStep(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= wizardData.flow.length) return;
+  [wizardData.flow[i], wizardData.flow[j]] = [wizardData.flow[j], wizardData.flow[i]];
   renderWizardStep();
 }
 
@@ -2196,7 +2325,7 @@ function wizardNext() {
     if (!wizardData.name.trim()) { showToast('El nombre es obligatorio', 'error'); return; }
     if (!wizardData.keyword.trim()) { showToast('La keyword es obligatoria', 'error'); return; }
   }
-  if (wizardStep === 2 && wizardData.profiles.filter(p=>p.name?.trim()).length === 0) {
+  if (wizardStep === 2 && wizardData.profiles.filter(p => p.name?.trim()).length === 0) {
     showToast('Agregá al menos un perfil con nombre', 'error'); return;
   }
   if (wizardStep < WIZARD_STEPS.length - 1) {
@@ -2211,7 +2340,7 @@ function captureWizardInputs() {
   if (wizardStep === 1) {
     wizardData.name = document.getElementById('wName')?.value ?? wizardData.name;
     wizardData.keyword = document.getElementById('wKeyword')?.value ?? wizardData.keyword;
-  } else if (wizardStep === 3) {
+  } else if (wizardStep === 4) {
     wizardData.context = document.getElementById('wContext')?.value ?? wizardData.context;
     wizardData.requireEmail = document.getElementById('wRequireEmail')?.checked ?? wizardData.requireEmail;
     wizardData.cancelMinutes = parseInt(document.getElementById('wCancel')?.value) || wizardData.cancelMinutes;
@@ -2229,6 +2358,7 @@ async function saveFunnel() {
       cancelMinutes: wizardData.cancelMinutes,
       profiles: wizardData.profiles.filter(p => p.name?.trim()),
       questions: wizardData.questions.filter(q => q.text?.trim()),
+      flow: wizardData.flow,
       status: 'active',
     };
     await api('POST', '/api/funnels', payload);

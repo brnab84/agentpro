@@ -8,23 +8,41 @@ import { Lead } from '../../models/Lead.js';
 const PROFILE_TAG = '[PROFILE:';
 
 function buildSystemPrompt(funnel) {
-  const profileList = funnel.profiles.map((p) => `- ${p.name}${p.description ? ': ' + p.description : ''}`).join('\n');
-  return `Eres un asistente de ventas inmobiliario experto. Tu misión es calificar al prospecto en una conversación natural y breve.
+  const profileList = funnel.profiles
+    .map((p) => `- ${p.name}${p.description ? ': ' + p.description : ''}`)
+    .join('\n');
+
+  let questionsSection = '';
+  if (funnel.questions?.length > 0) {
+    const qList = funnel.questions
+      .map((q, i) => {
+        let line = `${i + 1}. ${q.text}`;
+        if (q.options?.length) line += `\n   Opciones: ${q.options.join(' / ')}`;
+        return line;
+      })
+      .join('\n');
+    questionsSection = `\nPREGUNTAS QUE DEBES HACER (en orden, una por mensaje):
+${qList}
+
+- Guía al lead hacia una de las opciones cuando existan. No inventes opciones.
+- Una vez respondidas las preguntas obligatorias, clasificá al lead.`;
+  }
+
+  return `Eres un asistente de ventas inmobiliario experto. Tu misión es calificar al prospecto con preguntas naturales y breves.
 
 CONTEXTO DEL PROYECTO:
 ${funnel.context || 'Proyecto inmobiliario de alta calidad.'}
 
 PERFILES DE CLASIFICACIÓN:
 ${profileList}
+${questionsSection}
 
-INSTRUCCIONES:
-- Responde en el mismo idioma que el cliente (español por defecto).
-- Haz máximo UNA pregunta por mensaje. Sé conciso y amigable.
-- Obtén: presupuesto, intención (comprar/invertir), urgencia y zona de interés.
-- Cuando tengas suficiente información para clasificar al lead, termina tu respuesta con exactamente: [PROFILE:NombreDePerfil]
-- El nombre del perfil debe ser EXACTAMENTE uno de la lista de perfiles.
-- Nunca inventes perfiles fuera de la lista.
-- ${funnel.requireEmail ? 'Antes de finalizar, solicita el correo del cliente.' : ''}`;
+REGLAS:
+- Respondé en el mismo idioma que el cliente (español por defecto).
+- Hacé UNA sola pregunta por mensaje. Sé conciso y amigable.
+- Cuando tengas suficiente información, terminá tu respuesta con exactamente: [PROFILE:NombreDePerfil]
+- El nombre del perfil debe ser EXACTAMENTE uno de la lista. Nunca inventes perfiles.
+- ${funnel.requireEmail ? 'Antes de finalizar, solicitá el correo del cliente.' : ''}`;
 }
 
 async function findOrCreateLead(tenantId, channel, externalId, displayName) {
@@ -53,10 +71,41 @@ async function findOrCreateLead(tenantId, channel, externalId, displayName) {
   return { lead, conv };
 }
 
-async function executeProfilePath(funnel, profile, tenantId, leadId) {
-  const path = funnel.profiles.find((p) => p.name.toLowerCase() === profile.toLowerCase());
-  if (!path) return;
+// Execute synchronous flow steps (message, move_stage, add_tag, wait-skip).
+// Returns { messages: string[], nextStepIndex: number }
+// Stops before a 'profiling' step (stopAtProfiling=true).
+async function runSyncFlowSteps(flow, fromIndex, lead, conv, stopAtProfiling = true) {
+  const messages = [];
+  let i = fromIndex;
 
+  for (; i < flow.length; i++) {
+    const step = flow[i];
+
+    if (step.type === 'profiling' && stopAtProfiling) break;
+
+    if (step.type === 'message' && step.text?.trim()) {
+      conv.messages.push({ role: 'assistant', content: step.text });
+      conv.lastMessageAt = new Date();
+      messages.push(step.text);
+
+    } else if (step.type === 'move_stage' && step.stage) {
+      await Lead.findOneAndUpdate({ _id: lead._id }, { stage: step.stage });
+
+    } else if (step.type === 'add_tag' && step.tag) {
+      await Lead.findOneAndUpdate({ _id: lead._id }, { $addToSet: { tags: step.tag } });
+
+    } else if (step.type === 'wait') {
+      // wait is async/timer — skip in engine v1, handled externally
+    }
+  }
+
+  if (messages.length) await conv.save();
+  return { messages, nextStepIndex: i };
+}
+
+async function applyProfileActions(funnel, profileName, tenantId, leadId) {
+  const path = funnel.profiles.find((p) => p.name.toLowerCase() === profileName.toLowerCase());
+  if (!path) return;
   const updates = {};
   if (path.stage) updates.stage = path.stage;
   if (path.tag) updates[`tags`] = path.tag;
@@ -77,12 +126,33 @@ export async function startFunnelExecution({ tenantId, funnel, externalId, displ
     channel,
     status: 'running',
     phase: 'profiling',
+    flowStepIndex: 0,
   });
 
   await Funnel.findByIdAndUpdate(funnel._id, { $inc: { totalExecutions: 1 } });
 
-  const reply = await continueProfilingConversation(funnel, conv, lead, execution, initialText);
-  return reply;
+  const flow = funnel.flow || [];
+  const hasProfiling = flow.some((s) => s.type === 'profiling');
+
+  // Run pre-profiling sync steps
+  const { messages: preMessages, nextStepIndex } = await runSyncFlowSteps(flow, 0, lead, conv, true);
+  await FunnelExecution.findByIdAndUpdate(execution._id, { flowStepIndex: nextStepIndex });
+
+  // Run profiling AI (if flow has a profiling block OR no flow defined)
+  const currentStep = flow[nextStepIndex];
+  const shouldProfile = !hasProfiling || currentStep?.type === 'profiling';
+
+  if (shouldProfile) {
+    const aiReply = await continueProfilingConversation(funnel, conv, lead, execution, initialText);
+    return [...preMessages, aiReply].filter(Boolean).join('\n\n') || aiReply;
+  }
+
+  // No profiling step — run remaining sync steps and complete
+  const { messages: postMessages } = await runSyncFlowSteps(flow, nextStepIndex, lead, conv, false);
+  await FunnelExecution.findByIdAndUpdate(execution._id, { status: 'completed', phase: 'done', completedAt: new Date() });
+  await Funnel.findByIdAndUpdate(funnel._id, { $inc: { completedExecutions: 1 } });
+
+  return [...preMessages, ...postMessages].join('\n\n') || null;
 }
 
 export async function continueFunnelExecution({ execution, text }) {
@@ -108,20 +178,16 @@ async function continueProfilingConversation(funnel, conv, lead, execution, user
 
   let replyText = response.content[0].text;
 
-  // Check if AI assigned a profile
   const profileIdx = replyText.indexOf(PROFILE_TAG);
   if (profileIdx !== -1) {
     const profileEnd = replyText.indexOf(']', profileIdx);
     const profileName = replyText.slice(profileIdx + PROFILE_TAG.length, profileEnd).trim();
 
-    // Clean tag from reply
     replyText = replyText.slice(0, profileIdx).trim();
 
-    // Store profile reply as assistant message
     conv.messages.push({ role: 'assistant', content: replyText });
     await conv.save();
 
-    // Send profile-specific message
     const pathProfile = funnel.profiles.find((p) => p.name.toLowerCase() === profileName.toLowerCase());
     if (pathProfile?.message) {
       conv.messages.push({ role: 'assistant', content: pathProfile.message });
@@ -129,23 +195,25 @@ async function continueProfilingConversation(funnel, conv, lead, execution, user
       await conv.save();
     }
 
-    // Update execution
+    // Advance past profiling step in flow and run post-profiling sync steps
+    const flow = funnel.flow || [];
+    const profilingIdx = flow.findIndex((s) => s.type === 'profiling');
+    const afterProfiling = profilingIdx >= 0 ? profilingIdx + 1 : flow.length;
+    const { messages: postMessages } = await runSyncFlowSteps(flow, afterProfiling, lead, conv, false);
+
     await FunnelExecution.findByIdAndUpdate(execution._id, {
       status: 'completed',
       phase: 'done',
       profile: profileName,
       completedAt: new Date(),
+      flowStepIndex: flow.length,
     });
 
     await Funnel.findByIdAndUpdate(funnel._id, { $inc: { completedExecutions: 1 } });
+    await applyProfileActions(funnel, profileName, execution.tenantId, execution.leadId);
 
-    // Move lead to stage / update CRM
-    await executeProfilePath(funnel, profileName, execution.tenantId, execution.leadId);
-
-    // Return both replies so the channel can send them sequentially
-    return pathProfile?.message
-      ? `${replyText}\n\n${pathProfile.message}`
-      : replyText;
+    const allMessages = [replyText, pathProfile?.message, ...postMessages].filter(Boolean);
+    return allMessages.join('\n\n');
   }
 
   conv.messages.push({ role: 'assistant', content: replyText });

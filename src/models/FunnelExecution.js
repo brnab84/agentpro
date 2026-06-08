@@ -12,6 +12,7 @@ const funnelExecutionSchema = new Schema(
     channel: { type: String, enum: ['whatsapp', 'instagram'], required: true },
     status: { type: String, enum: ['running', 'completed', 'cancelled'], default: 'running', index: true },
     phase: { type: String, enum: ['profiling', 'done'], default: 'profiling' },
+    flowStepIndex: { type: Number, default: 0 },
     profile: { type: String, default: null },
     completedAt: { type: Date, default: null },
   },
