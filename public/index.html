@@ -352,8 +352,37 @@
             Invitar agente
           </button>
         </div>
-        <div id="teamGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-        <div id="teamEmpty" class="hidden text-center py-12 text-gray-400">No hay agentes aún. Invitá al primero.</div>
+        <div id="teamGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
+        <div id="teamEmpty" class="hidden text-center py-8 text-gray-400">No hay agentes aún. Invitá al primero.</div>
+
+        <!-- Channel config (owner only) -->
+        <div id="channelConfigSection" class="hidden">
+          <h3 class="font-semibold text-gray-900 mb-4">Configuración de canales</h3>
+          <div class="card p-6 max-w-xl">
+            <div class="flex items-center gap-3 mb-5">
+              <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900">WhatsApp Business</p>
+                <p class="text-xs text-gray-400">Meta Cloud API</p>
+              </div>
+            </div>
+            <form id="channelForm" class="space-y-4">
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Phone Number ID</label>
+                <input id="cfgPhoneId" type="text" placeholder="Ej: 1082687198270881" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <p class="text-xs text-gray-400 mt-1">Lo encontrás en Meta for Developers → WhatsApp → Paso 1</p>
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Instagram Page ID <span class="text-gray-300">(opcional)</span></label>
+                <input id="cfgInstaId" type="text" placeholder="Ej: 123456789" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div id="channelSaveMsg" class="hidden text-sm text-green-600 font-medium">✓ Configuración guardada</div>
+              <button type="submit" class="gradient-bg text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition">Guardar</button>
+            </form>
+          </div>
+        </div>
       </div>
 
     </main>
@@ -1135,6 +1164,19 @@ async function loadTeam() {
   const isOwner = currentUser?.role === 'owner';
   document.getElementById('inviteBtn').classList.toggle('hidden', !isOwner);
 
+  // Show channel config section for owners and pre-fill values
+  const cfgSection = document.getElementById('channelConfigSection');
+  if (isOwner) {
+    cfgSection.classList.remove('hidden');
+    try {
+      const tenant = await api('GET', '/api/users/channels');
+      document.getElementById('cfgPhoneId').value = tenant.channels?.whatsappPhoneNumberId || '';
+      document.getElementById('cfgInstaId').value = tenant.channels?.instagramPageId || '';
+    } catch {}
+  } else {
+    cfgSection.classList.add('hidden');
+  }
+
   if (!allAgents.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
 
@@ -1180,6 +1222,18 @@ document.getElementById('inviteForm').onsubmit = async (e) => {
     errEl.textContent = err.message;
     errEl.classList.remove('hidden');
   }
+};
+
+document.getElementById('channelForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('channelSaveMsg');
+  msg.classList.add('hidden');
+  await api('PATCH', '/api/users/channels', {
+    whatsappPhoneNumberId: document.getElementById('cfgPhoneId').value.trim(),
+    instagramPageId: document.getElementById('cfgInstaId').value.trim(),
+  });
+  msg.classList.remove('hidden');
+  setTimeout(() => msg.classList.add('hidden'), 3000);
 };
 
 async function removeAgent(id, name) {

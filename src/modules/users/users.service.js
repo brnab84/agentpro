@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { AppError } from '../../utils/AppError.js';
 import { User } from '../../models/User.js';
+import { Tenant } from '../../models/Tenant.js';
 
 export const listAgents = (tenantId) =>
   User.find({ tenantId }).select('-passwordHash').sort({ createdAt: 1 });
@@ -11,6 +12,22 @@ export async function inviteAgent(tenantId, { name, email, password }) {
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await User.create({ tenantId, name, email, passwordHash, role: 'agent' });
   return { id: user._id, name: user.name, email: user.email, role: user.role };
+}
+
+export async function getChannelConfig(tenantId) {
+  const tenant = await Tenant.findById(tenantId).select('name channels');
+  if (!tenant) throw new AppError('Tenant not found', 404);
+  return tenant;
+}
+
+export async function updateChannelConfig(tenantId, { whatsappPhoneNumberId, instagramPageId }) {
+  const tenant = await Tenant.findByIdAndUpdate(
+    tenantId,
+    { 'channels.whatsappPhoneNumberId': whatsappPhoneNumberId || '', 'channels.instagramPageId': instagramPageId || '' },
+    { new: true },
+  );
+  if (!tenant) throw new AppError('Tenant not found', 404);
+  return tenant;
 }
 
 export async function removeAgent(tenantId, id) {
