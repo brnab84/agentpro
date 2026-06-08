@@ -1,0 +1,132 @@
+import { env } from '../../config/env.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import { handleIncomingMessage, resolveTenantByWhatsapp, resolveTenantByInstagram } from './channels.service.js';
+import { parseWhatsAppWebhook, sendWhatsAppMessage } from './whatsapp.service.js';
+import { parseInstagramWebhook, sendInstagramMessage } from './instagram.service.js';
+
+// ── WhatsApp ─────────────────────────────────────────────────────────────────
+
+export const verifyWhatsApp = (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === env.whatsappVerifyToken) {
+    return res.status(200).send(challenge);
+  }
+  res.status(403).json({ error: 'Forbidden' });
+};
+
+export const receiveWhatsApp = asyncHandler(async (req, res) => {
+  // Acknowledge immediately (Meta requires 200 within 20s)
+  res.status(200).json({ status: 'ok' });
+
+  const messages = parseWhatsAppWebhook(req.body);
+  for (const msg of messages) {
+    const tenant = await resolveTenantByWhatsapp(msg.phoneNumberId);
+    if (!tenant) continue;
+
+    const reply = await handleIncomingMessage({
+      tenantId: tenant._id,
+      channel: 'whatsapp',
+      externalId: msg.from,
+      displayName: msg.name,
+      text: msg.text,
+    });
+
+    await sendWhatsAppMessage(msg.phoneNumberId, msg.from, reply);
+  }
+});
+
+// ── Instagram ────────────────────────────────────────────────────────────────
+
+export const verifyInstagram = (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === env.instagramVerifyToken) {
+    return res.status(200).send(challenge);
+  }
+  res.status(403).json({ error: 'Forbidden' });
+};
+
+export const receiveInstagram = asyncHandler(async (req, res) => {
+  res.status(200).json({ status: 'ok' });
+
+  const messages = parseInstagramWebhook(req.body);
+  for (const msg of messages) {
+    const tenant = await resolveTenantByInstagram(msg.pageId);
+    if (!tenant) continue;
+
+    const reply = await handleIncomingMessage({
+      tenantId: tenant._id,
+      channel: 'instagram',
+      externalId: msg.senderId,
+      displayName: msg.senderId,
+      text: msg.text,
+    });
+
+    await sendInstagramMessage(msg.pageId, msg.senderId, reply);
+  }
+});
+
+// ── Email (inbound via webhook, e.g. SendGrid Inbound Parse) ─────────────────
+
+export const receiveEmail = asyncHandler(async (req, res) => {
+  res.status(200).json({ status: 'ok' });
+
+  // SendGrid Inbound Parse sends multipart/form-data
+  const from = req.body.from || '';
+  const subject = req.body.subject || '';
+  const text = req.body.text || req.body.html || '';
+  const to = req.body.to || '';
+
+  // Extract tenantId from the "to" address: <tenantId>@inbound.agentpro.app
+  const toMatch = to.match(/^([a-f0-9]{24})@/i);
+  if (!toMatch) return;
+  const tenantId = toMatch[1];
+
+  // Extract sender email
+  const emailMatch = from.match(/<(.+?)>/) || [null, from];
+  const senderEmail = emailMatch[1].trim();
+  const senderName = from.replace(/<.+>/, '').trim() || senderEmail;
+
+  const fullText = subject ? `Asunto: ${subject}\n\n${text}` : text;
+
+  await handleIncomingMessage({
+    tenantId,
+    channel: 'email',
+    externalId: senderEmail,
+    displayName: senderName,
+    text: fullText,
+  });
+});
+
+// ── Conversations (protected, for agents to read) ────────────────────────────
+
+import { Conversation } from '../../models/Conversation.js';
+
+export const getConversations = asyncHandler(async (req, res) => {
+  const { tenantId } = req;
+  const { leadId, channel } = req.query;
+  const filter = { tenantId };
+  if (leadId) filter.leadId = leadId;
+  if (channel) filter.channel = channel;
+
+  const convs = await Conversation.find(filter)
+    .sort({ lastMessageAt: -1 })
+    .limit(50)
+    .populate('leadId', 'name contact stage score');
+
+  res.json(convs);
+});
+
+export const getConversation = asyncHandler(async (req, res) => {
+  const conv = await Conversation.findOne({ _id: req.params.id, tenantId: req.tenantId }).populate(
+    'leadId',
+    'name contact stage score',
+  );
+  if (!conv) return res.status(404).json({ error: 'Not found' });
+  res.json(conv);
+});

@@ -15,4 +15,8 @@ export const env = {
   jwtExpires: process.env.JWT_EXPIRES || '1d',
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
   aiModel: process.env.AI_MODEL || 'claude-haiku-4-5-20251001',
+  whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN || '',
+  whatsappAccessToken: process.env.WHATSAPP_ACCESS_TOKEN || '',
+  instagramVerifyToken: process.env.INSTAGRAM_VERIFY_TOKEN || '',
+  instagramAccessToken: process.env.INSTAGRAM_ACCESS_TOKEN || '',
 };
