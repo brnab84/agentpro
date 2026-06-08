@@ -1,10 +1,11 @@
 import { createApp } from '../src/app.js';
 import { connectDB } from '../src/config/db.js';
 
-const app = createApp();
+// App se inicializa una vez y se reutiliza entre invocaciones (Vercel warm instances).
+let app;
 
-// Vercel serverless handler — connectDB is idempotent (cached after first call).
 export default async function handler(req, res) {
   await connectDB();
+  if (!app) app = createApp();
   return app(req, res);
 }
