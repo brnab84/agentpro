@@ -17,6 +17,8 @@ const leadSchema = new mongoose.Schema(
     score: { type: Number, min: 0, max: 100, default: 0 },
     predictedCloseProb: { type: Number, min: 0, max: 1, default: 0 },
     nextAction: { type: String, trim: true },
+    aiQualityScore: { type: Number, min: 0, max: 100, default: 0 },
+    aiSummary: { type: String, trim: true },
   },
   { timestamps: true },
 );

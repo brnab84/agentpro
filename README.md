@@ -26,6 +26,14 @@ npm run dev
 
 All `/api/*` routes except auth require `Authorization: Bearer <token>`.
 
+## AI (Phase 2)
+Requires `ANTHROPIC_API_KEY` in `.env`.
+- `POST /api/ai/leads/:leadId/qualify` — body `{ conversationText }`. Claude extracts budget/intent/urgency, computes quality score, then recalculates lead score, close probability, property matches and next-best-action.
+- `POST /api/ai/leads/:leadId/rescore` — recompute scoring/matches/next-action from current lead data (no AI call).
+- `GET /api/ai/leads/:leadId/matches` — top property matches by attribute fit.
+
+Scoring: weighted model over budget/urgency/intent/source/AI-quality signals; close probability via logistic curve. Matching: attribute fit (budget 45% / zone 35% / type 20%).
+
 ## Roadmap
 - Phase 2: AI lead scoring, predictive close probability, semantic matching, next-best-action
 - Phase 3: WhatsApp / Instagram / email automation + chatbot

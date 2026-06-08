@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "Predictive SaaS CRM for real estate agents",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
@@ -19,7 +21,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.0",
     "morgan": "^1.10.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@anthropic-ai/sdk": "^0.27.0"
   },
   "devDependencies": {
     "eslint": "^9.7.0",

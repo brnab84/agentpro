@@ -8,6 +8,7 @@ import authRoutes from './modules/auth/auth.routes.js';
 import leadRoutes from './modules/leads/leads.routes.js';
 import propertyRoutes from './modules/properties/properties.routes.js';
 import appointmentRoutes from './modules/appointments/appointments.routes.js';
+import aiRoutes from './modules/ai/ai.routes.js';
 
 export function createApp() {
   const app = express();
@@ -23,6 +24,7 @@ export function createApp() {
   app.use('/api/leads', leadRoutes);
   app.use('/api/properties', propertyRoutes);
   app.use('/api/appointments', appointmentRoutes);
+  app.use('/api/ai', aiRoutes);
 
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
   app.use(errorHandler);
