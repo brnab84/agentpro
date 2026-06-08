@@ -9,6 +9,7 @@ const router = Router();
 router.use(auth, tenantScope);
 
 router.get('/', controller.list);
+router.post('/import-url', controller.importFromUrl);
 router.post('/', validate(createPropertySchema), controller.create);
 router.get('/:id', controller.getById);
 router.patch('/:id', validate(updatePropertySchema), controller.update);

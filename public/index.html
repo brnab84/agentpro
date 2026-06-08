@@ -331,7 +331,7 @@
             Nueva Propiedad
           </button>
         </div>
-        <div id="propertiesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="propertiesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         <div id="propsEmpty" class="hidden text-center py-12 text-gray-400">No hay propiedades aún.</div>
       </div>
 
@@ -531,35 +531,118 @@
 
 <!-- Property Modal -->
 <div id="propertyModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-  <div class="card w-full max-w-lg p-6 fade-in">
-    <div class="flex items-center justify-between mb-5">
-      <h3 class="text-lg font-semibold text-gray-900">Nueva Propiedad</h3>
+  <div class="card w-full max-w-2xl fade-in flex flex-col" style="max-height:90vh">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 flex-shrink-0">
+      <h3 id="propModalTitle" class="text-lg font-semibold text-gray-900">Nueva Propiedad</h3>
       <button onclick="closePropModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
-    <form id="propertyForm" class="space-y-3">
-      <input id="propId" type="hidden" />
-      <div class="grid grid-cols-2 gap-3">
-        <div class="col-span-2"><label class="text-xs text-gray-500 font-medium">Título *</label><input id="propTitle" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Casa en Polanco" /></div>
-        <div><label class="text-xs text-gray-500 font-medium">Zona</label><input id="propZone" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-        <div><label class="text-xs text-gray-500 font-medium">Precio</label><input id="propPrice" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-        <div><label class="text-xs text-gray-500 font-medium">Recámaras</label><input id="propBeds" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-        <div><label class="text-xs text-gray-500 font-medium">Baños</label><input id="propBaths" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-        <div><label class="text-xs text-gray-500 font-medium">Tipo</label>
-          <select id="propType" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="house">Casa</option><option value="apartment">Departamento</option><option value="land">Terreno</option><option value="commercial">Comercial</option>
-          </select>
-        </div>
-        <div><label class="text-xs text-gray-500 font-medium">Status</label>
-          <select id="propStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="available">Disponible</option><option value="reserved">Reservada</option><option value="sold">Vendida</option>
-          </select>
-        </div>
+
+    <!-- URL Import Bar -->
+    <div class="px-6 py-3 bg-blue-50 border-b border-blue-100 flex-shrink-0">
+      <p class="text-xs text-blue-600 font-medium mb-1.5">Importar desde URL (Encuentra24, Zonaprop, MercadoLibre, etc.)</p>
+      <div class="flex gap-2">
+        <input id="propImportUrl" type="url" placeholder="https://www.encuentra24.com/propiedad/..." class="flex-1 border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
+        <button onclick="importPropertyFromUrl()" id="importBtn" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition whitespace-nowrap flex items-center gap-2">
+          <svg id="importSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+          <span id="importBtnText">Importar</span>
+        </button>
       </div>
-      <div class="flex gap-3 pt-2">
-        <button type="submit" class="flex-1 gradient-bg text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition">Guardar</button>
-        <button type="button" onclick="closePropModal()" class="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
-      </div>
-    </form>
+      <p id="importError" class="text-xs text-red-500 mt-1 hidden"></p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-100 flex-shrink-0 px-6">
+      <button onclick="showPropTab('info')" id="ptab-info" class="prop-tab active text-sm font-medium py-3 px-4 border-b-2 border-blue-600 text-blue-600">Información</button>
+      <button onclick="showPropTab('photos')" id="ptab-photos" class="prop-tab text-sm font-medium py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700">Fotos</button>
+      <button onclick="showPropTab('map')" id="ptab-map" class="prop-tab text-sm font-medium py-3 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700">Mapa</button>
+    </div>
+
+    <!-- Scrollable body -->
+    <div class="overflow-y-auto flex-1 px-6 py-4">
+      <form id="propertyForm">
+        <input id="propId" type="hidden" />
+
+        <!-- TAB: Info -->
+        <div id="ptab-content-info" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2">
+              <label class="text-xs text-gray-500 font-medium">Título *</label>
+              <input id="propTitle" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Apartamento 3 hab en Miraflores" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Zona / Barrio</label>
+              <input id="propZone" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Miraflores" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Dirección</label>
+              <input id="propAddress" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Av. Principal 123" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Precio (USD)</label>
+              <input id="propPrice" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="150000" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Superficie (m²)</label>
+              <input id="propArea" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="120" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Habitaciones</label>
+              <input id="propBeds" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Baños</label>
+              <input id="propBaths" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Tipo</label>
+              <select id="propType" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="house">Casa</option><option value="apartment">Departamento</option><option value="land">Terreno</option><option value="commercial">Comercial</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Estado</label>
+              <select id="propStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="available">Disponible</option><option value="reserved">Reservada</option><option value="sold">Vendida</option>
+              </select>
+            </div>
+            <div class="col-span-2">
+              <label class="text-xs text-gray-500 font-medium">Descripción</label>
+              <textarea id="propDescription" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Descripción de la propiedad..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Photos -->
+        <div id="ptab-content-photos" class="hidden space-y-3">
+          <div id="photosPreview" class="grid grid-cols-3 gap-2 mb-3"></div>
+          <div>
+            <label class="text-xs text-gray-500 font-medium">Agregar foto (URL)</label>
+            <div class="flex gap-2 mt-1">
+              <input id="photoUrlInput" type="url" placeholder="https://..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button type="button" onclick="addPhotoUrl()" class="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition">Agregar</button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400">Las fotos importadas desde URL se cargan automáticamente.</p>
+        </div>
+
+        <!-- TAB: Map -->
+        <div id="ptab-content-map" class="hidden">
+          <div id="mapContainer" class="w-full h-64 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-sm text-gray-400">
+            Ingresá una dirección en la pestaña Información para ver el mapa.
+          </div>
+          <p class="text-xs text-gray-400 mt-2">El mapa se genera a partir de la dirección o zona ingresada.</p>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+      <button onclick="submitPropForm()" class="flex-1 gradient-bg text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition">Guardar Propiedad</button>
+      <button type="button" onclick="closePropModal()" class="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
+      <button type="button" id="propDeleteBtn" onclick="deletePropFromModal()" class="hidden border border-red-200 text-red-500 text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-red-50 transition">Eliminar</button>
+    </div>
   </div>
 </div>
 
@@ -1080,47 +1163,203 @@ async function deleteAppt() {
 }
 
 // ── Properties ────────────────────────────────────────────────────────────────
+// ── Properties ────────────────────────────────────────────────────────────────
+let propPhotos = [];
+
+const PROP_TYPE_LABEL = { house:'Casa', apartment:'Depto', land:'Terreno', commercial:'Comercial' };
+const PROP_STATUS_COLOR = { available:'bg-green-100 text-green-700', reserved:'bg-yellow-100 text-yellow-700', sold:'bg-gray-100 text-gray-500' };
+const PROP_STATUS_LABEL = { available:'Disponible', reserved:'Reservada', sold:'Vendida' };
+
 async function loadProperties() {
   allProps = await api('GET', '/api/properties').catch(() => []);
   const grid = document.getElementById('propertiesGrid');
   const empty = document.getElementById('propsEmpty');
   if (!allProps.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
-  const typeLabel = { house:'Casa', apartment:'Depto', land:'Terreno', commercial:'Comercial' };
-  const statusColor = { available:'bg-green-100 text-green-700', reserved:'bg-yellow-100 text-yellow-700', sold:'bg-gray-100 text-gray-500' };
-  grid.innerHTML = allProps.map(p => `
-    <div class="card p-5 hover:shadow-md transition">
-      <div class="flex items-start justify-between mb-3">
-        <div><p class="font-semibold text-gray-900">${p.title}</p><p class="text-sm text-gray-500">${p.zone || '—'}</p></div>
-        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[p.status] || 'bg-gray-100 text-gray-500'}">${p.status}</span>
+  grid.innerHTML = allProps.map(p => {
+    const photo = p.photos?.[0];
+    const statusColor = PROP_STATUS_COLOR[p.status] || 'bg-gray-100 text-gray-500';
+    const statusLabel = PROP_STATUS_LABEL[p.status] || p.status;
+    return `
+    <div class="card overflow-hidden hover:shadow-lg transition cursor-pointer" onclick="openEditPropertyModal('${p._id}')">
+      ${photo
+        ? `<div class="h-44 bg-gray-100 overflow-hidden"><img src="${photo}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'h-44 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center text-4xl\\'>🏠</div>'" /></div>`
+        : `<div class="h-44 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center text-4xl">🏠</div>`
+      }
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-gray-900 truncate">${p.title}</p>
+            <p class="text-xs text-gray-500 mt-0.5">${p.address || p.zone || '—'}</p>
+          </div>
+          <span class="text-xs px-2 py-0.5 rounded-full font-medium ml-2 flex-shrink-0 ${statusColor}">${statusLabel}</span>
+        </div>
+        <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
+          ${p.beds ? `<span class="flex items-center gap-1">🛏 ${p.beds} hab</span>` : ''}
+          ${p.baths ? `<span class="flex items-center gap-1">🚿 ${p.baths} baños</span>` : ''}
+          ${p.area ? `<span class="flex items-center gap-1">📐 ${p.area} m²</span>` : ''}
+          <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${PROP_TYPE_LABEL[p.type] || p.type}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <p class="text-lg font-bold text-blue-700">${p.price ? '$' + p.price.toLocaleString() : 'Consultar'}</p>
+          ${p.sourceUrl ? `<a href="${p.sourceUrl}" target="_blank" onclick="event.stopPropagation()" class="text-xs text-blue-500 hover:underline">Ver fuente</a>` : ''}
+        </div>
+        ${p.description ? `<p class="text-xs text-gray-400 mt-2 line-clamp-2">${p.description}</p>` : ''}
       </div>
-      <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
-        <span>🛏 ${p.beds || '—'}</span><span>🚿 ${p.baths || '—'}</span><span>${typeLabel[p.type] || p.type || '—'}</span>
-      </div>
-      <p class="text-lg font-bold text-blue-700">${p.price ? '$' + p.price.toLocaleString() : '—'}</p>
-      <button onclick="deleteProp('${p._id}')" class="text-xs text-red-400 hover:underline mt-3">Eliminar</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
+
 function openNewPropertyModal() {
-  ['propTitle','propZone','propPrice','propBeds','propBaths'].forEach(id => document.getElementById(id).value = '');
+  propPhotos = [];
+  document.getElementById('propId').value = '';
+  document.getElementById('propModalTitle').textContent = 'Nueva Propiedad';
+  ['propTitle','propZone','propAddress','propPrice','propArea','propBeds','propBaths','propDescription','propImportUrl'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('propType').value = 'house';
+  document.getElementById('propStatus').value = 'available';
+  document.getElementById('importError').classList.add('hidden');
+  renderPhotosPreview();
+  document.getElementById('propDeleteBtn').classList.add('hidden');
+  showPropTab('info');
+  refreshPropMap();
   document.getElementById('propertyModal').classList.remove('hidden');
 }
+
+function openEditPropertyModal(id) {
+  const p = allProps.find(x => x._id === id);
+  if (!p) return;
+  propPhotos = [...(p.photos || [])];
+  document.getElementById('propId').value = p._id;
+  document.getElementById('propModalTitle').textContent = 'Editar Propiedad';
+  document.getElementById('propTitle').value = p.title || '';
+  document.getElementById('propZone').value = p.zone || '';
+  document.getElementById('propAddress').value = p.address || '';
+  document.getElementById('propPrice').value = p.price || '';
+  document.getElementById('propArea').value = p.area || '';
+  document.getElementById('propBeds').value = p.beds || '';
+  document.getElementById('propBaths').value = p.baths || '';
+  document.getElementById('propDescription').value = p.description || '';
+  document.getElementById('propType').value = p.type || 'house';
+  document.getElementById('propStatus').value = p.status || 'available';
+  document.getElementById('propImportUrl').value = '';
+  document.getElementById('importError').classList.add('hidden');
+  renderPhotosPreview();
+  document.getElementById('propDeleteBtn').classList.remove('hidden');
+  showPropTab('info');
+  refreshPropMap();
+  document.getElementById('propertyModal').classList.remove('hidden');
+}
+
+async function deletePropFromModal() {
+  const id = document.getElementById('propId').value;
+  if (!id || !confirm('¿Eliminar esta propiedad?')) return;
+  await api('DELETE', '/api/properties/' + id);
+  closePropModal(); loadProperties();
+}
+
 function closePropModal() { document.getElementById('propertyModal').classList.add('hidden'); }
-document.getElementById('propertyForm').onsubmit = async (e) => {
-  e.preventDefault();
+
+function showPropTab(tab) {
+  ['info','photos','map'].forEach(t => {
+    document.getElementById('ptab-content-' + t).classList.toggle('hidden', t !== tab);
+    const btn = document.getElementById('ptab-' + t);
+    btn.classList.toggle('border-blue-600', t === tab);
+    btn.classList.toggle('text-blue-600', t === tab);
+    btn.classList.toggle('border-transparent', t !== tab);
+    btn.classList.toggle('text-gray-500', t !== tab);
+  });
+  if (tab === 'map') refreshPropMap();
+}
+
+function refreshPropMap() {
+  const address = document.getElementById('propAddress').value || document.getElementById('propZone').value;
+  const container = document.getElementById('mapContainer');
+  if (!address) {
+    container.innerHTML = '<span class="text-gray-400 text-sm">Ingresá una dirección en Información para ver el mapa.</span>';
+    return;
+  }
+  const encoded = encodeURIComponent(address);
+  container.innerHTML = `<iframe class="w-full h-64 border-0" loading="lazy" allowfullscreen
+    src="https://maps.google.com/maps?q=${encoded}&output=embed&z=15"></iframe>`;
+}
+
+function renderPhotosPreview() {
+  const container = document.getElementById('photosPreview');
+  if (!propPhotos.length) { container.innerHTML = '<p class="col-span-3 text-xs text-gray-400 text-center py-4">Sin fotos aún</p>'; return; }
+  container.innerHTML = propPhotos.map((url, i) => `
+    <div class="relative group rounded-lg overflow-hidden h-24 bg-gray-100">
+      <img src="${url}" class="w-full h-full object-cover" onerror="this.src=''" />
+      <button type="button" onclick="removePhoto(${i})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs items-center justify-center hidden group-hover:flex">×</button>
+    </div>`).join('');
+}
+
+function addPhotoUrl() {
+  const input = document.getElementById('photoUrlInput');
+  const url = input.value.trim();
+  if (!url) return;
+  propPhotos.push(url);
+  input.value = '';
+  renderPhotosPreview();
+}
+
+function removePhoto(i) {
+  propPhotos.splice(i, 1);
+  renderPhotosPreview();
+}
+
+async function importPropertyFromUrl() {
+  const url = document.getElementById('propImportUrl').value.trim();
+  if (!url) return;
+  const btn = document.getElementById('importBtn');
+  const spinner = document.getElementById('importSpinner');
+  const btnText = document.getElementById('importBtnText');
+  const errEl = document.getElementById('importError');
+  btn.disabled = true; spinner.classList.remove('hidden'); btnText.textContent = 'Importando...'; errEl.classList.add('hidden');
+  try {
+    const data = await api('POST', '/api/properties/import-url', { url });
+    if (data.title) document.getElementById('propTitle').value = data.title;
+    if (data.zone) document.getElementById('propZone').value = data.zone;
+    if (data.address) document.getElementById('propAddress').value = data.address;
+    if (data.price) document.getElementById('propPrice').value = data.price;
+    if (data.area) document.getElementById('propArea').value = data.area;
+    if (data.beds) document.getElementById('propBeds').value = data.beds;
+    if (data.baths) document.getElementById('propBaths').value = data.baths;
+    if (data.description) document.getElementById('propDescription').value = data.description;
+    if (data.type) document.getElementById('propType').value = data.type;
+    if (data.photos?.length) { propPhotos = [...data.photos]; renderPhotosPreview(); }
+    if (data.address || data.zone) refreshPropMap();
+  } catch(e) {
+    errEl.textContent = e.message || 'No se pudo importar la URL';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false; spinner.classList.add('hidden'); btnText.textContent = 'Importar';
+  }
+}
+
+async function submitPropForm() {
+  const title = document.getElementById('propTitle').value.trim();
+  if (!title) { document.getElementById('propTitle').focus(); return; }
+  const id = document.getElementById('propId').value;
   const body = {
-    title: document.getElementById('propTitle').value,
-    zone: document.getElementById('propZone').value,
+    title,
+    zone: document.getElementById('propZone').value || undefined,
+    address: document.getElementById('propAddress').value || undefined,
     price: Number(document.getElementById('propPrice').value) || undefined,
+    area: Number(document.getElementById('propArea').value) || undefined,
     beds: Number(document.getElementById('propBeds').value) || undefined,
     baths: Number(document.getElementById('propBaths').value) || undefined,
+    description: document.getElementById('propDescription').value || undefined,
     type: document.getElementById('propType').value,
     status: document.getElementById('propStatus').value,
+    photos: propPhotos,
+    sourceUrl: document.getElementById('propImportUrl').value || undefined,
   };
-  await api('POST', '/api/properties', body);
+  if (id) await api('PATCH', '/api/properties/' + id, body);
+  else await api('POST', '/api/properties', body);
   closePropModal(); loadProperties();
-};
-async function deleteProp(id) { if (!confirm('¿Eliminar?')) return; await api('DELETE', '/api/properties/' + id); loadProperties(); }
+}
+
+async function deleteProp(id) { if (!confirm('¿Eliminar propiedad?')) return; await api('DELETE', '/api/properties/' + id); loadProperties(); }
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 async function loadPipeline() {
