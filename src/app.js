@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
+import { join } from 'path';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './modules/auth/auth.routes.js';
@@ -18,6 +19,9 @@ export function createApp() {
   app.use(cors());
   app.use(express.json());
   if (env.nodeEnv !== 'test') app.use(morgan('dev'));
+
+  // Serve frontend from public/ (process.cwd() = project root in Vercel)
+  app.use(express.static(join(process.cwd(), 'public')));
 
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
