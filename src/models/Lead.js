@@ -19,6 +19,7 @@ const leadSchema = new mongoose.Schema(
     nextAction: { type: String, trim: true },
     aiQualityScore: { type: Number, min: 0, max: 100, default: 0 },
     aiSummary: { type: String, trim: true },
+    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true },
 );

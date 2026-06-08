@@ -2,7 +2,9 @@ import { AppError } from '../../utils/AppError.js';
 import { Lead } from '../../models/Lead.js';
 
 export const list = (tenantId, filter = {}) =>
-  Lead.find({ tenantId, ...filter }).sort({ createdAt: -1 });
+  Lead.find({ tenantId, ...filter })
+    .populate('assignedTo', 'name email')
+    .sort({ createdAt: -1 });
 
 export const getById = async (tenantId, id) => {
   const lead = await Lead.findOne({ _id: id, tenantId });

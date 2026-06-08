@@ -2,7 +2,9 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as service from './leads.service.js';
 
 export const list = asyncHandler(async (req, res) => {
-  const filter = req.query.stage ? { stage: req.query.stage } : {};
+  const filter = {};
+  if (req.query.stage) filter.stage = req.query.stage;
+  if (req.user.role === 'agent') filter.assignedTo = req.user.id;
   res.json(await service.list(req.tenantId, filter));
 });
 

@@ -13,6 +13,7 @@ import appointmentRoutes from './modules/appointments/appointments.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
 import channelRoutes from './modules/channels/channels.routes.js';
 import analyticsRoutes from './modules/analytics/analytics.routes.js';
+import userRoutes from './modules/users/users.routes.js';
 
 let indexHtml;
 try {
@@ -40,6 +41,7 @@ export function createApp() {
   app.use('/api/ai', aiRoutes);
   app.use('/api/webhooks', channelRoutes);
   app.use('/api/analytics', analyticsRoutes);
+  app.use('/api/users', userRoutes);
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
   app.use(errorHandler);

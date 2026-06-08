@@ -121,6 +121,10 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         Pipeline
       </a>
+      <a id="teamNavItem" onclick="showTab('team')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="team">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Equipo
+      </a>
     </nav>
     <div class="px-3 py-4 border-t border-blue-700/40">
       <button onclick="logout()" class="flex items-center gap-2 text-blue-200 hover:text-white text-sm px-3 py-2 rounded-lg hover:bg-white/10 w-full transition">
@@ -269,6 +273,7 @@
                 <th class="text-left px-6 py-3 text-gray-500 font-medium">Stage</th>
                 <th class="text-left px-6 py-3 text-gray-500 font-medium">Score</th>
                 <th class="text-left px-6 py-3 text-gray-500 font-medium">Prob.</th>
+                <th class="text-left px-6 py-3 text-gray-500 font-medium">Agente</th>
                 <th class="text-left px-6 py-3 text-gray-500 font-medium">Acciones</th>
               </tr>
             </thead>
@@ -336,6 +341,21 @@
         <div class="flex gap-4 overflow-x-auto pb-4" id="kanbanBoard"></div>
       </div>
 
+      <!-- ── EQUIPO ── -->
+      <div id="tab-team" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <p class="text-sm text-gray-500">Agentes de tu agencia</p>
+          </div>
+          <button id="inviteBtn" onclick="openInviteModal()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+            Invitar agente
+          </button>
+        </div>
+        <div id="teamGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="teamEmpty" class="hidden text-center py-12 text-gray-400">No hay agentes aún. Invitá al primero.</div>
+      </div>
+
     </main>
   </div>
 </div>
@@ -365,6 +385,12 @@
         <div class="col-span-2"><label class="text-xs text-gray-500 font-medium">Stage</label>
           <select id="leadStage" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="new">Nuevo</option><option value="qualified">Calificado</option><option value="visit">Visita</option><option value="closed">Cerrado</option><option value="lost">Perdido</option>
+          </select>
+        </div>
+        <div class="col-span-2" id="assignToRow">
+          <label class="text-xs text-gray-500 font-medium">Asignar a agente</label>
+          <select id="leadAssignTo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Sin asignar</option>
           </select>
         </div>
       </div>
@@ -444,6 +470,36 @@
   </div>
 </div>
 
+<!-- Invite Agent Modal -->
+<div id="inviteModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="card w-full max-w-md p-6 fade-in">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-lg font-semibold text-gray-900">Invitar agente</h3>
+      <button onclick="closeInviteModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div id="inviteError" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4"></div>
+    <form id="inviteForm" class="space-y-4">
+      <div>
+        <label class="text-xs text-gray-500 font-medium">Nombre *</label>
+        <input id="inviteName" type="text" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Juan García" />
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 font-medium">Email *</label>
+        <input id="inviteEmail" type="email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="agente@agencia.com" />
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 font-medium">Contraseña inicial *</label>
+        <input id="invitePassword" type="text" required minlength="6" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Mínimo 6 caracteres" />
+        <p class="text-xs text-gray-400 mt-1">Compartí estas credenciales con el agente para que pueda ingresar.</p>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="flex-1 gradient-bg text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition">Crear agente</button>
+        <button type="button" onclick="closeInviteModal()" class="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Property Modal -->
 <div id="propertyModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
   <div class="card w-full max-w-lg p-6 fade-in">
@@ -518,6 +574,10 @@ function showApp() {
   document.getElementById('appPage').classList.remove('hidden');
   document.getElementById('userLabel').textContent = currentUser?.name || '';
   document.getElementById('userAvatar').textContent = (currentUser?.name || 'U')[0].toUpperCase();
+  // agents can't manage team
+  if (currentUser?.role !== 'owner') {
+    document.getElementById('teamNavItem')?.classList.add('hidden');
+  }
   showTab('dashboard');
 }
 function logout() {
@@ -574,7 +634,7 @@ document.getElementById('registerForm').onsubmit = async (e) => {
 };
 
 // ── Navigation ────────────────────────────────────────────────────────────────
-const tabTitles = { dashboard: 'Dashboard', leads: 'Leads', agenda: 'Agenda', properties: 'Propiedades', pipeline: 'Pipeline' };
+const tabTitles = { dashboard: 'Dashboard', leads: 'Leads', agenda: 'Agenda', properties: 'Propiedades', pipeline: 'Pipeline', team: 'Equipo' };
 function showTab(tab) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById('tab-' + tab)?.classList.remove('hidden');
@@ -590,6 +650,7 @@ function showTab(tab) {
   if (tab === 'agenda') initAgenda();
   if (tab === 'properties') loadProperties();
   if (tab === 'pipeline') loadPipeline();
+  if (tab === 'team') loadTeam();
 }
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
@@ -741,13 +802,15 @@ function renderLeads(leads) {
   const empty = document.getElementById('leadsEmpty');
   if (!leads.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
-  tbody.innerHTML = leads.map(l => `
-    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+  tbody.innerHTML = leads.map(l => {
+    const agentName = l.assignedTo?.name || '—';
+    return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition">
       <td class="px-6 py-3"><p class="font-medium text-gray-900">${l.name}</p><p class="text-xs text-gray-400">${l.aiSummary || l.intent || '—'}</p></td>
       <td class="px-6 py-3 text-gray-600">${l.contact || '—'}</td>
       <td class="px-6 py-3"><span class="text-xs px-2 py-0.5 rounded-full font-medium stage-${l.stage}">${stageLabel(l.stage)}</span></td>
       <td class="px-6 py-3"><div class="flex items-center gap-2"><div class="score-bar w-16"><div class="score-fill" style="width:${l.score}%"></div></div><span class="text-xs font-medium text-gray-700">${l.score}</span></div></td>
       <td class="px-6 py-3 text-sm text-gray-700">${l.predictedCloseProb ? Math.round(l.predictedCloseProb*100)+'%' : '—'}</td>
+      <td class="px-6 py-3 text-xs text-gray-500">${agentName}</td>
       <td class="px-6 py-3">
         <div class="flex gap-2">
           <button onclick="openEditLeadModal('${l._id}')" class="text-xs text-blue-600 hover:underline">Editar</button>
@@ -756,19 +819,21 @@ function renderLeads(leads) {
           <button onclick="deleteLead('${l._id}')" class="text-xs text-red-400 hover:underline">Eliminar</button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
-function openNewLeadModal() {
+async function openNewLeadModal() {
   document.getElementById('leadId').value = '';
   document.getElementById('leadModalTitle').textContent = 'Nuevo Lead';
   ['leadName','leadContact','leadIntent'].forEach(id => document.getElementById(id).value = '');
   ['leadBudget','leadUrgency'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('leadSource').value = 'manual';
   document.getElementById('leadStage').value = 'new';
+  await populateAgentSelect('');
   document.getElementById('leadModal').classList.remove('hidden');
 }
-function openEditLeadModal(id) {
+async function openEditLeadModal(id) {
   const l = allLeads.find(x => x._id === id); if (!l) return;
   document.getElementById('leadId').value = l._id;
   document.getElementById('leadModalTitle').textContent = 'Editar Lead';
@@ -779,12 +844,28 @@ function openEditLeadModal(id) {
   document.getElementById('leadUrgency').value = l.urgencyDays || '';
   document.getElementById('leadIntent').value = l.intent || '';
   document.getElementById('leadStage').value = l.stage || 'new';
+  const assignedId = l.assignedTo?._id || l.assignedTo || '';
+  await populateAgentSelect(assignedId);
   document.getElementById('leadModal').classList.remove('hidden');
+}
+async function populateAgentSelect(selectedId) {
+  const sel = document.getElementById('leadAssignTo');
+  // only owners can assign; hide row for agents
+  if (currentUser?.role !== 'owner') {
+    document.getElementById('assignToRow').classList.add('hidden');
+    return;
+  }
+  try {
+    const agents = await api('GET', '/api/users');
+    sel.innerHTML = '<option value="">Sin asignar</option>' +
+      agents.map(a => `<option value="${a._id}" ${a._id === selectedId ? 'selected' : ''}>${a.name} (${a.role})</option>`).join('');
+  } catch { sel.innerHTML = '<option value="">Sin asignar</option>'; }
 }
 function closeLeadModal() { document.getElementById('leadModal').classList.add('hidden'); }
 document.getElementById('leadForm').onsubmit = async (e) => {
   e.preventDefault();
   const id = document.getElementById('leadId').value;
+  const assignVal = document.getElementById('leadAssignTo').value;
   const body = {
     name: document.getElementById('leadName').value,
     contact: document.getElementById('leadContact').value,
@@ -793,6 +874,7 @@ document.getElementById('leadForm').onsubmit = async (e) => {
     urgencyDays: Number(document.getElementById('leadUrgency').value) || undefined,
     intent: document.getElementById('leadIntent').value,
     stage: document.getElementById('leadStage').value,
+    assignedTo: assignVal || null,
   };
   await (id ? api('PATCH', '/api/leads/' + id, body) : api('POST', '/api/leads', body));
   closeLeadModal(); loadLeads();
@@ -1041,6 +1123,69 @@ async function loadPipeline() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── Team ─────────────────────────────────────────────────────────────────────
+let allAgents = [];
+
+async function loadTeam() {
+  allAgents = await api('GET', '/api/users').catch(() => []);
+  const grid = document.getElementById('teamGrid');
+  const empty = document.getElementById('teamEmpty');
+  const isOwner = currentUser?.role === 'owner';
+  document.getElementById('inviteBtn').classList.toggle('hidden', !isOwner);
+
+  if (!allAgents.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  const roleColors = { owner: 'bg-purple-100 text-purple-700', agent: 'bg-blue-100 text-blue-700' };
+  const roleLabels = { owner: 'Propietario', agent: 'Agente' };
+  grid.innerHTML = allAgents.map(a => `
+    <div class="card p-5 flex items-start gap-4">
+      <div class="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+        ${a.name[0].toUpperCase()}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-gray-900">${a.name}</p>
+        <p class="text-sm text-gray-500 truncate">${a.email}</p>
+        <span class="inline-block mt-2 text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[a.role] || 'bg-gray-100 text-gray-600'}">${roleLabels[a.role] || a.role}</span>
+      </div>
+      ${isOwner && a.role !== 'owner' ? `
+      <button onclick="removeAgent('${a._id}', '${a.name}')" class="text-gray-300 hover:text-red-500 transition flex-shrink-0" title="Eliminar agente">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>` : ''}
+    </div>`).join('');
+}
+
+function openInviteModal() {
+  ['inviteName','inviteEmail','invitePassword'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inviteError').classList.add('hidden');
+  document.getElementById('inviteModal').classList.remove('hidden');
+}
+function closeInviteModal() { document.getElementById('inviteModal').classList.add('hidden'); }
+
+document.getElementById('inviteForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const errEl = document.getElementById('inviteError');
+  errEl.classList.add('hidden');
+  try {
+    await api('POST', '/api/users/invite', {
+      name: document.getElementById('inviteName').value,
+      email: document.getElementById('inviteEmail').value,
+      password: document.getElementById('invitePassword').value,
+    });
+    closeInviteModal();
+    loadTeam();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.remove('hidden');
+  }
+};
+
+async function removeAgent(id, name) {
+  if (!confirm(`¿Eliminar a ${name} del equipo?`)) return;
+  await api('DELETE', '/api/users/' + id);
+  loadTeam();
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
