@@ -135,3 +135,27 @@ export const getConversation = asyncHandler(async (req, res) => {
   if (!conv) return res.status(404).json({ error: 'Not found' });
   res.json(conv);
 });
+
+export const replyToConversation = asyncHandler(async (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: 'text is required' });
+
+  const conv = await Conversation.findOne({ _id: req.params.id, tenantId: req.tenantId });
+  if (!conv) return res.status(404).json({ error: 'Not found' });
+
+  conv.messages.push({ role: 'assistant', content: text });
+  conv.lastMessageAt = new Date();
+  await conv.save();
+
+  // Send via the appropriate channel
+  if (conv.channel === 'whatsapp') {
+    const { Tenant } = await import('../../models/Tenant.js');
+    const tenant = await Tenant.findById(req.tenantId);
+    const phoneNumberId = tenant?.channels?.whatsappPhoneNumberId;
+    if (phoneNumberId) await sendWhatsAppMessage(phoneNumberId, conv.externalId, text);
+  } else if (conv.channel === 'instagram') {
+    await sendInstagramMessage(conv.externalId, conv.externalId, text);
+  }
+
+  res.json({ ok: true });
+});

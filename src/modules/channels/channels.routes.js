@@ -9,6 +9,7 @@ import {
   receiveEmail,
   getConversations,
   getConversation,
+  replyToConversation,
 } from './channels.controller.js';
 
 const router = Router();
@@ -26,5 +27,6 @@ router.post('/email', receiveEmail);
 router.use(auth, tenantScope);
 router.get('/conversations', getConversations);
 router.get('/conversations/:id', getConversation);
+router.post('/conversations/:id/reply', replyToConversation);
 
 export default router;

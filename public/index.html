@@ -121,6 +121,11 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         Pipeline
       </a>
+      <a onclick="showTab('inbox')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="inbox">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        <span>Mensajes</span>
+        <span id="inboxBadge" class="hidden ml-auto bg-green-400 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+      </a>
       <a id="teamNavItem" onclick="showTab('team')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="team">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         Equipo
@@ -339,6 +344,66 @@
       <div id="tab-pipeline" class="tab-content hidden fade-in">
         <p class="text-sm text-gray-500 mb-6">Vista kanban del pipeline de ventas</p>
         <div class="flex gap-4 overflow-x-auto pb-4" id="kanbanBoard"></div>
+      </div>
+
+      <!-- ── INBOX ── -->
+      <div id="tab-inbox" class="tab-content hidden fade-in">
+        <div class="flex h-[calc(100vh-140px)] gap-0 rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+
+          <!-- Left: conversation list -->
+          <div class="w-80 flex-shrink-0 border-r border-gray-100 flex flex-col">
+            <div class="p-4 border-b border-gray-100">
+              <h2 class="font-semibold text-gray-900 mb-3">Bandeja de entrada</h2>
+              <div class="flex gap-1">
+                <button onclick="filterInbox('all')" id="inboxFilter-all" class="inbox-filter-btn active flex-1 text-xs py-1.5 rounded-lg bg-blue-600 text-white font-medium transition">Todos</button>
+                <button onclick="filterInbox('whatsapp')" id="inboxFilter-whatsapp" class="inbox-filter-btn flex-1 text-xs py-1.5 rounded-lg bg-gray-100 text-gray-600 font-medium transition">WhatsApp</button>
+                <button onclick="filterInbox('instagram')" id="inboxFilter-instagram" class="inbox-filter-btn flex-1 text-xs py-1.5 rounded-lg bg-gray-100 text-gray-600 font-medium transition">Instagram</button>
+                <button onclick="filterInbox('email')" id="inboxFilter-email" class="inbox-filter-btn flex-1 text-xs py-1.5 rounded-lg bg-gray-100 text-gray-600 font-medium transition">Email</button>
+              </div>
+            </div>
+            <div id="convList" class="flex-1 overflow-y-auto divide-y divide-gray-50"></div>
+            <div id="convListEmpty" class="hidden flex-1 flex items-center justify-center text-sm text-gray-400 p-8 text-center">No hay conversaciones aún.<br/>Los mensajes de WhatsApp, Instagram y Email aparecen aquí.</div>
+          </div>
+
+          <!-- Right: chat view -->
+          <div class="flex-1 flex flex-col">
+            <!-- Empty state -->
+            <div id="chatEmpty" class="flex-1 flex flex-col items-center justify-center text-gray-400">
+              <svg class="w-16 h-16 mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              <p class="text-sm">Seleccioná una conversación</p>
+            </div>
+
+            <!-- Chat active -->
+            <div id="chatActive" class="hidden flex-1 flex flex-col">
+              <!-- Header -->
+              <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-3">
+                <div id="chatAvatar" class="w-9 h-9 rounded-full gradient-bg flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"></div>
+                <div class="flex-1 min-w-0">
+                  <p id="chatName" class="font-semibold text-gray-900 text-sm truncate"></p>
+                  <p id="chatMeta" class="text-xs text-gray-400"></p>
+                </div>
+                <span id="chatChannelBadge" class="text-xs px-2 py-0.5 rounded-full font-medium"></span>
+              </div>
+
+              <!-- Messages -->
+              <div id="chatMessages" class="flex-1 overflow-y-auto p-5 space-y-3 bg-gray-50"></div>
+
+              <!-- Reply box -->
+              <div class="p-4 border-t border-gray-100 bg-white">
+                <div id="chat24hWarning" class="hidden text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 mb-2">
+                  ⚠ Han pasado más de 24 horas. Solo podés enviar mensajes de plantilla por WhatsApp.
+                </div>
+                <div class="flex gap-2">
+                  <textarea id="replyInput" rows="2" placeholder="Escribí tu respuesta..." class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                  <button onclick="sendReply()" class="gradient-bg text-white px-4 py-2 rounded-xl hover:opacity-90 transition flex-shrink-0 flex items-center gap-1.5 text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    Enviar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ── EQUIPO ── -->
@@ -649,7 +714,7 @@
 <script>
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.3.2'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.4.0'; // fallback; authoritative value fetched from /api/version
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let token = localStorage.getItem('agentpro_token') || '';
@@ -762,6 +827,7 @@ function showTab(tab) {
   if (tab === 'agenda') initAgenda();
   if (tab === 'properties') loadProperties();
   if (tab === 'pipeline') loadPipeline();
+  if (tab === 'inbox') loadInbox();
   if (tab === 'team') loadTeam();
 }
 
@@ -1360,6 +1426,129 @@ async function submitPropForm() {
 }
 
 async function deleteProp(id) { if (!confirm('¿Eliminar propiedad?')) return; await api('DELETE', '/api/properties/' + id); loadProperties(); }
+
+// ── Inbox ─────────────────────────────────────────────────────────────────────
+let allConvs = [], activeConvId = null, inboxChannelFilter = 'all';
+
+const CHANNEL_META = {
+  whatsapp:  { label: 'WhatsApp',  color: 'bg-green-100 text-green-700',  icon: '💬' },
+  instagram: { label: 'Instagram', color: 'bg-pink-100 text-pink-700',    icon: '📸' },
+  email:     { label: 'Email',     color: 'bg-blue-100 text-blue-700',    icon: '✉️'  },
+};
+
+async function loadInbox() {
+  allConvs = await api('GET', '/api/channels/conversations').catch(() => []);
+  renderConvList();
+  updateInboxBadge();
+}
+
+function updateInboxBadge() {
+  const badge = document.getElementById('inboxBadge');
+  const count = allConvs.length;
+  if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.classList.remove('hidden'); }
+  else badge.classList.add('hidden');
+}
+
+function filterInbox(channel) {
+  inboxChannelFilter = channel;
+  document.querySelectorAll('.inbox-filter-btn').forEach(b => {
+    b.classList.toggle('bg-blue-600', false);
+    b.classList.toggle('text-white', false);
+    b.classList.toggle('bg-gray-100', true);
+    b.classList.toggle('text-gray-600', true);
+  });
+  const active = document.getElementById('inboxFilter-' + channel);
+  active.classList.add('bg-blue-600','text-white');
+  active.classList.remove('bg-gray-100','text-gray-600');
+  renderConvList();
+}
+
+function renderConvList() {
+  const filtered = inboxChannelFilter === 'all' ? allConvs : allConvs.filter(c => c.channel === inboxChannelFilter);
+  const list = document.getElementById('convList');
+  const empty = document.getElementById('convListEmpty');
+  if (!filtered.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  list.innerHTML = filtered.map(c => {
+    const lead = c.leadId;
+    const name = lead?.name || c.externalId;
+    const initials = name.slice(0,2).toUpperCase();
+    const last = c.messages?.at(-1);
+    const preview = last?.content?.slice(0,60) || '—';
+    const meta = CHANNEL_META[c.channel] || CHANNEL_META.whatsapp;
+    const date = new Date(c.lastMessageAt);
+    const dateStr = date.toLocaleDateString('es', { day:'2-digit', month:'short' });
+    const isActive = c._id === activeConvId;
+    return `
+    <div onclick="openConv('${c._id}')" class="flex items-start gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 transition ${isActive ? 'bg-blue-50 border-l-2 border-blue-500' : ''}">
+      <div class="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">${initials}</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between mb-0.5">
+          <p class="font-medium text-gray-900 text-sm truncate">${name}</p>
+          <span class="text-xs text-gray-400 flex-shrink-0 ml-1">${dateStr}</span>
+        </div>
+        <p class="text-xs text-gray-500 truncate">${preview}</p>
+        <span class="inline-block mt-1 text-xs px-1.5 py-0.5 rounded-full ${meta.color}">${meta.icon} ${meta.label}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openConv(id) {
+  activeConvId = id;
+  renderConvList();
+  const conv = await api('GET', '/api/channels/conversations/' + id).catch(() => null);
+  if (!conv) return;
+
+  document.getElementById('chatEmpty').classList.add('hidden');
+  document.getElementById('chatActive').classList.remove('hidden');
+
+  const lead = conv.leadId;
+  const name = lead?.name || conv.externalId;
+  const meta = CHANNEL_META[conv.channel] || CHANNEL_META.whatsapp;
+
+  document.getElementById('chatAvatar').textContent = name.slice(0,2).toUpperCase();
+  document.getElementById('chatName').textContent = name;
+  document.getElementById('chatMeta').textContent = conv.externalId + (lead?.stage ? ' · ' + lead.stage : '');
+  const badge = document.getElementById('chatChannelBadge');
+  badge.textContent = meta.icon + ' ' + meta.label;
+  badge.className = 'text-xs px-2 py-0.5 rounded-full font-medium ' + meta.color;
+
+  // 24h warning for WhatsApp
+  const lastMsg = conv.messages?.at(-1);
+  const hrs = lastMsg ? (Date.now() - new Date(lastMsg.timestamp)) / 36e5 : 999;
+  document.getElementById('chat24hWarning').classList.toggle('hidden', conv.channel !== 'whatsapp' || hrs < 24);
+
+  // Render messages
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = (conv.messages || []).map(m => {
+    const isAgent = m.role === 'assistant';
+    const time = new Date(m.timestamp).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
+    return `
+    <div class="flex ${isAgent ? 'justify-end' : 'justify-start'}">
+      <div class="max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm ${isAgent ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white text-gray-800 rounded-bl-sm shadow-sm border border-gray-100'}">
+        <p class="leading-relaxed">${m.content}</p>
+        <p class="text-xs mt-1 ${isAgent ? 'text-blue-200' : 'text-gray-400'} text-right">${time}</p>
+      </div>
+    </div>`;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+
+  document.getElementById('replyInput').dataset.convId = id;
+}
+
+async function sendReply() {
+  const input = document.getElementById('replyInput');
+  const text = input.value.trim();
+  if (!text || !activeConvId) return;
+  input.value = '';
+  await api('POST', '/api/channels/conversations/' + activeConvId + '/reply', { text });
+  openConv(activeConvId);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && activeConvId) sendReply();
+});
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 async function loadPipeline() {
