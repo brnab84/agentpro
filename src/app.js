@@ -3,8 +3,17 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 import { join } from 'path';
+import { readFileSync } from 'fs';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
+
+// Read HTML once at startup — avoids file-streaming issues in serverless environments.
+let indexHtml;
+try {
+  indexHtml = readFileSync(join(process.cwd(), 'public', 'index.html'), 'utf-8');
+} catch {
+  indexHtml = '<h1>AgentPro API</h1>';
+}
 import authRoutes from './modules/auth/auth.routes.js';
 import leadRoutes from './modules/leads/leads.routes.js';
 import propertyRoutes from './modules/properties/properties.routes.js';
@@ -20,10 +29,8 @@ export function createApp() {
   app.use(express.json());
   if (env.nodeEnv !== 'test') app.use(morgan('dev'));
 
-  // Serve frontend from public/ (process.cwd() = project root in Vercel)
-  app.use(express.static(join(process.cwd(), 'public')));
-
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
+  app.get('/', (req, res) => res.type('html').send(indexHtml));
 
   app.use('/api/auth', authRoutes);
   app.use('/api/leads', leadRoutes);
