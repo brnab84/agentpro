@@ -4,22 +4,22 @@ import cors from 'cors';
 import morgan from 'morgan';
 import { join } from 'path';
 import { readFileSync } from 'fs';
-import { env } from './config/env.js';
+import { env, APP_VERSION } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
-
-// Read HTML once at startup — avoids file-streaming issues in serverless environments.
-let indexHtml;
-try {
-  indexHtml = readFileSync(join(process.cwd(), 'public', 'index.html'), 'utf-8');
-} catch {
-  indexHtml = '<h1>AgentPro API</h1>';
-}
 import authRoutes from './modules/auth/auth.routes.js';
 import leadRoutes from './modules/leads/leads.routes.js';
 import propertyRoutes from './modules/properties/properties.routes.js';
 import appointmentRoutes from './modules/appointments/appointments.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
 import channelRoutes from './modules/channels/channels.routes.js';
+import analyticsRoutes from './modules/analytics/analytics.routes.js';
+
+let indexHtml;
+try {
+  indexHtml = readFileSync(join(process.cwd(), 'public', 'index.html'), 'utf-8');
+} catch {
+  indexHtml = '<h1>AgentPro API</h1>';
+}
 
 export function createApp() {
   const app = express();
@@ -29,8 +29,9 @@ export function createApp() {
   app.use(express.json());
   if (env.nodeEnv === 'development') app.use(morgan('dev'));
 
-  app.get('/health', (req, res) => res.json({ status: 'ok' }));
-  app.get('/', (req, res) => res.type('html').send(indexHtml));
+  app.get('/health', (_req, res) => res.json({ status: 'ok', version: APP_VERSION }));
+  app.get('/api/version', (_req, res) => res.json({ version: APP_VERSION }));
+  app.get('/', (_req, res) => res.type('html').send(indexHtml));
 
   app.use('/api/auth', authRoutes);
   app.use('/api/leads', leadRoutes);
@@ -38,8 +39,9 @@ export function createApp() {
   app.use('/api/appointments', appointmentRoutes);
   app.use('/api/ai', aiRoutes);
   app.use('/api/webhooks', channelRoutes);
+  app.use('/api/analytics', analyticsRoutes);
 
-  app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+  app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
   app.use(errorHandler);
 
   return app;

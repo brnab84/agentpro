@@ -1,6 +1,6 @@
 {
   "name": "agentpro",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "description": "Predictive SaaS CRM for real estate agents",
   "type": "module",
   "engines": {

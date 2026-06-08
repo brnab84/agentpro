@@ -21,11 +21,11 @@
     .appt-done { background: #f3f4f6; color: #6b7280; }
     .score-bar { height: 6px; border-radius: 3px; background: #e5e7eb; }
     .score-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); }
+    .bar-h { height: 8px; border-radius: 4px; }
     .fade-in { animation: fadeIn .3s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .spinner { border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; width: 20px; height: 20px; animation: spin .7s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .kanban-col { min-height: 300px; }
     .cal-day { min-height: 80px; border: 1px solid #e5e7eb; }
     .cal-day.today { background: #eff6ff; border-color: #3b82f6; }
     .cal-day.other-month { background: #f9fafb; }
@@ -61,6 +61,7 @@
       <p class="text-sm text-gray-500 mb-3">¿No tenés cuenta?</p>
       <button onclick="showRegister()" class="text-blue-600 text-sm font-medium hover:underline">Crear cuenta gratis</button>
     </div>
+    <p class="text-center text-xs text-gray-300 mt-6" id="loginVersion"></p>
   </div>
 </div>
 
@@ -126,6 +127,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Cerrar sesión
       </button>
+      <p class="text-blue-400 text-xs text-center mt-3" id="sidebarVersion"></p>
     </div>
   </div>
 
@@ -136,7 +138,7 @@
         <h2 id="pageTitle" class="text-lg font-semibold text-gray-900">Dashboard</h2>
         <div class="flex items-center gap-3">
           <span class="text-sm text-gray-500" id="userLabel"></span>
-          <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-white text-sm font-bold" id="userAvatar">B</div>
+          <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-white text-sm font-bold" id="userAvatar">U</div>
         </div>
       </div>
     </header>
@@ -145,12 +147,88 @@
 
       <!-- ── DASHBOARD ── -->
       <div id="tab-dashboard" class="tab-content fade-in">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-          <div class="card p-6"><p class="text-sm text-gray-500 mb-1">Total Leads</p><p class="text-3xl font-bold text-gray-900" id="statLeads">—</p></div>
-          <div class="card p-6"><p class="text-sm text-gray-500 mb-1">Calificados</p><p class="text-3xl font-bold text-blue-600" id="statQualified">—</p></div>
-          <div class="card p-6"><p class="text-sm text-gray-500 mb-1">Score Prom.</p><p class="text-3xl font-bold text-purple-600" id="statScore">—</p></div>
-          <div class="card p-6"><p class="text-sm text-gray-500 mb-1">Citas hoy</p><p class="text-3xl font-bold text-green-600" id="statAppts">—</p></div>
+
+        <!-- Row 1: Overview stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="card p-5">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Total Leads</p>
+            <p class="text-3xl font-bold text-gray-900" id="statLeads">—</p>
+            <p class="text-xs text-gray-400 mt-1">en tu pipeline</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Calificados</p>
+            <p class="text-3xl font-bold text-blue-600" id="statQualified">—</p>
+            <p class="text-xs text-gray-400 mt-1">con visita o más</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Score Prom.</p>
+            <p class="text-3xl font-bold text-purple-600" id="statScore">—</p>
+            <p class="text-xs text-gray-400 mt-1">sobre 100 pts</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Citas hoy</p>
+            <p class="text-3xl font-bold text-green-600" id="statAppts">—</p>
+            <p class="text-xs text-gray-400 mt-1">programadas</p>
+          </div>
         </div>
+
+        <!-- Row 2: Pipeline forecast + Commissions -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-gray-900">Forecast de Pipeline</h3>
+              <span class="text-xs text-gray-400">valor en cartera</span>
+            </div>
+            <div id="pipelineForecast" class="space-y-3"></div>
+            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+              <span class="text-sm text-gray-500">Total activo</span>
+              <span class="font-bold text-gray-900" id="pipelineTotal">—</span>
+            </div>
+          </div>
+
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-gray-900">Comisiones (3%)</h3>
+              <span class="text-xs text-gray-400">estimado</span>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div class="bg-green-50 rounded-xl p-4 text-center">
+                <p class="text-xs font-medium text-green-600 mb-1">Ganadas</p>
+                <p class="text-xl font-bold text-green-700" id="commEarned">—</p>
+                <p class="text-xs text-green-500 mt-0.5">cierres confirmados</p>
+              </div>
+              <div class="bg-blue-50 rounded-xl p-4 text-center">
+                <p class="text-xs font-medium text-blue-600 mb-1">Proyectadas</p>
+                <p class="text-xl font-bold text-blue-700" id="commProjected">—</p>
+                <p class="text-xs text-blue-500 mt-0.5">pipeline activo ×40%</p>
+              </div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3 mb-3">
+              <p class="text-xs text-gray-500 text-center">Citas este mes: <strong id="apptMonth" class="text-gray-700">—</strong></p>
+            </div>
+            <p class="text-xs font-medium text-gray-500 mb-2">Citas por estado</p>
+            <div id="apptByStatus" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <!-- Row 3: Stage funnel + Source + Top Leads -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Embudo de Ventas</h3>
+            <div id="stageFunnel" class="space-y-2"></div>
+          </div>
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Origen de Leads</h3>
+            <div id="sourceChart" class="space-y-3"></div>
+          </div>
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Top Leads por Score</h3>
+            <div id="topLeadsList" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Row 4: Recent leads + Upcoming appts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="card p-6">
             <h3 class="font-semibold text-gray-900 mb-4">Leads recientes</h3>
@@ -218,9 +296,7 @@
             Nueva Cita
           </button>
         </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Calendar -->
           <div class="lg:col-span-2 card p-4">
             <div class="grid grid-cols-7 mb-2">
               <div class="text-xs font-medium text-gray-400 text-center py-1">Dom</div>
@@ -233,8 +309,6 @@
             </div>
             <div id="calGrid" class="grid grid-cols-7 gap-px bg-gray-200"></div>
           </div>
-
-          <!-- Today's list -->
           <div class="card p-5">
             <h4 id="agendaDayTitle" class="font-semibold text-gray-900 mb-4">Citas de hoy</h4>
             <div id="agendaDayList" class="space-y-3 overflow-y-auto max-h-96"></div>
@@ -405,7 +479,11 @@
 </div>
 
 <script>
+// ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
+const APP_VERSION = '1.2.0'; // fallback; authoritative value fetched from /api/version
+
+// ── State ─────────────────────────────────────────────────────────────────────
 let token = localStorage.getItem('agentpro_token') || '';
 let currentUser = JSON.parse(localStorage.getItem('agentpro_user') || 'null');
 let allLeads = [], allProps = [], allAppts = [];
@@ -425,8 +503,15 @@ async function api(method, path, body) {
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-function showLogin() { document.getElementById('loginPage').classList.remove('hidden'); document.getElementById('registerPage').classList.add('hidden'); document.getElementById('appPage').classList.add('hidden'); }
-function showRegister() { document.getElementById('loginPage').classList.add('hidden'); document.getElementById('registerPage').classList.remove('hidden'); }
+function showLogin() {
+  document.getElementById('loginPage').classList.remove('hidden');
+  document.getElementById('registerPage').classList.add('hidden');
+  document.getElementById('appPage').classList.add('hidden');
+}
+function showRegister() {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('registerPage').classList.remove('hidden');
+}
 function showApp() {
   document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('registerPage').classList.add('hidden');
@@ -435,29 +520,57 @@ function showApp() {
   document.getElementById('userAvatar').textContent = (currentUser?.name || 'U')[0].toUpperCase();
   showTab('dashboard');
 }
-function logout() { token = ''; currentUser = null; localStorage.removeItem('agentpro_token'); localStorage.removeItem('agentpro_user'); showLogin(); }
+function logout() {
+  token = ''; currentUser = null;
+  localStorage.removeItem('agentpro_token');
+  localStorage.removeItem('agentpro_user');
+  showLogin();
+}
+
+async function initVersion() {
+  let v = APP_VERSION;
+  try { const d = await api('GET', '/api/version'); v = d.version || v; } catch {}
+  const label = `v${v}`;
+  document.getElementById('loginVersion').textContent = label;
+  document.getElementById('sidebarVersion').textContent = label;
+}
 
 document.getElementById('loginForm').onsubmit = async (e) => {
   e.preventDefault();
   const btn = document.getElementById('loginBtn');
   btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
   try {
-    const data = await api('POST', '/api/auth/login', { email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value });
+    const data = await api('POST', '/api/auth/login', {
+      email: document.getElementById('loginEmail').value,
+      password: document.getElementById('loginPassword').value,
+    });
     token = data.token; currentUser = data.user;
-    localStorage.setItem('agentpro_token', token); localStorage.setItem('agentpro_user', JSON.stringify(currentUser));
+    localStorage.setItem('agentpro_token', token);
+    localStorage.setItem('agentpro_user', JSON.stringify(currentUser));
     showApp();
-  } catch (err) { const el = document.getElementById('loginError'); el.textContent = err.message; el.classList.remove('hidden'); }
-  finally { btn.innerHTML = 'Ingresar'; btn.disabled = false; }
+  } catch (err) {
+    const el = document.getElementById('loginError');
+    el.textContent = err.message; el.classList.remove('hidden');
+  } finally { btn.innerHTML = 'Ingresar'; btn.disabled = false; }
 };
 
 document.getElementById('registerForm').onsubmit = async (e) => {
   e.preventDefault();
   try {
-    const data = await api('POST', '/api/auth/register', { tenantName: document.getElementById('regTenant').value, name: document.getElementById('regName').value, email: document.getElementById('regEmail').value, password: document.getElementById('regPassword').value });
+    const data = await api('POST', '/api/auth/register', {
+      tenantName: document.getElementById('regTenant').value,
+      name: document.getElementById('regName').value,
+      email: document.getElementById('regEmail').value,
+      password: document.getElementById('regPassword').value,
+    });
     token = data.token; currentUser = data.user;
-    localStorage.setItem('agentpro_token', token); localStorage.setItem('agentpro_user', JSON.stringify(currentUser));
+    localStorage.setItem('agentpro_token', token);
+    localStorage.setItem('agentpro_user', JSON.stringify(currentUser));
     showApp();
-  } catch (err) { const el = document.getElementById('registerError'); el.textContent = err.message; el.classList.remove('hidden'); }
+  } catch (err) {
+    const el = document.getElementById('registerError');
+    el.textContent = err.message; el.classList.remove('hidden');
+  }
 };
 
 // ── Navigation ────────────────────────────────────────────────────────────────
@@ -466,9 +579,10 @@ function showTab(tab) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById('tab-' + tab)?.classList.remove('hidden');
   document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('bg-white/20', el.dataset.tab === tab);
-    el.classList.toggle('text-white', el.dataset.tab === tab);
-    el.classList.toggle('text-blue-100', el.dataset.tab !== tab);
+    const active = el.dataset.tab === tab;
+    el.classList.toggle('bg-white/20', active);
+    el.classList.toggle('text-white', active);
+    el.classList.toggle('text-blue-100', !active);
   });
   document.getElementById('pageTitle').textContent = tabTitles[tab];
   if (tab === 'dashboard') loadDashboard();
@@ -480,36 +594,131 @@ function showTab(tab) {
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
 async function loadDashboard() {
-  const [leads, props, appts] = await Promise.all([
-    api('GET', '/api/leads').catch(() => []),
-    api('GET', '/api/properties').catch(() => []),
+  const [stats, appts] = await Promise.all([
+    api('GET', '/api/analytics').catch(() => null),
     api('GET', '/api/appointments').catch(() => []),
   ]);
-  const today = new Date().toDateString();
-  const todayAppts = appts.filter(a => new Date(a.datetime).toDateString() === today);
-  const avgScore = leads.length ? Math.round(leads.reduce((s, l) => s + l.score, 0) / leads.length) : 0;
-  document.getElementById('statLeads').textContent = leads.length;
-  document.getElementById('statQualified').textContent = leads.filter(l => l.stage !== 'new').length;
-  document.getElementById('statScore').textContent = avgScore;
-  document.getElementById('statAppts').textContent = todayAppts.length;
 
+  if (!stats) return;
+  const { overview, pipeline, commissions, sources, appointments, topLeads } = stats;
+
+  document.getElementById('statLeads').textContent = overview.totalLeads;
+  document.getElementById('statQualified').textContent = overview.totalLeads - (pipeline.stageCounts.new || 0);
+  document.getElementById('statScore').textContent = overview.avgScore;
+  document.getElementById('statAppts').textContent = overview.todayAppts;
+
+  // Pipeline forecast
+  const pipelineStages = [
+    { key: 'new', label: 'Nuevo', color: 'bg-blue-400' },
+    { key: 'qualified', label: 'Calificado', color: 'bg-emerald-400' },
+    { key: 'visit', label: 'Visita', color: 'bg-amber-400' },
+    { key: 'closed', label: 'Cerrado', color: 'bg-green-500' },
+  ];
+  const maxBudget = Math.max(...pipelineStages.map(s => pipeline.stageBudget[s.key] || 0), 1);
+  document.getElementById('pipelineForecast').innerHTML = pipelineStages.map(s => {
+    const budget = pipeline.stageBudget[s.key] || 0;
+    const count = pipeline.stageCounts[s.key] || 0;
+    const pct = Math.round((budget / maxBudget) * 100);
+    return `<div>
+      <div class="flex justify-between text-xs mb-1">
+        <span class="text-gray-600 font-medium">${s.label} <span class="text-gray-400">(${count})</span></span>
+        <span class="font-semibold text-gray-900">${fmtMoney(budget)}</span>
+      </div>
+      <div class="bar-h bg-gray-100"><div class="bar-h ${s.color} transition-all" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('pipelineTotal').textContent = fmtMoney(pipeline.pipelineValue);
+
+  // Commissions
+  document.getElementById('commEarned').textContent = fmtMoney(commissions.earned);
+  document.getElementById('commProjected').textContent = fmtMoney(commissions.projected);
+  document.getElementById('apptMonth').textContent = appointments.thisMonth;
+
+  const apptStatusDefs = [
+    { key: 'confirmed', label: 'Confirmadas', color: 'bg-green-400' },
+    { key: 'scheduled', label: 'Programadas', color: 'bg-blue-400' },
+    { key: 'done', label: 'Realizadas', color: 'bg-gray-300' },
+    { key: 'cancelled', label: 'Canceladas', color: 'bg-red-300' },
+  ];
+  const totalAppts = Object.values(appointments.byStatus).reduce((s, v) => s + v, 0) || 1;
+  document.getElementById('apptByStatus').innerHTML = apptStatusDefs.map(d => {
+    const n = appointments.byStatus[d.key] || 0;
+    return `<div class="flex items-center gap-2 text-xs">
+      <span class="text-gray-500 w-24">${d.label}</span>
+      <div class="flex-1 bar-h bg-gray-100"><div class="bar-h ${d.color}" style="width:${Math.round((n/totalAppts)*100)}%"></div></div>
+      <span class="font-medium text-gray-700 w-4">${n}</span>
+    </div>`;
+  }).join('');
+
+  // Stage funnel
+  const funnelStages = [
+    { key: 'new', label: 'Nuevos', color: 'bg-blue-500' },
+    { key: 'qualified', label: 'Calificados', color: 'bg-emerald-500' },
+    { key: 'visit', label: 'Visitas', color: 'bg-amber-500' },
+    { key: 'closed', label: 'Cerrados', color: 'bg-green-600' },
+    { key: 'lost', label: 'Perdidos', color: 'bg-red-400' },
+  ];
+  const maxCount = Math.max(...funnelStages.map(s => pipeline.stageCounts[s.key] || 0), 1);
+  document.getElementById('stageFunnel').innerHTML = funnelStages.map(s => {
+    const n = pipeline.stageCounts[s.key] || 0;
+    return `<div>
+      <div class="flex justify-between text-xs mb-1">
+        <span class="text-gray-600">${s.label}</span>
+        <span class="font-semibold text-gray-900">${n}</span>
+      </div>
+      <div class="bar-h bg-gray-100"><div class="bar-h ${s.color}" style="width:${Math.round((n/maxCount)*100)}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Source distribution
+  const sourceLabels = { whatsapp: '📱 WhatsApp', instagram: '📸 Instagram', email: '📧 Email', manual: '✏️ Manual' };
+  const sourceColors = { whatsapp: 'bg-green-400', instagram: 'bg-pink-400', email: 'bg-blue-400', manual: 'bg-gray-400' };
+  const totalSources = Object.values(sources).reduce((s, v) => s + v, 0) || 1;
+  document.getElementById('sourceChart').innerHTML = Object.entries(sources)
+    .sort(([,a],[,b]) => b - a)
+    .map(([key, n]) => {
+      const pct = Math.round((n / totalSources) * 100);
+      return `<div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="text-gray-600">${sourceLabels[key] || key}</span>
+          <span class="font-semibold text-gray-700">${n} <span class="text-gray-400">(${pct}%)</span></span>
+        </div>
+        <div class="bar-h bg-gray-100"><div class="bar-h ${sourceColors[key] || 'bg-gray-400'}" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+
+  // Top leads
+  document.getElementById('topLeadsList').innerHTML = topLeads.map((l, i) => {
+    const medalColors = ['bg-yellow-400 text-yellow-900', 'bg-gray-300 text-gray-700', 'bg-orange-300 text-orange-900'];
+    return `<div class="flex items-center gap-3">
+      <span class="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0 ${medalColors[i] || 'bg-gray-100 text-gray-500'}">${i+1}</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-gray-900 truncate">${l.name}</p>
+        <div class="score-bar mt-1"><div class="score-fill" style="width:${l.score}%"></div></div>
+      </div>
+      <span class="text-sm font-bold text-gray-700">${l.score}</span>
+    </div>`;
+  }).join('') || '<p class="text-sm text-gray-400">Sin leads calificados.</p>';
+
+  // Recent leads
+  const leads = await api('GET', '/api/leads').catch(() => []);
   document.getElementById('recentLeads').innerHTML = leads.slice(-5).reverse().map(l => `
     <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
       <div><p class="text-sm font-medium text-gray-900">${l.name}</p><p class="text-xs text-gray-400">${l.intent || l.source || '—'}</p></div>
       <span class="text-xs px-2 py-0.5 rounded-full font-medium stage-${l.stage}">${stageLabel(l.stage)}</span>
     </div>`).join('') || '<p class="text-sm text-gray-400">Sin leads aún.</p>';
 
+  // Upcoming appointments
   const upcoming = appts.filter(a => new Date(a.datetime) >= new Date()).sort((a,b) => new Date(a.datetime)-new Date(b.datetime)).slice(0, 5);
   document.getElementById('upcomingAppts').innerHTML = upcoming.map(a => {
     const d = new Date(a.datetime);
-    const leadName = a.leadId?.name || '—';
     return `<div class="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
       <div class="text-center min-w-10">
         <p class="text-xs text-gray-400">${d.toLocaleDateString('es', {month:'short'})}</p>
         <p class="text-lg font-bold text-gray-900">${d.getDate()}</p>
       </div>
       <div class="flex-1">
-        <p class="text-sm font-medium text-gray-900">${leadName}</p>
+        <p class="text-sm font-medium text-gray-900">${a.leadId?.name || '—'}</p>
         <p class="text-xs text-gray-400">${d.toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'})}</p>
       </div>
       <span class="text-xs px-2 py-0.5 rounded-full font-medium appt-${a.status}">${apptLabel(a.status)}</span>
@@ -576,7 +785,15 @@ function closeLeadModal() { document.getElementById('leadModal').classList.add('
 document.getElementById('leadForm').onsubmit = async (e) => {
   e.preventDefault();
   const id = document.getElementById('leadId').value;
-  const body = { name: document.getElementById('leadName').value, contact: document.getElementById('leadContact').value, source: document.getElementById('leadSource').value, budget: Number(document.getElementById('leadBudget').value) || undefined, urgencyDays: Number(document.getElementById('leadUrgency').value) || undefined, intent: document.getElementById('leadIntent').value, stage: document.getElementById('leadStage').value };
+  const body = {
+    name: document.getElementById('leadName').value,
+    contact: document.getElementById('leadContact').value,
+    source: document.getElementById('leadSource').value,
+    budget: Number(document.getElementById('leadBudget').value) || undefined,
+    urgencyDays: Number(document.getElementById('leadUrgency').value) || undefined,
+    intent: document.getElementById('leadIntent').value,
+    stage: document.getElementById('leadStage').value,
+  };
   await (id ? api('PATCH', '/api/leads/' + id, body) : api('POST', '/api/leads', body));
   closeLeadModal(); loadLeads();
 };
@@ -586,7 +803,13 @@ async function deleteLead(id) {
 }
 
 // ── AI ────────────────────────────────────────────────────────────────────────
-function openAiModal(leadId, name) { currentAiLeadId = leadId; document.getElementById('aiLeadName').textContent = name; document.getElementById('aiText').value = ''; document.getElementById('aiResult').classList.add('hidden'); document.getElementById('aiModal').classList.remove('hidden'); }
+function openAiModal(leadId, name) {
+  currentAiLeadId = leadId;
+  document.getElementById('aiLeadName').textContent = name;
+  document.getElementById('aiText').value = '';
+  document.getElementById('aiResult').classList.add('hidden');
+  document.getElementById('aiModal').classList.remove('hidden');
+}
 function closeAiModal() { document.getElementById('aiModal').classList.add('hidden'); }
 async function runAiQualify() {
   const text = document.getElementById('aiText').value.trim();
@@ -604,7 +827,10 @@ async function runAiQualify() {
     result.classList.remove('hidden');
     loadLeads();
   } catch (err) { alert('Error: ' + err.message); }
-  finally { btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Calificar con IA'; btn.disabled = false; }
+  finally {
+    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Calificar con IA';
+    btn.disabled = false;
+  }
 }
 
 // ── Agenda / Calendar ─────────────────────────────────────────────────────────
@@ -612,7 +838,8 @@ async function initAgenda() {
   const now = new Date();
   if (!calYear) { calYear = now.getFullYear(); calMonth = now.getMonth(); }
   allAppts = await api('GET', '/api/appointments').catch(() => []);
-  await loadLeadOptions(); await loadPropOptions();
+  await loadLeadOptions();
+  await loadPropOptions();
   renderCalendar();
   showDayAppts(now);
 }
@@ -622,16 +849,13 @@ function renderCalendar() {
   document.getElementById('calTitle').textContent = `${months[calMonth]} ${calYear}`;
   const first = new Date(calYear, calMonth, 1);
   const last = new Date(calYear, calMonth + 1, 0);
-  const today = new Date();
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
   for (let i = 0; i < first.getDay(); i++) {
-    const d = new Date(calYear, calMonth, -first.getDay() + i + 1);
-    grid.appendChild(dayCell(d, true));
+    grid.appendChild(dayCell(new Date(calYear, calMonth, -first.getDay() + i + 1), true));
   }
   for (let d = 1; d <= last.getDate(); d++) {
-    const date = new Date(calYear, calMonth, d);
-    grid.appendChild(dayCell(date, false));
+    grid.appendChild(dayCell(new Date(calYear, calMonth, d), false));
   }
   const remaining = 7 - (grid.children.length % 7);
   if (remaining < 7) for (let i = 1; i <= remaining; i++) {
@@ -640,18 +864,14 @@ function renderCalendar() {
 }
 
 function dayCell(date, otherMonth) {
-  const today = new Date();
-  const isToday = date.toDateString() === today.toDateString();
+  const isToday = date.toDateString() === new Date().toDateString();
   const dayAppts = allAppts.filter(a => new Date(a.datetime).toDateString() === date.toDateString());
+  const colorMap = { scheduled: 'bg-blue-100 text-blue-700', confirmed: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-700', done: 'bg-gray-100 text-gray-500' };
   const div = document.createElement('div');
   div.className = `cal-day p-1 cursor-pointer hover:bg-blue-50 transition ${otherMonth ? 'other-month' : 'bg-white'} ${isToday ? 'today' : ''}`;
   div.onclick = () => showDayAppts(date);
   div.innerHTML = `<p class="text-xs font-medium ${otherMonth ? 'text-gray-300' : isToday ? 'text-blue-700' : 'text-gray-700'} mb-1">${date.getDate()}</p>` +
-    dayAppts.slice(0, 2).map(a => {
-      const color = { scheduled: 'bg-blue-100 text-blue-700', confirmed: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-700', done: 'bg-gray-100 text-gray-500' }[a.status] || 'bg-blue-100 text-blue-700';
-      const leadName = a.leadId?.name || 'Lead';
-      return `<div class="cal-event ${color}" title="${leadName}">${leadName}</div>`;
-    }).join('') +
+    dayAppts.slice(0, 2).map(a => `<div class="cal-event ${colorMap[a.status] || 'bg-blue-100 text-blue-700'}">${a.leadId?.name || 'Lead'}</div>`).join('') +
     (dayAppts.length > 2 ? `<div class="text-xs text-gray-400 mt-1">+${dayAppts.length - 2} más</div>` : '');
   return div;
 }
@@ -668,15 +888,13 @@ function showDayAppts(date) {
   empty.classList.add('hidden');
   list.innerHTML = dayAppts.map(a => {
     const t = new Date(a.datetime).toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
-    const leadName = a.leadId?.name || '—';
-    const propName = a.propertyId?.title || '';
     return `<div class="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition cursor-pointer" onclick="openEditApptModal('${a._id}')">
       <div class="flex items-center justify-between mb-1">
         <span class="text-sm font-semibold text-gray-900">${t}</span>
         <span class="text-xs px-2 py-0.5 rounded-full font-medium appt-${a.status}">${apptLabel(a.status)}</span>
       </div>
-      <p class="text-sm text-gray-700">${leadName}</p>
-      ${propName ? `<p class="text-xs text-gray-400 mt-0.5">📍 ${propName}</p>` : ''}
+      <p class="text-sm text-gray-700">${a.leadId?.name || '—'}</p>
+      ${a.propertyId?.title ? `<p class="text-xs text-gray-400 mt-0.5">📍 ${a.propertyId.title}</p>` : ''}
     </div>`;
   }).join('');
 }
@@ -686,15 +904,14 @@ function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
 function calToday() { const n = new Date(); calYear = n.getFullYear(); calMonth = n.getMonth(); renderCalendar(); showDayAppts(n); }
 
 async function loadLeadOptions(selectedId) {
-  const leads = allLeads.length ? allLeads : await api('GET', '/api/leads').catch(() => []);
+  if (!allLeads.length) allLeads = await api('GET', '/api/leads').catch(() => []);
   const sel = document.getElementById('apptLead');
-  sel.innerHTML = '<option value="">Seleccionar lead...</option>' + leads.map(l => `<option value="${l._id}" ${l._id === selectedId ? 'selected' : ''}>${l.name}</option>`).join('');
+  sel.innerHTML = '<option value="">Seleccionar lead...</option>' + allLeads.map(l => `<option value="${l._id}" ${l._id === selectedId ? 'selected' : ''}>${l.name}</option>`).join('');
 }
 async function loadPropOptions(selectedId) {
-  const props = allProps.length ? allProps : await api('GET', '/api/properties').catch(() => []);
-  allProps = props;
+  if (!allProps.length) allProps = await api('GET', '/api/properties').catch(() => []);
   const sel = document.getElementById('apptProp');
-  sel.innerHTML = '<option value="">Sin propiedad específica</option>' + props.map(p => `<option value="${p._id}" ${p._id === selectedId ? 'selected' : ''}>${p.title}</option>`).join('');
+  sel.innerHTML = '<option value="">Sin propiedad específica</option>' + allProps.map(p => `<option value="${p._id}" ${p._id === selectedId ? 'selected' : ''}>${p.title}</option>`).join('');
 }
 
 function openNewApptModal(preselectedLeadId) {
@@ -702,9 +919,8 @@ function openNewApptModal(preselectedLeadId) {
   document.getElementById('apptModalTitle').textContent = 'Nueva Cita';
   document.getElementById('apptDeleteBtn').classList.add('hidden');
   document.getElementById('apptStatus').value = 'scheduled';
+  document.getElementById('apptLead').value = preselectedLeadId || '';
   document.getElementById('apptProp').value = '';
-  if (preselectedLeadId) document.getElementById('apptLead').value = preselectedLeadId;
-  else document.getElementById('apptLead').value = '';
   const now = new Date();
   document.getElementById('apptDate').value = now.toISOString().split('T')[0];
   document.getElementById('apptTime').value = '10:00';
@@ -719,10 +935,8 @@ function openEditApptModal(id) {
   document.getElementById('apptDate').value = d.toISOString().split('T')[0];
   document.getElementById('apptTime').value = d.toTimeString().slice(0,5);
   document.getElementById('apptStatus').value = a.status || 'scheduled';
-  const leadId = a.leadId?._id || a.leadId;
-  const propId = a.propertyId?._id || a.propertyId;
-  document.getElementById('apptLead').value = leadId || '';
-  document.getElementById('apptProp').value = propId || '';
+  document.getElementById('apptLead').value = a.leadId?._id || a.leadId || '';
+  document.getElementById('apptProp').value = a.propertyId?._id || a.propertyId || '';
   document.getElementById('apptModal').classList.remove('hidden');
 }
 function closeApptModal() { document.getElementById('apptModal').classList.add('hidden'); }
@@ -732,15 +946,18 @@ document.getElementById('apptForm').onsubmit = async (e) => {
   const id = document.getElementById('apptId').value;
   const date = document.getElementById('apptDate').value;
   const time = document.getElementById('apptTime').value;
-  const datetime = new Date(`${date}T${time}`).toISOString();
-  const body = { leadId: document.getElementById('apptLead').value, propertyId: document.getElementById('apptProp').value || undefined, datetime, status: document.getElementById('apptStatus').value };
+  const body = {
+    leadId: document.getElementById('apptLead').value,
+    propertyId: document.getElementById('apptProp').value || undefined,
+    datetime: new Date(`${date}T${time}`).toISOString(),
+    status: document.getElementById('apptStatus').value,
+  };
   await (id ? api('PATCH', '/api/appointments/' + id, body) : api('POST', '/api/appointments', body));
   closeApptModal();
   allAppts = await api('GET', '/api/appointments').catch(() => []);
   renderCalendar();
   if (selectedDay) showDayAppts(selectedDay);
 };
-
 async function deleteAppt() {
   const id = document.getElementById('apptId').value;
   if (!id || !confirm('¿Eliminar esta cita?')) return;
@@ -753,15 +970,14 @@ async function deleteAppt() {
 
 // ── Properties ────────────────────────────────────────────────────────────────
 async function loadProperties() {
-  const props = await api('GET', '/api/properties').catch(() => []);
-  allProps = props;
+  allProps = await api('GET', '/api/properties').catch(() => []);
   const grid = document.getElementById('propertiesGrid');
   const empty = document.getElementById('propsEmpty');
-  if (!props.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  if (!allProps.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
   const typeLabel = { house:'Casa', apartment:'Depto', land:'Terreno', commercial:'Comercial' };
   const statusColor = { available:'bg-green-100 text-green-700', reserved:'bg-yellow-100 text-yellow-700', sold:'bg-gray-100 text-gray-500' };
-  grid.innerHTML = props.map(p => `
+  grid.innerHTML = allProps.map(p => `
     <div class="card p-5 hover:shadow-md transition">
       <div class="flex items-start justify-between mb-3">
         <div><p class="font-semibold text-gray-900">${p.title}</p><p class="text-sm text-gray-500">${p.zone || '—'}</p></div>
@@ -771,16 +987,25 @@ async function loadProperties() {
         <span>🛏 ${p.beds || '—'}</span><span>🚿 ${p.baths || '—'}</span><span>${typeLabel[p.type] || p.type || '—'}</span>
       </div>
       <p class="text-lg font-bold text-blue-700">${p.price ? '$' + p.price.toLocaleString() : '—'}</p>
-      <div class="flex gap-2 mt-3">
-        <button onclick="deleteProp('${p._id}')" class="text-xs text-red-400 hover:underline">Eliminar</button>
-      </div>
+      <button onclick="deleteProp('${p._id}')" class="text-xs text-red-400 hover:underline mt-3">Eliminar</button>
     </div>`).join('');
 }
-function openNewPropertyModal() { document.getElementById('propertyModal').classList.remove('hidden'); }
+function openNewPropertyModal() {
+  ['propTitle','propZone','propPrice','propBeds','propBaths'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('propertyModal').classList.remove('hidden');
+}
 function closePropModal() { document.getElementById('propertyModal').classList.add('hidden'); }
 document.getElementById('propertyForm').onsubmit = async (e) => {
   e.preventDefault();
-  const body = { title: document.getElementById('propTitle').value, zone: document.getElementById('propZone').value, price: Number(document.getElementById('propPrice').value) || undefined, beds: Number(document.getElementById('propBeds').value) || undefined, baths: Number(document.getElementById('propBaths').value) || undefined, type: document.getElementById('propType').value, status: document.getElementById('propStatus').value };
+  const body = {
+    title: document.getElementById('propTitle').value,
+    zone: document.getElementById('propZone').value,
+    price: Number(document.getElementById('propPrice').value) || undefined,
+    beds: Number(document.getElementById('propBeds').value) || undefined,
+    baths: Number(document.getElementById('propBaths').value) || undefined,
+    type: document.getElementById('propType').value,
+    status: document.getElementById('propStatus').value,
+  };
   await api('POST', '/api/properties', body);
   closePropModal(); loadProperties();
 };
@@ -790,21 +1015,21 @@ async function deleteProp(id) { if (!confirm('¿Eliminar?')) return; await api('
 async function loadPipeline() {
   const leads = await api('GET', '/api/leads').catch(() => []);
   const stages = [
-    { id:'new', label:'Nuevos', color:'bg-blue-50 border-blue-200' },
-    { id:'qualified', label:'Calificados', color:'bg-emerald-50 border-emerald-200' },
-    { id:'visit', label:'Visita', color:'bg-amber-50 border-amber-200' },
-    { id:'closed', label:'Cerrados', color:'bg-green-50 border-green-200' },
-    { id:'lost', label:'Perdidos', color:'bg-red-50 border-red-200' },
+    { id:'new', label:'Nuevos', border:'border-blue-200', bg:'bg-blue-50' },
+    { id:'qualified', label:'Calificados', border:'border-emerald-200', bg:'bg-emerald-50' },
+    { id:'visit', label:'Visita', border:'border-amber-200', bg:'bg-amber-50' },
+    { id:'closed', label:'Cerrados', border:'border-green-200', bg:'bg-green-50' },
+    { id:'lost', label:'Perdidos', border:'border-red-200', bg:'bg-red-50' },
   ];
   document.getElementById('kanbanBoard').innerHTML = stages.map(st => {
     const group = leads.filter(l => l.stage === st.id);
-    return `<div class="kanban-col flex-shrink-0 w-60">
+    return `<div class="flex-shrink-0 w-60">
       <div class="flex items-center justify-between mb-3">
         <span class="text-sm font-semibold text-gray-700">${st.label}</span>
         <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">${group.length}</span>
       </div>
-      <div class="space-y-2">${group.map(l => `
-        <div class="card p-3 border ${st.color} hover:shadow-md transition cursor-pointer" onclick="openNewApptModal('${l._id}')">
+      <div class="space-y-2 min-h-20">${group.map(l => `
+        <div class="card p-3 border ${st.border} ${st.bg} hover:shadow-md transition cursor-pointer" onclick="openNewApptModal('${l._id}')">
           <p class="text-sm font-medium text-gray-900 mb-1">${l.name}</p>
           <p class="text-xs text-gray-500 mb-2">${l.intent || l.contact || '—'}</p>
           <div class="flex items-center justify-between">
@@ -821,8 +1046,15 @@ async function loadPipeline() {
 // ── Utils ─────────────────────────────────────────────────────────────────────
 function stageLabel(s) { return {new:'Nuevo', qualified:'Calificado', visit:'Visita', closed:'Cerrado', lost:'Perdido'}[s] || s; }
 function apptLabel(s) { return {scheduled:'Programada', confirmed:'Confirmada', cancelled:'Cancelada', done:'Realizada'}[s] || s; }
+function fmtMoney(n) {
+  if (!n) return '$0';
+  if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return '$' + (n / 1_000).toFixed(0) + 'K';
+  return '$' + n.toLocaleString();
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+initVersion();
 if (token && currentUser) showApp(); else showLogin();
 </script>
 </body>
