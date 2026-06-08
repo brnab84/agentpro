@@ -23,7 +23,7 @@ const funnelSchema = new Schema(
     description: { type: String, trim: true },
     channel: { type: String, enum: ['whatsapp', 'instagram'], default: 'whatsapp' },
     phoneNumberId: { type: String, trim: true },
-    status: { type: String, enum: ['active', 'draft', 'inactive'], default: 'draft' },
+    status: { type: String, enum: ['active', 'paused', 'draft'], default: 'draft' },
     trigger: { keyword: { type: String, trim: true } },
     context: { type: String, trim: true },
     requireEmail: { type: Boolean, default: false },

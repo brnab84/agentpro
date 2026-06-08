@@ -1936,22 +1936,28 @@ function renderWizardStep() {
         </div>
       </div>`;
   } else if (wizardStep === 2) {
-    const profilesHtml = wizardData.profiles.map((p, i) => `
-      <div class="border border-gray-200 rounded-xl p-4 space-y-3 relative">
-        <button onclick="removeWizardProfile(${i})" class="absolute top-3 right-3 text-gray-300 hover:text-red-400 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
+    const PROFILE_COLORS = ['bg-blue-100 text-blue-700 border-blue-200','bg-green-100 text-green-700 border-green-200','bg-orange-100 text-orange-700 border-orange-200','bg-purple-100 text-purple-700 border-purple-200','bg-red-100 text-red-700 border-red-200'];
+    const profilesHtml = wizardData.profiles.map((p, i) => {
+      const col = PROFILE_COLORS[i % PROFILE_COLORS.length];
+      return `
+      <div class="border-2 rounded-xl p-4 space-y-3 relative ${col.split(' ')[2]} ${col.split(' ')[0]}">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs font-bold uppercase tracking-wide ${col.split(' ')[1]}">Resultado ${i+1}</span>
+          <button onclick="removeWizardProfile(${i})" class="text-gray-400 hover:text-red-400 transition p-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="text-xs text-gray-400">Nombre del perfil</label>
+            <label class="text-xs text-gray-500 font-medium">Nombre <span class="text-red-400">*</span></label>
             <input type="text" value="${p.name}" oninput="wizardData.profiles[${i}].name=this.value"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Calificado" />
+              class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Calificado A" />
           </div>
           <div>
-            <label class="text-xs text-gray-400">Etapa CRM</label>
-            <select oninput="wizardData.profiles[${i}].stage=this.value"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Sin cambiar</option>
+            <label class="text-xs text-gray-500 font-medium">Mover a etapa CRM</label>
+            <select onchange="wizardData.profiles[${i}].stage=this.value"
+              class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">— Sin cambio —</option>
               <option value="new" ${p.stage==='new'?'selected':''}>Nuevo</option>
               <option value="contacted" ${p.stage==='contacted'?'selected':''}>Contactado</option>
               <option value="qualified" ${p.stage==='qualified'?'selected':''}>Calificado</option>
@@ -1961,24 +1967,44 @@ function renderWizardStep() {
           </div>
         </div>
         <div>
-          <label class="text-xs text-gray-400">Descripción (para la IA)</label>
+          <label class="text-xs text-gray-500 font-medium">¿Qué características tiene este lead? <span class="text-gray-400">(guía para la IA)</span></label>
           <input type="text" value="${p.description||''}" oninput="wizardData.profiles[${i}].description=this.value"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Tiene budget >100k y urgencia alta" />
+            class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Presupuesto mayor a USD 100k, compra en menos de 3 meses" />
         </div>
         <div>
-          <label class="text-xs text-gray-400">Mensaje al clasificar</label>
+          <label class="text-xs text-gray-500 font-medium">Mensaje automático al clasificar</label>
           <textarea rows="2" oninput="wizardData.profiles[${i}].message=this.value"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            placeholder="Mensaje que recibirá el lead al ser clasificado...">${p.message||''}</textarea>
+            class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            placeholder="Mensaje que la IA envía al lead cuando lo clasifica aquí...">${p.message||''}</textarea>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
+
+    const hasProfiles = wizardData.profiles.length > 0;
     body.innerHTML = `
       <div class="space-y-3">
-        <p class="text-sm text-gray-500">Definí los perfiles posibles. La IA clasificará a cada lead en uno de ellos.</p>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2">
+          <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p class="text-xs text-amber-700"><strong>¿Qué es un perfil?</strong> Es la "etiqueta" que la IA asignará al lead según la conversación. Por ejemplo: <em>Calificado A</em> (listo para comprar) o <em>No calificado</em> (sin presupuesto). La IA elige el más adecuado y envía el mensaje de ese perfil.</p>
+        </div>
+        ${!hasProfiles ? `
+        <div>
+          <p class="text-xs text-gray-500 font-medium mb-2">Plantillas rápidas</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="applyProfileTemplate('simple')" class="text-left border-2 border-dashed border-gray-300 rounded-xl p-3 hover:border-blue-400 hover:bg-blue-50 transition">
+              <p class="text-sm font-semibold text-gray-700">Básico (2 perfiles)</p>
+              <p class="text-xs text-gray-400 mt-0.5">Calificado / No calificado</p>
+            </button>
+            <button onclick="applyProfileTemplate('abc')" class="text-left border-2 border-dashed border-gray-300 rounded-xl p-3 hover:border-blue-400 hover:bg-blue-50 transition">
+              <p class="text-sm font-semibold text-gray-700">ABC (3 perfiles)</p>
+              <p class="text-xs text-gray-400 mt-0.5">Lead A / Lead B / Lead C</p>
+            </button>
+          </div>
+        </div>` : ''}
         ${profilesHtml}
         <button onclick="addWizardProfile()" class="w-full border-2 border-dashed border-gray-300 rounded-xl py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition flex items-center justify-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Agregar perfil
+          Agregar otro resultado posible
         </button>
       </div>`;
   } else if (wizardStep === 3) {
@@ -1999,6 +2025,22 @@ function renderWizardStep() {
         </div>
       </div>`;
   }
+}
+
+function applyProfileTemplate(tpl) {
+  if (tpl === 'simple') {
+    wizardData.profiles = [
+      { name: 'Calificado', description: 'Tiene presupuesto, interés real y urgencia', message: 'Genial, un asesor se va a comunicar con vos pronto para darte toda la información. ¡Gracias por tu interés!', stage: 'qualified', tag: '' },
+      { name: 'No calificado', description: 'Sin presupuesto o sin interés real de compra', message: 'Gracias por comunicarte. Si en el futuro cambia tu situación, no dudes en escribirnos.', stage: 'contacted', tag: '' },
+    ];
+  } else if (tpl === 'abc') {
+    wizardData.profiles = [
+      { name: 'Lead A', description: 'Compra en menos de 3 meses, presupuesto confirmado', message: '¡Excelente! Un asesor te va a contactar hoy para coordinar una visita.', stage: 'qualified', tag: '' },
+      { name: 'Lead B', description: 'Interesado pero en etapa de evaluación, 3-6 meses', message: 'Perfecto, te vamos a enviar información detallada y te contactamos próximamente.', stage: 'contacted', tag: '' },
+      { name: 'Lead C', description: 'Interés bajo o plazo mayor a 6 meses', message: 'Gracias por tu consulta. Te agregamos a nuestra lista para informarte de novedades.', stage: 'new', tag: '' },
+    ];
+  }
+  renderWizardStep();
 }
 
 function addWizardProfile() {
@@ -2053,7 +2095,7 @@ async function saveFunnel() {
       context: wizardData.context,
       requireEmail: wizardData.requireEmail,
       cancelMinutes: wizardData.cancelMinutes,
-      profiles: wizardData.profiles,
+      profiles: wizardData.profiles.filter(p => p.name?.trim()),
       status: 'active',
     };
     await api('POST', '/api/funnels', payload);
