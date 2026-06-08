@@ -45,9 +45,36 @@ export const importFromUrl = asyncHandler(async (req, res) => {
     .trim()
     .slice(0, 8000);
 
-  // Extract image URLs from HTML
-  const imgMatches = [...html.matchAll(/(?:src|data-src)=["']([^"']*(?:jpg|jpeg|png|webp)[^"']*)/gi)];
-  const photos = [...new Set(imgMatches.map(m => m[1]).filter(u => u.startsWith('http')))].slice(0, 8);
+  // Extract image URLs — multiple strategies
+  const photoSet = new Set();
+
+  // 1. og:image and twitter:image meta tags (most reliable)
+  for (const m of html.matchAll(/(?:og:image|twitter:image)[^>]*content=["']([^"']+)["']/gi)) photoSet.add(m[1]);
+  for (const m of html.matchAll(/content=["']([^"']+)["'][^>]*(?:og:image|twitter:image)/gi)) photoSet.add(m[1]);
+
+  // 2. JSON-LD structured data
+  for (const m of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const obj = JSON.parse(m[1]);
+      const imgs = [obj.image, obj.photo, ...(obj.images || [])].flat().filter(Boolean);
+      imgs.forEach(i => typeof i === 'string' ? photoSet.add(i) : i?.url && photoSet.add(i.url));
+    } catch { /* ignore */ }
+  }
+
+  // 3. src / data-src / data-lazy-src / data-original with image extensions or CDN paths
+  for (const m of html.matchAll(/(?:data-src|data-lazy-src|data-original|data-image|src)=["']([^"']{20,})["']/gi)) {
+    const u = m[1];
+    if (u.startsWith('http') && /\.(jpg|jpeg|png|webp|avif)(\?|$)/i.test(u)) photoSet.add(u);
+  }
+
+  // 4. JSON strings inside script tags with image URLs
+  for (const m of html.matchAll(/"(https?:\/\/[^"]{10,}\.(jpg|jpeg|png|webp)(?:\?[^"]*)?)"/gi)) photoSet.add(m[1]);
+
+  // Filter out icons/logos/tracking pixels (common patterns)
+  const skipPatterns = /logo|icon|avatar|sprite|pixel|banner|ad[_-]|tracking|placeholder|blank/i;
+  const photos = [...photoSet]
+    .filter(u => u.startsWith('http') && !skipPatterns.test(u))
+    .slice(0, 10);
 
   const client = getAnthropic();
   const message = await client.messages.create({
@@ -65,8 +92,11 @@ export const importFromUrl = asyncHandler(async (req, res) => {
   "area": número_en_m2,
   "zone": "barrio o zona",
   "address": "dirección completa",
-  "description": "descripción breve"
+  "description": "descripción breve de 2-3 oraciones",
+  "photos": ["url1","url2"]
 }
+
+El campo "photos" solo si encontrás URLs completas de imágenes (http...) en el texto.
 
 Texto: ${text}`,
     }],
@@ -78,5 +108,10 @@ Texto: ${text}`,
     if (jsonMatch) extracted = JSON.parse(jsonMatch[0]);
   } catch { /* ignore parse errors */ }
 
-  res.json({ ...extracted, photos, sourceUrl: url });
+  // Merge photos: regex-extracted + AI-extracted, deduplicated
+  const aiPhotos = (extracted.photos || []).filter(u => typeof u === 'string' && u.startsWith('http'));
+  const allPhotos = [...new Set([...photos, ...aiPhotos])].slice(0, 10);
+  delete extracted.photos;
+
+  res.json({ ...extracted, photos: allPhotos, sourceUrl: url });
 });
