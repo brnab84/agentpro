@@ -27,7 +27,7 @@ export function createApp() {
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors());
   app.use(express.json());
-  if (env.nodeEnv !== 'test') app.use(morgan('dev'));
+  if (env.nodeEnv === 'development') app.use(morgan('dev'));
 
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
   app.get('/', (req, res) => res.type('html').send(indexHtml));
