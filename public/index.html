@@ -485,6 +485,15 @@
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                   Configuración
                 </button>
+                <button id="menuPortalLink" onclick="openMyPortal()" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text-2);text-align:left" onmouseenter="this.style.background='var(--surface-2)'" onmouseleave="this.style.background='none'">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+                  Ver mi portal
+                </button>
+                <a href="/landing" target="_blank" onclick="closeUserMenu()" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;text-decoration:none;font-size:13px;color:var(--text-2);text-align:left" onmouseenter="this.style.background='var(--surface-2)'" onmouseleave="this.style.background='none'">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  Landing page
+                </a>
+                <div style="margin:4px 0;border-top:1px solid var(--border)"></div>
                 <button onclick="logout()" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:none;background:none;cursor:pointer;font-size:13px;color:#DC2626;text-align:left" onmouseenter="this.style.background='#FFF1F2'" onmouseleave="this.style.background='none'">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                   Cerrar sesión
@@ -759,7 +768,13 @@
       <!-- ── PROPERTIES ── -->
       <div id="tab-properties" class="tab-content hidden fade-in">
         <div class="flex justify-between mb-6">
-          <p class="text-sm text-gray-500">Inventario de propiedades</p>
+          <div class="flex items-center gap-3">
+            <p class="text-sm text-gray-500">Inventario de propiedades</p>
+            <button id="viewPortalBtn" onclick="openMyPortal()" class="hidden text-xs text-indigo-600 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              Ver portal público
+            </button>
+          </div>
           <button onclick="openNewPropertyModal()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Nueva Propiedad
@@ -5804,19 +5819,34 @@ async function syncGoogleCalendar() {
 // ── Portal ────────────────────────────────────────────────────────────────────
 
 let _portalActive = false;
+let _portalSlug   = '';
+
+function openMyPortal() {
+  closeUserMenu();
+  if (!_portalSlug) {
+    showToast('Primero configurá el slug de tu portal en Configuración → Mi Portal', 'error');
+    showTab('team');
+    return;
+  }
+  window.open(`${window.location.origin}/portal/${_portalSlug}`, '_blank');
+}
 
 async function loadPortalConfig() {
   try {
     const cfg = await api('GET', '/api/portal/config/me');
     _portalActive = cfg.portal?.active || false;
+    _portalSlug   = cfg.slug || '';
     document.getElementById('portalAgencyName').value = cfg.portal?.agencyName || '';
-    document.getElementById('portalSlug').value        = cfg.slug || '';
+    document.getElementById('portalSlug').value        = _portalSlug;
     document.getElementById('portalTagline').value     = cfg.portal?.tagline || '';
     document.getElementById('portalWhatsapp').value    = cfg.portal?.whatsapp || '';
     document.getElementById('portalEmail').value       = cfg.portal?.email || '';
     document.getElementById('portalColor').value       = cfg.portal?.primaryColor || '#6366F1';
     _updatePortalToggleUI(_portalActive);
-    _updatePortalLink(cfg.slug);
+    _updatePortalLink(_portalSlug);
+    // Show "Ver portal" button in properties tab if slug exists
+    const vpBtn = document.getElementById('viewPortalBtn');
+    if (vpBtn) vpBtn.classList.toggle('hidden', !_portalSlug);
   } catch { /* not critical */ }
 }
 
@@ -5859,7 +5889,10 @@ async function savePortalConfig(e) {
   };
   try {
     await api('PUT', '/api/portal/config/me', body);
+    _portalSlug = slug;
     _updatePortalLink(slug);
+    const vpBtn = document.getElementById('viewPortalBtn');
+    if (vpBtn) vpBtn.classList.toggle('hidden', !slug);
     const msg = document.getElementById('portalSaveMsg');
     msg.classList.remove('hidden');
     setTimeout(() => msg.classList.add('hidden'), 3000);
