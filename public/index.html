@@ -2050,7 +2050,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.9.3'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.9.4'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -3285,6 +3285,7 @@ const PIPELINE_STAGES = [
 
 async function loadPipeline() {
   const leads = await api('GET', '/api/leads').catch(() => []);
+  allLeads = leads; // keep global cache in sync so openEditLeadModal works
   const board = document.getElementById('kanbanBoard');
   board.innerHTML = PIPELINE_STAGES.map(st => {
     const group = leads.filter(l => l.stage === st.id);
