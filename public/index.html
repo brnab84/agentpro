@@ -621,16 +621,16 @@
         </div>
         <div class="card overflow-hidden">
           <div class="overflow-x-auto">
-          <table class="w-full text-sm min-w-max">
-            <thead class="bg-gray-50 border-b border-gray-200">
+          <table class="w-full text-sm" style="table-layout:auto">
+            <thead style="background:var(--surface-2);border-bottom:1px solid var(--border)">
               <tr>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Nombre</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Contacto</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Stage</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Score</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Prob.</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Agente</th>
-                <th class="text-left px-6 py-3 text-gray-500 font-medium">Acciones</th>
+                <th class="text-left px-4 py-2.5 text-xs font-semibold" style="color:var(--text-2);letter-spacing:.04em;text-transform:uppercase">Nombre</th>
+                <th class="text-left px-4 py-2.5 text-xs font-semibold" style="color:var(--text-2);letter-spacing:.04em;text-transform:uppercase">Contacto</th>
+                <th class="text-left px-4 py-2.5 text-xs font-semibold" style="color:var(--text-2);letter-spacing:.04em;text-transform:uppercase">Stage</th>
+                <th class="text-left px-4 py-2.5 text-xs font-semibold" style="color:var(--text-2);letter-spacing:.04em;text-transform:uppercase">Score</th>
+                <th class="text-left px-4 py-2.5 text-xs font-semibold" style="color:var(--text-2);letter-spacing:.04em;text-transform:uppercase">Prob.</th>
+                <th class="text-left px-4 py-2.5 text-xs font-semibold hide-mobile" style="color:var(--text-2);letter-spacing:.04em;text-transform:uppercase">Agente</th>
+                <th class="text-left px-4 py-2.5 text-xs font-semibold" style="color:var(--text-2);letter-spacing:.04em;text-transform:uppercase">Acciones</th>
               </tr>
             </thead>
             <tbody id="leadsTable"></tbody>
@@ -1830,7 +1830,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.8.5'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.8.6'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -2199,24 +2199,59 @@ function renderLeads(leads) {
   empty.classList.add('hidden');
   tbody.innerHTML = leads.map(l => {
     const agentName = l.assignedTo?.name || '—';
-    return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-      <td class="px-6 py-3"><p class="font-medium text-gray-900">${l.name}</p><p class="text-xs text-gray-400">${l.aiSummary || l.intent || '—'}</p></td>
-      <td class="px-6 py-3 text-gray-600">${l.contact || '—'}</td>
-      <td class="px-6 py-3"><span class="text-xs px-2 py-0.5 rounded-full font-medium stage-${l.stage}">${stageLabel(l.stage)}</span></td>
-      <td class="px-6 py-3"><div class="flex items-center gap-2"><div class="score-bar w-16"><div class="score-fill" style="width:${l.score}%"></div></div><span class="text-xs font-medium text-gray-700">${l.score}</span></div></td>
-      <td class="px-6 py-3 text-sm text-gray-700">${l.predictedCloseProb ? Math.round(l.predictedCloseProb*100)+'%' : '—'}</td>
-      <td class="px-6 py-3 text-xs text-gray-500">${agentName}</td>
-      <td class="px-6 py-3">
-        <div class="flex gap-2">
-          <button onclick="openEditLeadModal('${l._id}')" class="text-xs text-blue-600 hover:underline">Editar</button>
-          <button onclick="openAiModal('${l._id}','${l.name}')" class="text-xs text-purple-600 hover:underline">IA</button>
-          <button onclick="openNewApptModal('${l._id}')" class="text-xs text-green-600 hover:underline">Cita</button>
-          <button onclick="deleteLead('${l._id}')" class="text-xs text-red-400 hover:underline">Eliminar</button>
+    const prob = l.predictedCloseProb ? Math.round(l.predictedCloseProb * 100) + '%' : '—';
+    return `<tr class="border-b hover:bg-blue-50/30 transition cursor-pointer" style="border-color:var(--border)">
+      <td class="px-4 py-3">
+        <p class="font-semibold text-sm" style="color:var(--text-1)">${l.name}</p>
+        <p class="text-xs mt-0.5 truncate max-w-[180px]" style="color:var(--text-3)">${l.intent || l.aiSummary || ''}</p>
+      </td>
+      <td class="px-4 py-3 text-sm" style="color:var(--text-2)">${l.contact || '—'}</td>
+      <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full font-semibold stage-${l.stage}">${stageLabel(l.stage)}</span></td>
+      <td class="px-4 py-3">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="score-bar" style="width:44px"><div class="score-fill" style="width:${l.score || 0}%"></div></div>
+          <span class="text-xs font-bold" style="color:var(--text-1)">${l.score || 0}</span>
+        </div>
+      </td>
+      <td class="px-4 py-3 text-xs" style="color:var(--text-2)">${prob}</td>
+      <td class="px-4 py-3 text-xs" style="color:var(--text-3)">${agentName}</td>
+      <td class="px-4 py-3">
+        <div style="display:flex;gap:4px;flex-wrap:nowrap">
+          <button data-action="edit" data-id="${l._id}"
+            style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid #BFDBFE;background:#EFF6FF;color:#1D4ED8;cursor:pointer;white-space:nowrap">
+            ✏️ Editar
+          </button>
+          <button data-action="ai" data-id="${l._id}"
+            style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid #E9D5FF;background:#F5F3FF;color:#7C3AED;cursor:pointer;white-space:nowrap">
+            🤖 IA
+          </button>
+          <button data-action="appt" data-id="${l._id}"
+            style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid #BBF7D0;background:#F0FDF4;color:#15803D;cursor:pointer;white-space:nowrap">
+            📅 Cita
+          </button>
+          <button data-action="delete" data-id="${l._id}"
+            style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid #FECACA;background:#FFF1F2;color:#DC2626;cursor:pointer;white-space:nowrap">
+            🗑
+          </button>
         </div>
       </td>
     </tr>`;
   }).join('');
 }
+
+// Event delegation for leads table — avoids onclick string injection issues
+document.getElementById('leadsTable').addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const action = btn.dataset.action;
+  const lead = allLeads.find(l => l._id === id);
+  if (!lead) return;
+  if (action === 'edit')   openEditLeadModal(id);
+  if (action === 'ai')     openAiModal(id, lead.name);
+  if (action === 'appt')   openNewApptModal(id);
+  if (action === 'delete') deleteLead(id);
+});
 
 async function openNewLeadModal() {
   document.getElementById('leadId').value = '';
