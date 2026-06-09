@@ -1819,14 +1819,52 @@
               <label class="text-xs text-gray-500 font-medium">Dirección</label>
               <input id="propAddress" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Av. Principal 123" />
             </div>
+            <!-- Row: Precio + Moneda + Operación -->
             <div>
-              <label class="text-xs text-gray-500 font-medium">Precio (USD)</label>
+              <label class="text-xs text-gray-500 font-medium">Precio</label>
               <input id="propPrice" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="150000" />
             </div>
             <div>
-              <label class="text-xs text-gray-500 font-medium">Superficie (m²)</label>
-              <input id="propArea" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="120" />
+              <label class="text-xs text-gray-500 font-medium">Moneda</label>
+              <select id="propCurrency" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="USD">USD</option>
+                <option value="ARS">ARS</option>
+                <option value="PEN">PEN</option>
+                <option value="COP">COP</option>
+                <option value="MXN">MXN</option>
+                <option value="CLP">CLP</option>
+                <option value="BRL">BRL</option>
+              </select>
             </div>
+            <!-- Row: Tipo + Operación -->
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Tipo</label>
+              <select id="propType" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="house">Casa</option>
+                <option value="apartment">Departamento</option>
+                <option value="land">Terreno</option>
+                <option value="commercial">Comercial</option>
+                <option value="office">Oficina</option>
+                <option value="warehouse">Depósito/Galpón</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Operación</label>
+              <select id="propOperation" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="sale">Venta</option>
+                <option value="rent">Alquiler</option>
+              </select>
+            </div>
+            <!-- Row: Superficie cubierta + total -->
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Sup. cubierta (m²)</label>
+              <input id="propArea" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="80" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Sup. total (m²)</label>
+              <input id="propAreaTotal" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="120" />
+            </div>
+            <!-- Row: Hab. + Baños + Parking + Piso -->
             <div>
               <label class="text-xs text-gray-500 font-medium">Habitaciones</label>
               <input id="propBeds" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -1836,16 +1874,29 @@
               <input id="propBaths" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label class="text-xs text-gray-500 font-medium">Tipo</label>
-              <select id="propType" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="house">Casa</option><option value="apartment">Departamento</option><option value="land">Terreno</option><option value="commercial">Comercial</option>
-              </select>
+              <label class="text-xs text-gray-500 font-medium">Cocheras</label>
+              <input id="propParking" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Piso Nº</label>
+              <input id="propFloor" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="—" />
+            </div>
+            <!-- Row: Antigüedad + Estado -->
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Antigüedad (años)</label>
+              <input id="propAge" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="—" />
             </div>
             <div>
               <label class="text-xs text-gray-500 font-medium">Estado</label>
               <select id="propStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="available">Disponible</option><option value="reserved">Reservada</option><option value="sold">Vendida</option>
               </select>
+            </div>
+            <!-- Amenidades -->
+            <div class="col-span-2">
+              <label class="text-xs text-gray-500 font-medium">Amenidades / Características</label>
+              <input id="propFeatures" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="piscina, gimnasio, quincho, seguridad 24h… (separar con comas)" />
+              <p class="text-xs text-gray-400 mt-0.5">Separar con comas. Se importan automáticamente desde la URL.</p>
             </div>
             <div class="col-span-2">
               <label class="text-xs text-gray-500 font-medium">Descripción</label>
@@ -1976,7 +2027,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.9.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.9.1'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -2801,7 +2852,7 @@ async function deleteAppt() {
 // ── Properties ────────────────────────────────────────────────────────────────
 let propPhotos = [];
 
-const PROP_TYPE_LABEL = { house:'Casa', apartment:'Depto', land:'Terreno', commercial:'Comercial' };
+const PROP_TYPE_LABEL = { house:'Casa', apartment:'Depto', land:'Terreno', commercial:'Comercial', office:'Oficina', warehouse:'Depósito' };
 const PROP_STATUS_COLOR = { available:'bg-green-100 text-green-700', reserved:'bg-yellow-100 text-yellow-700', sold:'bg-gray-100 text-gray-500' };
 const PROP_STATUS_LABEL = { available:'Disponible', reserved:'Reservada', sold:'Vendida' };
 
@@ -2829,16 +2880,20 @@ async function loadProperties() {
           </div>
           <span class="text-xs px-2 py-0.5 rounded-full font-medium ml-2 flex-shrink-0 ${statusColor}">${statusLabel}</span>
         </div>
-        <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
-          ${p.beds ? `<span class="flex items-center gap-1">🛏 ${p.beds} hab</span>` : ''}
-          ${p.baths ? `<span class="flex items-center gap-1">🚿 ${p.baths} baños</span>` : ''}
-          ${p.area ? `<span class="flex items-center gap-1">📐 ${p.area} m²</span>` : ''}
-          <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${PROP_TYPE_LABEL[p.type] || p.type}</span>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mb-3">
+          ${p.beds ? `<span>🛏 ${p.beds} hab</span>` : ''}
+          ${p.baths ? `<span>🚿 ${p.baths} baños</span>` : ''}
+          ${p.parking ? `<span>🚗 ${p.parking} coche</span>` : ''}
+          ${p.area ? `<span>📐 ${p.area} m²</span>` : ''}
+          ${p.areaTotal && p.areaTotal !== p.area ? `<span class="text-gray-400">(${p.areaTotal} m² tot.)</span>` : ''}
+          <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${PROP_TYPE_LABEL[p.type] || p.type}</span>
+          ${p.operation === 'rent' ? `<span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Alquiler</span>` : ''}
         </div>
         <div class="flex items-center justify-between">
-          <p class="text-lg font-bold text-blue-700">${p.price ? '$' + p.price.toLocaleString() : 'Consultar'}</p>
-          ${p.sourceUrl ? `<a href="${p.sourceUrl}" target="_blank" onclick="event.stopPropagation()" class="text-xs text-blue-500 hover:underline">Ver fuente</a>` : ''}
+          <p class="text-lg font-bold" style="color:var(--accent)">${p.price ? (p.currency && p.currency !== 'USD' ? p.currency + ' ' : 'USD ') + p.price.toLocaleString() : 'Consultar'}</p>
+          ${p.sourceUrl ? `<a href="${p.sourceUrl}" target="_blank" onclick="event.stopPropagation()" class="text-xs text-blue-500 hover:underline">Ver fuente ↗</a>` : ''}
         </div>
+        ${p.features?.length ? `<div class="flex flex-wrap gap-1 mt-2">${p.features.slice(0,4).map(f => `<span class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">${f}</span>`).join('')}${p.features.length > 4 ? `<span class="text-xs text-gray-400">+${p.features.length-4}</span>` : ''}</div>` : ''}
         ${p.description ? `<p class="text-xs text-gray-400 mt-2 line-clamp-2">${p.description}</p>` : ''}
       </div>
     </div>`;
@@ -2849,9 +2904,11 @@ function openNewPropertyModal() {
   propPhotos = [];
   document.getElementById('propId').value = '';
   document.getElementById('propModalTitle').textContent = 'Nueva Propiedad';
-  ['propTitle','propZone','propAddress','propPrice','propArea','propBeds','propBaths','propDescription','propImportUrl'].forEach(id => document.getElementById(id).value = '');
+  ['propTitle','propZone','propAddress','propPrice','propArea','propAreaTotal','propBeds','propBaths','propParking','propFloor','propAge','propFeatures','propDescription','propImportUrl'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('propType').value = 'house';
   document.getElementById('propStatus').value = 'available';
+  document.getElementById('propCurrency').value = 'USD';
+  document.getElementById('propOperation').value = 'sale';
   document.getElementById('importError').classList.add('hidden');
   renderPhotosPreview();
   document.getElementById('propDeleteBtn').classList.add('hidden');
@@ -2870,9 +2927,16 @@ function openEditPropertyModal(id) {
   document.getElementById('propZone').value = p.zone || '';
   document.getElementById('propAddress').value = p.address || '';
   document.getElementById('propPrice').value = p.price || '';
+  document.getElementById('propCurrency').value = p.currency || 'USD';
+  document.getElementById('propOperation').value = p.operation || 'sale';
   document.getElementById('propArea').value = p.area || '';
+  document.getElementById('propAreaTotal').value = p.areaTotal || '';
   document.getElementById('propBeds').value = p.beds || '';
   document.getElementById('propBaths').value = p.baths || '';
+  document.getElementById('propParking').value = p.parking || '';
+  document.getElementById('propFloor').value = p.floor ?? '';
+  document.getElementById('propAge').value = p.age ?? '';
+  document.getElementById('propFeatures').value = (p.features || []).join(', ');
   document.getElementById('propDescription').value = p.description || '';
   document.getElementById('propType').value = p.type || 'house';
   document.getElementById('propStatus').value = p.status || 'available';
@@ -2956,17 +3020,25 @@ async function importPropertyFromUrl() {
   btn.disabled = true; spinner.classList.remove('hidden'); btnText.textContent = 'Importando...'; errEl.classList.add('hidden');
   try {
     const data = await api('POST', '/api/properties/import-url', { url });
-    if (data.title) document.getElementById('propTitle').value = data.title;
-    if (data.zone) document.getElementById('propZone').value = data.zone;
-    if (data.address) document.getElementById('propAddress').value = data.address;
-    if (data.price) document.getElementById('propPrice').value = data.price;
-    if (data.area) document.getElementById('propArea').value = data.area;
-    if (data.beds) document.getElementById('propBeds').value = data.beds;
-    if (data.baths) document.getElementById('propBaths').value = data.baths;
+    if (data.title)       document.getElementById('propTitle').value = data.title;
+    if (data.zone)        document.getElementById('propZone').value = data.zone;
+    if (data.address)     document.getElementById('propAddress').value = data.address;
+    if (data.price)       document.getElementById('propPrice').value = data.price;
+    if (data.currency)    document.getElementById('propCurrency').value = data.currency;
+    if (data.operation)   document.getElementById('propOperation').value = data.operation;
+    if (data.area)        document.getElementById('propArea').value = data.area;
+    if (data.areaTotal)   document.getElementById('propAreaTotal').value = data.areaTotal;
+    if (data.beds)        document.getElementById('propBeds').value = data.beds;
+    if (data.baths)       document.getElementById('propBaths').value = data.baths;
+    if (data.parking != null && data.parking !== undefined) document.getElementById('propParking').value = data.parking;
+    if (data.floor != null)  document.getElementById('propFloor').value = data.floor;
+    if (data.age != null)    document.getElementById('propAge').value = data.age;
     if (data.description) document.getElementById('propDescription').value = data.description;
-    if (data.type) document.getElementById('propType').value = data.type;
-    if (data.photos?.length) { propPhotos = [...data.photos]; renderPhotosPreview(); }
+    if (data.type)        document.getElementById('propType').value = data.type;
+    if (data.features?.length) document.getElementById('propFeatures').value = data.features.join(', ');
+    if (data.photos?.length) { propPhotos = [...data.photos]; renderPhotosPreview(); showPropTab('photos'); }
     if (data.address || data.zone) refreshPropMap();
+    showToast(`✅ Importado: ${data.title || 'propiedad'} · ${data.photos?.length || 0} fotos`);
   } catch(e) {
     errEl.textContent = e.message || 'No se pudo importar la URL';
     errEl.classList.remove('hidden');
@@ -2979,19 +3051,28 @@ async function submitPropForm() {
   const title = document.getElementById('propTitle').value.trim();
   if (!title) { document.getElementById('propTitle').focus(); return; }
   const id = document.getElementById('propId').value;
+  const numOrUndef = id => { const n = Number(document.getElementById(id)?.value); return n || undefined; };
+  const strOrUndef = id => document.getElementById(id)?.value?.trim() || undefined;
   const body = {
     title,
-    zone: document.getElementById('propZone').value || undefined,
-    address: document.getElementById('propAddress').value || undefined,
-    price: Number(document.getElementById('propPrice').value) || undefined,
-    area: Number(document.getElementById('propArea').value) || undefined,
-    beds: Number(document.getElementById('propBeds').value) || undefined,
-    baths: Number(document.getElementById('propBaths').value) || undefined,
-    description: document.getElementById('propDescription').value || undefined,
-    type: document.getElementById('propType').value,
-    status: document.getElementById('propStatus').value,
-    photos: propPhotos,
-    sourceUrl: document.getElementById('propImportUrl').value || undefined,
+    zone:        strOrUndef('propZone'),
+    address:     strOrUndef('propAddress'),
+    price:       numOrUndef('propPrice'),
+    currency:    strOrUndef('propCurrency') || 'USD',
+    operation:   strOrUndef('propOperation') || 'sale',
+    area:        numOrUndef('propArea'),
+    areaTotal:   numOrUndef('propAreaTotal'),
+    beds:        numOrUndef('propBeds'),
+    baths:       numOrUndef('propBaths'),
+    parking:     numOrUndef('propParking'),
+    floor:       numOrUndef('propFloor'),
+    age:         numOrUndef('propAge'),
+    description: strOrUndef('propDescription'),
+    type:        document.getElementById('propType').value,
+    status:      document.getElementById('propStatus').value,
+    features:    (document.getElementById('propFeatures')?.value || '').split(',').map(s => s.trim()).filter(Boolean),
+    photos:      propPhotos,
+    sourceUrl:   document.getElementById('propImportUrl').value || undefined,
   };
   try {
     if (id) await api('PATCH', '/api/properties/' + id, body);
