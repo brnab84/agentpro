@@ -318,7 +318,10 @@
         <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.18)">
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         </div>
-        <span class="text-white font-bold" style="font-size:16px;letter-spacing:-0.03em">AgentPro</span>
+        <div style="flex:1;min-width:0">
+          <span class="text-white font-bold" style="font-size:16px;letter-spacing:-0.03em">AgentPro</span>
+          <span id="sidebarVersion" style="display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.2);border-radius:99px;padding:1px 7px;letter-spacing:0.03em;vertical-align:middle"></span>
+        </div>
       </div>
       <p style="color:rgba(255,255,255,0.45);font-size:11px;margin-top:3px;letter-spacing:-0.01em" id="tenantLabel">Mi Agencia</p>
     </div>
@@ -389,7 +392,6 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Cerrar sesión
       </button>
-      <p style="color:rgba(255,255,255,0.55);font-size:11px;font-weight:600;text-align:center;margin-top:10px;letter-spacing:0.04em;background:rgba(255,255,255,0.08);border-radius:99px;padding:3px 10px;display:inline-block;width:100%" id="sidebarVersion"></p>
     </div>
   </div>
 
@@ -1808,7 +1810,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.8.1'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.8.2'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
