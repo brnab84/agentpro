@@ -22,7 +22,8 @@
     "mongoose": "^8.5.0",
     "morgan": "^1.10.0",
     "zod": "^3.23.8",
-    "@anthropic-ai/sdk": "^0.27.0"
+    "@anthropic-ai/sdk": "^0.27.0",
+    "nodemailer": "^6.9.14"
   },
   "devDependencies": {
     "eslint": "^9.7.0",

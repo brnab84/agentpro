@@ -369,6 +369,16 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Plantillas WA
       </a>
+      <!-- CORREO section -->
+      <div style="padding:6px 12px 2px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-top:4px">Correo</div>
+      <a onclick="showTab('email-accounts')" class="nav-item" data-tab="email-accounts">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        Mis emails
+      </a>
+      <a onclick="showTab('email-signatures')" class="nav-item" data-tab="email-signatures">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        Mis firmas
+      </a>
       <a id="teamNavItem" onclick="showTab('team')" class="nav-item hide-mobile" data-tab="team">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         Equipo
@@ -933,6 +943,113 @@
         </div>
       </div>
 
+      <!-- ── Email Account Modal ── -->
+      <div id="emailAccountModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center hidden p-4 sm:p-6">
+        <div class="modal-box bg-white w-full max-w-lg max-h-[90vh] flex flex-col">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+            <h2 id="emailAccountModalTitle" class="text-lg font-bold text-gray-900">Agregar cuenta</h2>
+            <button onclick="closeEmailAccountModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="col-span-2">
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Nombre / Etiqueta *</label>
+                <input id="eaName" type="text" placeholder="Ej: Marketing Principal" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Nombre remitente</label>
+                <input id="eaFromName" type="text" placeholder="Ej: Bernardo González" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Email remitente *</label>
+                <input id="eaFromEmail" type="email" placeholder="bernardo@empresa.com" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+            <div class="pt-2">
+              <p class="text-xs font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Configuración SMTP
+              </p>
+              <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-2">
+                  <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Servidor SMTP</label>
+                  <input id="eaSmtpHost" type="text" placeholder="smtp.gmail.com" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Puerto</label>
+                  <input id="eaSmtpPort" type="number" value="587" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Usuario SMTP</label>
+                  <input id="eaSmtpUser" type="text" placeholder="tu@gmail.com" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Contraseña</label>
+                  <input id="eaSmtpPass" type="password" placeholder="Contraseña de app" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              <div class="flex items-center gap-2 mt-3">
+                <input id="eaSmtpSecure" type="checkbox" class="rounded" />
+                <label for="eaSmtpSecure" class="text-xs text-gray-600">SSL/TLS (puerto 465)</label>
+              </div>
+            </div>
+            <!-- Quick config hints -->
+            <div class="rounded-xl p-3" style="background:var(--surface-2);border:1px solid var(--border)">
+              <p class="text-xs font-semibold mb-2" style="color:var(--text-2)">Configuraciones comunes</p>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="fillSmtp('smtp.gmail.com',587,false)" class="text-left p-2 rounded-lg text-xs hover:bg-white transition" style="color:var(--text-2)">📧 Gmail (587)</button>
+                <button onclick="fillSmtp('smtp.office365.com',587,false)" class="text-left p-2 rounded-lg text-xs hover:bg-white transition" style="color:var(--text-2)">📧 Outlook (587)</button>
+                <button onclick="fillSmtp('smtp.zoho.com',587,false)" class="text-left p-2 rounded-lg text-xs hover:bg-white transition" style="color:var(--text-2)">📧 Zoho (587)</button>
+                <button onclick="fillSmtp('smtp.sendgrid.net',587,false)" class="text-left p-2 rounded-lg text-xs hover:bg-white transition" style="color:var(--text-2)">📧 SendGrid (587)</button>
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+            <button onclick="closeEmailAccountModal()" class="border border-gray-300 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-50 transition">Cancelar</button>
+            <button onclick="saveEmailAccount()" class="flex-1 gradient-bg text-white text-sm font-semibold py-2.5 rounded-xl hover:opacity-90 transition">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Email Signature Modal ── -->
+      <div id="signatureModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center hidden p-4 sm:p-6">
+        <div class="modal-box bg-white w-full max-w-xl max-h-[90vh] flex flex-col">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+            <h2 id="signatureModalTitle" class="text-lg font-bold text-gray-900">Nueva firma</h2>
+            <button onclick="closeSignatureModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            <div>
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Nombre de la firma *</label>
+              <input id="sigName" type="text" placeholder="Ej: Firma Principal" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div class="flex items-center gap-2">
+              <input id="sigDefault" type="checkbox" class="rounded" />
+              <label for="sigDefault" class="text-xs text-gray-600 font-medium">Establecer como firma predeterminada</label>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Contenido HTML</label>
+                <button onclick="insertSigTemplate()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Usar plantilla</button>
+              </div>
+              <textarea id="sigHtml" rows="10" placeholder="<p>Tu nombre<br><strong>Cargo</strong><br>empresa.com</p>"
+                class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono resize-y"></textarea>
+            </div>
+            <!-- Preview -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Vista previa</p>
+              <div id="sigPreviewBox" class="rounded-xl p-4 border text-sm" style="border-color:var(--border);background:var(--surface-2);min-height:80px"></div>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+            <button onclick="closeSignatureModal()" class="border border-gray-300 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-50 transition">Cancelar</button>
+            <button onclick="saveSignature()" class="flex-1 gradient-bg text-white text-sm font-semibold py-2.5 rounded-xl hover:opacity-90 transition">Guardar</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Phone Number Modal ── -->
       <div id="phoneModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center hidden p-4 sm:p-6">
         <div class="modal-box bg-white w-full max-w-md">
@@ -1097,6 +1214,54 @@
               <p id="fdLeadsEmpty" class="text-sm hidden" style="color:var(--text-3)">Aún no hay leads calificados.</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- ── Mis Emails ── -->
+      <div id="tab-email-accounts" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="page-title">Mis Emails</h2>
+            <p class="page-sub">Cuentas SMTP para envío de correos desde AgentPro</p>
+          </div>
+          <button onclick="openEmailAccountModal()" class="gradient-bg text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Agregar cuenta
+          </button>
+        </div>
+        <!-- Info banner -->
+        <div class="rounded-2xl p-4 mb-6 flex items-start gap-3" style="background:var(--accent-light)">
+          <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div class="text-xs" style="color:var(--accent-dark)">
+            <p class="font-semibold mb-0.5">Configuración SMTP</p>
+            <p>Conectá cualquier cuenta de email (Gmail, Outlook, cuentas corporativas) usando SMTP para enviar campañas y notificaciones. Usá contraseñas de aplicación para mayor seguridad.</p>
+          </div>
+        </div>
+        <div id="emailAccountsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="emailAccountsEmpty" class="hidden text-center py-20" style="color:var(--text-3)">
+          <svg class="w-14 h-14 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <p class="text-sm">Sin cuentas de email</p>
+          <p class="text-xs mt-1">Agregá tu primera cuenta SMTP para enviar correos</p>
+        </div>
+      </div>
+
+      <!-- ── Mis Firmas ── -->
+      <div id="tab-email-signatures" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="page-title">Mis Firmas</h2>
+            <p class="page-sub">Firmas de email que se adjuntan automáticamente a tus correos</p>
+          </div>
+          <button onclick="openSignatureModal()" class="gradient-bg text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Nueva firma
+          </button>
+        </div>
+        <div id="signaturesList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        <div id="signaturesEmpty" class="hidden text-center py-20" style="color:var(--text-3)">
+          <svg class="w-14 h-14 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          <p class="text-sm">Sin firmas todavía</p>
+          <p class="text-xs mt-1">Creá una firma de email para tus comunicaciones</p>
         </div>
       </div>
 
@@ -1643,7 +1808,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.7.1'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.8.0'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1769,6 +1934,8 @@ const tabTitles = {
   inbox: 'Mensajes', funnels: 'Funnels', campaigns: 'Campañas', phones: 'Mis Números',
   active: 'Conversaciones Activas',
   templates: 'Plantillas WhatsApp',
+  'email-accounts': 'Mis Emails',
+  'email-signatures': 'Mis Firmas',
 };
 function showTab(tab) {
   closeSidebar();
@@ -1793,6 +1960,8 @@ function showTab(tab) {
   if (tab === 'campaigns') loadCampaigns();
   if (tab === 'active') loadActiveConversations();
   if (tab === 'phones') loadPhoneNumbers();
+  if (tab === 'email-accounts') loadEmailAccounts();
+  if (tab === 'email-signatures') loadEmailSignatures();
   if (tab === 'templates') loadWaTemplates();
   if (tab === 'team') loadTeam();
 }
@@ -4201,6 +4370,237 @@ document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openGlobalSearch(); }
   if (e.key === 'Escape') closeGlobalSearch();
 });
+
+// ── Email Accounts ────────────────────────────────────────────────────────────
+let allEmailAccounts = [];
+let editingEmailAccountId = null;
+
+async function loadEmailAccounts() {
+  try {
+    allEmailAccounts = await api('GET', '/api/email-accounts');
+    renderEmailAccounts();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function renderEmailAccounts() {
+  const list = document.getElementById('emailAccountsList');
+  const empty = document.getElementById('emailAccountsEmpty');
+  if (!allEmailAccounts.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  const statusColors = { active:'bg-green-100 text-green-700', inactive:'bg-gray-100 text-gray-500', error:'bg-red-100 text-red-600' };
+  const statusLabels = { active:'ACTIVO', inactive:'INACTIVO', error:'ERROR' };
+  list.innerHTML = allEmailAccounts.map(a => `
+    <div class="card p-5">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#EBF2FF">
+            <svg class="w-5 h-5" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <p class="font-semibold text-sm" style="color:var(--text-1)">${a.name}</p>
+            <p class="text-xs" style="color:var(--text-3)">${a.fromEmail}</p>
+          </div>
+        </div>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${statusColors[a.status] || 'bg-gray-100 text-gray-500'}">${statusLabels[a.status] || a.status}</span>
+      </div>
+      ${a.smtpHost ? `<p class="text-xs mb-1" style="color:var(--text-3)">SMTP: <span style="color:var(--text-2);font-family:var(--font-mono)">${a.smtpHost}:${a.smtpPort}</span></p>` : ''}
+      ${a.lastError ? `<p class="text-xs mb-3 text-red-500 truncate">${a.lastError}</p>` : '<div class="mb-3"></div>'}
+      <div class="flex gap-2 flex-wrap">
+        <button onclick="editEmailAccount('${a._id}')" class="text-xs font-medium border rounded-lg px-3 py-1.5 hover:bg-gray-50 transition" style="border-color:var(--border);color:var(--text-2)">✏️ Editar</button>
+        <button onclick="testEmailAccount('${a._id}')" class="text-xs font-medium border rounded-lg px-3 py-1.5 hover:bg-gray-50 transition" style="border-color:var(--border);color:var(--text-2)">🔌 Probar</button>
+        <button onclick="promptSendTest('${a._id}')" class="text-xs font-medium border rounded-lg px-3 py-1.5 hover:bg-gray-50 transition" style="border-color:var(--border);color:var(--text-2)">📤 Enviar test</button>
+        <button onclick="deleteEmailAccount('${a._id}')" class="text-xs text-red-400 hover:text-red-600 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function openEmailAccountModal() {
+  editingEmailAccountId = null;
+  document.getElementById('emailAccountModalTitle').textContent = 'Agregar cuenta';
+  ['eaName','eaFromName','eaFromEmail','eaSmtpHost','eaSmtpUser','eaSmtpPass'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('eaSmtpPort').value = '587';
+  document.getElementById('eaSmtpSecure').checked = false;
+  document.getElementById('emailAccountModal').classList.remove('hidden');
+}
+
+function closeEmailAccountModal() { document.getElementById('emailAccountModal').classList.add('hidden'); }
+
+function fillSmtp(host, port, secure) {
+  document.getElementById('eaSmtpHost').value = host;
+  document.getElementById('eaSmtpPort').value = port;
+  document.getElementById('eaSmtpSecure').checked = secure;
+}
+
+function editEmailAccount(id) {
+  const a = allEmailAccounts.find(x => x._id === id);
+  if (!a) return;
+  editingEmailAccountId = id;
+  document.getElementById('emailAccountModalTitle').textContent = 'Editar cuenta';
+  document.getElementById('eaName').value = a.name;
+  document.getElementById('eaFromName').value = a.fromName || '';
+  document.getElementById('eaFromEmail').value = a.fromEmail;
+  document.getElementById('eaSmtpHost').value = a.smtpHost || '';
+  document.getElementById('eaSmtpPort').value = a.smtpPort || 587;
+  document.getElementById('eaSmtpUser').value = a.smtpUser || '';
+  document.getElementById('eaSmtpPass').value = '';
+  document.getElementById('eaSmtpSecure').checked = !!a.smtpSecure;
+  document.getElementById('emailAccountModal').classList.remove('hidden');
+}
+
+async function saveEmailAccount() {
+  const name = document.getElementById('eaName').value.trim();
+  const fromEmail = document.getElementById('eaFromEmail').value.trim();
+  if (!name || !fromEmail) { showToast('Nombre y email son requeridos', 'error'); return; }
+  const payload = {
+    name, fromEmail,
+    fromName: document.getElementById('eaFromName').value.trim(),
+    smtpHost: document.getElementById('eaSmtpHost').value.trim(),
+    smtpPort: Number(document.getElementById('eaSmtpPort').value) || 587,
+    smtpUser: document.getElementById('eaSmtpUser').value.trim(),
+    smtpSecure: document.getElementById('eaSmtpSecure').checked,
+  };
+  const pass = document.getElementById('eaSmtpPass').value;
+  if (pass) payload.smtpPass = pass;
+  try {
+    if (editingEmailAccountId) await api('PATCH', `/api/email-accounts/${editingEmailAccountId}`, payload);
+    else await api('POST', '/api/email-accounts', payload);
+    closeEmailAccountModal();
+    showToast(editingEmailAccountId ? 'Cuenta actualizada' : 'Cuenta agregada');
+    loadEmailAccounts();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function testEmailAccount(id) {
+  showToast('Probando conexión…', 'success');
+  try {
+    await api('POST', `/api/email-accounts/${id}/test`);
+    showToast('✅ Conexión SMTP exitosa');
+    loadEmailAccounts();
+  } catch(e) { showToast(e.message, 'error'); loadEmailAccounts(); }
+}
+
+async function promptSendTest(id) {
+  const toEmail = prompt('Ingresá el email de destino para el test:');
+  if (!toEmail) return;
+  try {
+    await api('POST', `/api/email-accounts/${id}/send-test`, { toEmail });
+    showToast(`Email de prueba enviado a ${toEmail}`);
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteEmailAccount(id) {
+  if (!confirm('¿Eliminar esta cuenta de email?')) return;
+  try {
+    await api('DELETE', `/api/email-accounts/${id}`);
+    showToast('Cuenta eliminada');
+    loadEmailAccounts();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── Email Signatures ──────────────────────────────────────────────────────────
+let allSignatures = [];
+let editingSignatureId = null;
+
+async function loadEmailSignatures() {
+  try {
+    allSignatures = await api('GET', '/api/email-signatures');
+    renderSignatures();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function renderSignatures() {
+  const list = document.getElementById('signaturesList');
+  const empty = document.getElementById('signaturesEmpty');
+  if (!allSignatures.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  list.innerHTML = allSignatures.map(s => `
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <p class="font-semibold text-sm" style="color:var(--text-1)">${s.name}</p>
+          ${s.isDefault ? '<span class="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Predeterminada</span>' : ''}
+        </div>
+        <div class="flex gap-2">
+          <button onclick="editSignature('${s._id}')" class="text-xs font-medium border rounded-lg px-3 py-1.5 hover:bg-gray-50 transition" style="border-color:var(--border);color:var(--text-2)">✏️ Editar</button>
+          <button onclick="deleteSignature('${s._id}')" class="text-xs text-red-400 hover:text-red-600 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition">🗑</button>
+        </div>
+      </div>
+      <div class="rounded-xl p-3 text-sm overflow-hidden max-h-32" style="background:var(--surface-2);border:1px solid var(--border)">${s.html || '<p class="text-gray-400 text-xs">Sin contenido</p>'}</div>
+    </div>`).join('');
+}
+
+function openSignatureModal() {
+  editingSignatureId = null;
+  document.getElementById('signatureModalTitle').textContent = 'Nueva firma';
+  document.getElementById('sigName').value = '';
+  document.getElementById('sigHtml').value = '';
+  document.getElementById('sigDefault').checked = false;
+  document.getElementById('sigPreviewBox').innerHTML = '';
+  document.getElementById('signatureModal').classList.remove('hidden');
+}
+
+function closeSignatureModal() { document.getElementById('signatureModal').classList.add('hidden'); }
+
+function editSignature(id) {
+  const s = allSignatures.find(x => x._id === id);
+  if (!s) return;
+  editingSignatureId = id;
+  document.getElementById('signatureModalTitle').textContent = 'Editar firma';
+  document.getElementById('sigName').value = s.name;
+  document.getElementById('sigHtml').value = s.html || '';
+  document.getElementById('sigDefault').checked = !!s.isDefault;
+  document.getElementById('sigPreviewBox').innerHTML = s.html || '';
+  document.getElementById('signatureModal').classList.remove('hidden');
+}
+
+function insertSigTemplate() {
+  document.getElementById('sigHtml').value = `<table style="font-family:Arial,sans-serif;font-size:13px;color:#333">
+  <tr>
+    <td style="padding-right:16px;border-right:3px solid #0071E3;padding-right:12px">
+      <img src="https://via.placeholder.com/60x60/0071E3/fff?text=AG" width="60" height="60" style="border-radius:50%" />
+    </td>
+    <td style="padding-left:12px">
+      <p style="margin:0;font-weight:700;font-size:15px">Tu Nombre</p>
+      <p style="margin:2px 0;color:#666">Cargo · Empresa</p>
+      <p style="margin:2px 0;color:#0071E3">📞 +507 6000-0000</p>
+      <p style="margin:2px 0;color:#0071E3">🌐 www.empresa.com</p>
+    </td>
+  </tr>
+</table>`;
+  document.getElementById('sigPreviewBox').innerHTML = document.getElementById('sigHtml').value;
+}
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'sigHtml') {
+    document.getElementById('sigPreviewBox').innerHTML = e.target.value;
+  }
+});
+
+async function saveSignature() {
+  const name = document.getElementById('sigName').value.trim();
+  if (!name) { showToast('El nombre es requerido', 'error'); return; }
+  const payload = {
+    name,
+    html: document.getElementById('sigHtml').value,
+    isDefault: document.getElementById('sigDefault').checked,
+  };
+  try {
+    if (editingSignatureId) await api('PATCH', `/api/email-signatures/${editingSignatureId}`, payload);
+    else await api('POST', '/api/email-signatures', payload);
+    closeSignatureModal();
+    showToast(editingSignatureId ? 'Firma actualizada' : 'Firma creada');
+    loadEmailSignatures();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteSignature(id) {
+  if (!confirm('¿Eliminar esta firma?')) return;
+  try {
+    await api('DELETE', `/api/email-signatures/${id}`);
+    showToast('Firma eliminada');
+    loadEmailSignatures();
+  } catch(e) { showToast(e.message, 'error'); }
+}
 
 // ── Phone Numbers ─────────────────────────────────────────────────────────────
 let allPhoneNumbers = [];

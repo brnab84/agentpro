@@ -18,6 +18,8 @@ import funnelRoutes from './modules/funnels/funnels.routes.js';
 import campaignRoutes from './modules/campaigns/campaigns.routes.js';
 import waTemplateRoutes from './modules/wa-templates/wa-templates.routes.js';
 import phoneNumberRoutes from './modules/phone-numbers/phone-numbers.routes.js';
+import emailAccountRoutes from './modules/email-accounts/email-accounts.routes.js';
+import emailSignatureRoutes from './modules/email-signatures/email-signatures.routes.js';
 
 let indexHtml;
 try {
@@ -54,6 +56,8 @@ export function createApp() {
   app.use('/api/campaigns', campaignRoutes);
   app.use('/api/wa-templates', waTemplateRoutes);
   app.use('/api/phone-numbers', phoneNumberRoutes);
+  app.use('/api/email-accounts', emailAccountRoutes);
+  app.use('/api/email-signatures', emailSignatureRoutes);
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
   app.use(errorHandler);
