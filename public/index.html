@@ -691,8 +691,17 @@
 
       <!-- ── PIPELINE ── -->
       <div id="tab-pipeline" class="tab-content hidden fade-in">
-        <p class="text-sm text-gray-500 mb-6">Vista kanban del pipeline de ventas</p>
-        <div class="flex gap-4 overflow-x-auto pb-4" id="kanbanBoard"></div>
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h2 class="text-xl font-bold" style="color:var(--text-1)">Pipeline</h2>
+            <p class="text-sm mt-0.5" style="color:var(--text-2)">Arrastrá o usá las flechas para mover leads entre etapas</p>
+          </div>
+          <button onclick="openNewLeadModal()" class="btn-primary flex items-center gap-2 text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Nuevo Lead
+          </button>
+        </div>
+        <div class="flex gap-3 overflow-x-auto pb-6" id="kanbanBoard" style="min-height:60vh;align-items:flex-start"></div>
       </div>
 
       <!-- ── INBOX ── -->
@@ -1818,7 +1827,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.8.3'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.8.4'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -2254,12 +2263,22 @@ document.getElementById('leadForm').onsubmit = async (e) => {
     stage: document.getElementById('leadStage').value,
     assignedTo: assignVal || null,
   };
-  await (id ? api('PATCH', '/api/leads/' + id, body) : api('POST', '/api/leads', body));
-  closeLeadModal(); loadLeads();
+  try {
+    await (id ? api('PATCH', '/api/leads/' + id, body) : api('POST', '/api/leads', body));
+    closeLeadModal();
+    showToast(id ? 'Lead actualizado' : 'Lead creado');
+    loadLeads();
+    if (document.getElementById('tab-pipeline')?.classList.contains('hidden') === false) loadPipeline();
+  } catch(err) { showToast(err.message, 'error'); }
 };
 async function deleteLead(id) {
-  if (!confirm('¿Eliminar este lead?')) return;
-  await api('DELETE', '/api/leads/' + id); loadLeads();
+  if (!confirm('¿Eliminar este lead? Esta acción no se puede deshacer.')) return;
+  try {
+    await api('DELETE', '/api/leads/' + id);
+    showToast('Lead eliminado');
+    loadLeads();
+    if (document.getElementById('tab-pipeline')?.classList.contains('hidden') === false) loadPipeline();
+  } catch(err) { showToast(err.message, 'error'); }
 }
 
 // ── AI ────────────────────────────────────────────────────────────────────────
@@ -2776,35 +2795,108 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
+const PIPELINE_STAGES = [
+  { id:'new',       label:'Nuevos',      color:'#3B82F6', bg:'#EFF6FF', border:'#BFDBFE' },
+  { id:'qualified', label:'Calificados', color:'#10B981', bg:'#ECFDF5', border:'#A7F3D0' },
+  { id:'visit',     label:'Visita',      color:'#F59E0B', bg:'#FFFBEB', border:'#FDE68A' },
+  { id:'closed',    label:'Cerrados',    color:'#22C55E', bg:'#F0FDF4', border:'#BBF7D0' },
+  { id:'lost',      label:'Perdidos',    color:'#EF4444', bg:'#FEF2F2', border:'#FECACA' },
+];
+
 async function loadPipeline() {
   const leads = await api('GET', '/api/leads').catch(() => []);
-  const stages = [
-    { id:'new', label:'Nuevos', border:'border-blue-200', bg:'bg-blue-50' },
-    { id:'qualified', label:'Calificados', border:'border-emerald-200', bg:'bg-emerald-50' },
-    { id:'visit', label:'Visita', border:'border-amber-200', bg:'bg-amber-50' },
-    { id:'closed', label:'Cerrados', border:'border-green-200', bg:'bg-green-50' },
-    { id:'lost', label:'Perdidos', border:'border-red-200', bg:'bg-red-50' },
-  ];
-  document.getElementById('kanbanBoard').innerHTML = stages.map(st => {
+  const board = document.getElementById('kanbanBoard');
+  board.innerHTML = PIPELINE_STAGES.map(st => {
     const group = leads.filter(l => l.stage === st.id);
-    return `<div class="flex-shrink-0 w-60">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-sm font-semibold text-gray-700">${st.label}</span>
-        <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">${group.length}</span>
-      </div>
-      <div class="space-y-2 min-h-20">${group.map(l => `
-        <div class="card p-3 border ${st.border} ${st.bg} hover:shadow-md transition cursor-pointer" onclick="openNewApptModal('${l._id}')">
-          <p class="text-sm font-medium text-gray-900 mb-1">${l.name}</p>
-          <p class="text-xs text-gray-500 mb-2">${l.intent || l.contact || '—'}</p>
-          <div class="flex items-center justify-between">
-            <div class="score-bar w-16"><div class="score-fill" style="width:${l.score}%"></div></div>
-            <span class="text-xs font-bold text-gray-700">${l.score}</span>
+    const stIdx = PIPELINE_STAGES.findIndex(s => s.id === st.id);
+    const cards = group.map(l => {
+      const prevSt = PIPELINE_STAGES[stIdx - 1];
+      const nextSt = PIPELINE_STAGES[stIdx + 1];
+      const budget = l.budget ? `$${Number(l.budget).toLocaleString('es')}` : '';
+      return `<div class="pipeline-card" draggable="true"
+          ondragstart="pipelineDragStart(event,'${l._id}')"
+          style="background:#fff;border:1px solid ${st.border};border-radius:12px;padding:12px;margin-bottom:8px;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:6px">
+          <p style="font-size:13px;font-weight:600;color:#1D1D1F;line-height:1.3;flex:1">${l.name}</p>
+          <button onclick="openEditLeadModal('${l._id}')" title="Editar"
+            style="flex-shrink:0;padding:3px;border-radius:6px;background:none;border:none;cursor:pointer;color:#6E6E73;line-height:0"
+            onmouseover="this.style.background='#F2F2F7'" onmouseout="this.style.background='none'">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </button>
+        </div>
+        ${l.contact ? `<p style="font-size:11px;color:#6E6E73;margin-bottom:4px">📱 ${l.contact}</p>` : ''}
+        ${l.intent  ? `<p style="font-size:11px;color:#6E6E73;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🏠 ${l.intent}</p>` : ''}
+        ${budget    ? `<p style="font-size:11px;color:#10B981;font-weight:600;margin-bottom:6px">💰 ${budget}</p>` : ''}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="width:48px;height:5px;background:#E5E7EB;border-radius:99px;overflow:hidden">
+              <div style="width:${l.score || 0}%;height:100%;background:${st.color};border-radius:99px"></div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:#374151">${l.score || 0}</span>
           </div>
-          ${l.nextAction ? `<p class="text-xs text-blue-600 mt-1.5">💡 ${l.nextAction.substring(0,50)}</p>` : ''}
-        </div>`).join('')}
+          <div style="display:flex;gap:3px">
+            ${prevSt ? `<button onclick="moveLeadStage('${l._id}','${prevSt.id}')" title="← ${prevSt.label}"
+              style="font-size:10px;padding:2px 7px;border-radius:6px;background:#F2F2F7;border:none;cursor:pointer;color:#6E6E73;font-weight:600"
+              onmouseover="this.style.background='#E5E7EB'" onmouseout="this.style.background='#F2F2F7'">←</button>` : ''}
+            ${nextSt ? `<button onclick="moveLeadStage('${l._id}','${nextSt.id}')" title="→ ${nextSt.label}"
+              style="font-size:10px;padding:2px 7px;border-radius:6px;background:${st.color};border:none;cursor:pointer;color:#fff;font-weight:600"
+              onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">→</button>` : ''}
+          </div>
+        </div>
+        ${l.nextAction ? `<p style="font-size:11px;color:#3B82F6;margin-top:6px;font-style:italic">💡 ${l.nextAction.substring(0,55)}</p>` : ''}
+      </div>`;
+    }).join('');
+
+    return `<div class="pipeline-col" style="flex-shrink:0;width:220px"
+        ondragover="event.preventDefault()" ondrop="pipelineDrop(event,'${st.id}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:10px;height:10px;border-radius:50%;background:${st.color}"></div>
+          <span style="font-size:13px;font-weight:700;color:#1D1D1F">${st.label}</span>
+        </div>
+        <span style="font-size:11px;font-weight:600;background:#F2F2F7;color:#6E6E73;padding:2px 8px;border-radius:99px">${group.length}</span>
+      </div>
+      <div class="pipeline-drop-zone" data-stage="${st.id}"
+        style="min-height:120px;border-radius:12px;padding:4px;border:2px dashed transparent;transition:border-color 0.2s">
+        ${cards}
+        <button onclick="openNewLeadModalForStage('${st.id}')"
+          style="width:100%;padding:8px;border-radius:10px;border:1.5px dashed #D1D5DB;background:none;color:#9CA3AF;font-size:12px;cursor:pointer;margin-top:4px;transition:all 0.15s"
+          onmouseover="this.style.borderColor='${st.color}';this.style.color='${st.color}'" onmouseout="this.style.borderColor='#D1D5DB';this.style.color='#9CA3AF'">
+          + Agregar lead
+        </button>
       </div>
     </div>`;
   }).join('');
+
+  // Drag-highlight drop zones
+  document.querySelectorAll('.pipeline-drop-zone').forEach(z => {
+    z.addEventListener('dragover', () => z.style.borderColor = '#3B82F6');
+    z.addEventListener('dragleave', () => z.style.borderColor = 'transparent');
+    z.addEventListener('drop', () => z.style.borderColor = 'transparent');
+  });
+}
+
+let _dragLeadId = null;
+function pipelineDragStart(e, id) { _dragLeadId = id; e.dataTransfer.effectAllowed = 'move'; }
+async function pipelineDrop(e, stage) {
+  e.preventDefault();
+  if (!_dragLeadId) return;
+  await moveLeadStage(_dragLeadId, stage);
+  _dragLeadId = null;
+}
+async function moveLeadStage(id, stage) {
+  try {
+    await api('PATCH', '/api/leads/' + id, { stage });
+    // Update allLeads cache
+    const l = allLeads.find(x => x._id === id);
+    if (l) l.stage = stage;
+    loadPipeline();
+    showToast('Stage actualizado: ' + (PIPELINE_STAGES.find(s=>s.id===stage)?.label || stage));
+  } catch(e) { showToast(e.message, 'error'); }
+}
+function openNewLeadModalForStage(stage) {
+  openNewLeadModal();
+  setTimeout(() => { const s = document.getElementById('leadStage'); if(s) s.value = stage; }, 50);
 }
 
 // ── Campaigns ─────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '1.8.3';
+export const APP_VERSION = '1.8.4';
 
 export const env = {
   port: Number(process.env.PORT) || 3000,
