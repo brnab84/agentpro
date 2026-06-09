@@ -1410,6 +1410,71 @@
           </div>
         </div>
 
+        <!-- Mi Portal card -->
+        <div id="portalConfigSection" class="hidden card p-6 max-w-xl mb-6">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#EEF2FF">
+              <svg class="w-6 h-6" fill="none" stroke="#4F46E5" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">Mi Portal Público</p>
+              <p class="text-xs text-gray-400">Página pública para mostrar tus propiedades</p>
+            </div>
+            <div class="ml-auto flex items-center gap-2">
+              <span class="text-xs text-gray-500">Activo</span>
+              <button id="portalActiveToggle" onclick="togglePortalActive()" class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-gray-200">
+                <span id="portalActiveKnob" class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform translate-x-0.5"></span>
+              </button>
+            </div>
+          </div>
+          <form id="portalConfigForm" class="space-y-4" onsubmit="savePortalConfig(event)">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Nombre de la agencia</label>
+                <input id="portalAgencyName" type="text" placeholder="Inmobiliaria ABC" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Slug (URL)</label>
+                <input id="portalSlug" type="text" placeholder="mi-agencia" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Tagline</label>
+              <input id="portalTagline" type="text" placeholder="Tu hogar ideal te espera" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-gray-500 font-medium">WhatsApp de contacto</label>
+                <input id="portalWhatsapp" type="text" placeholder="+5491100000000" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Email de contacto</label>
+                <input id="portalEmail" type="email" placeholder="info@agencia.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Color principal</label>
+              <div class="flex items-center gap-3 mt-1">
+                <input id="portalColor" type="color" value="#6366F1" class="h-9 w-16 rounded-lg border border-gray-300 cursor-pointer p-1" />
+                <span class="text-xs text-gray-400">Color del portal público</span>
+              </div>
+            </div>
+            <!-- Link preview -->
+            <div id="portalLinkPreview" class="hidden rounded-lg p-3 flex items-center justify-between gap-2" style="background:#F0F4FF;border:1px solid #C7D2FE">
+              <div class="flex items-center gap-2 min-w-0">
+                <svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                <a id="portalLinkHref" href="#" target="_blank" class="text-xs text-indigo-600 font-medium truncate hover:underline"></a>
+              </div>
+              <button type="button" onclick="copyPortalLink()" class="text-xs text-indigo-500 hover:text-indigo-700 font-medium flex-shrink-0 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Copiar
+              </button>
+            </div>
+            <div id="portalSaveMsg" class="hidden text-sm text-green-600 font-medium">✓ Portal guardado</div>
+            <button type="submit" class="gradient-bg text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition">Guardar portal</button>
+          </form>
+        </div>
+
         <!-- Channel config (owner only) -->
         <div id="channelConfigSection" class="hidden">
           <h3 class="font-semibold text-gray-900 mb-4">Configuración de canales</h3>
@@ -2095,7 +2160,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '2.0.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '2.1.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -2321,7 +2386,7 @@ function showTab(tab) {
   if (tab === 'email-accounts') loadEmailAccounts();
   if (tab === 'email-signatures') loadEmailSignatures();
   if (tab === 'templates') loadWaTemplates();
-  if (tab === 'team') { loadTeam(); loadGoogleCalendarStatus(); }
+  if (tab === 'team') { loadTeam(); loadGoogleCalendarStatus(); loadPortalConfig(); }
   if (tab === 'domains') loadDomains();
   if (tab === 'reports') document.getElementById('reportPreview')?.classList.add('hidden');
 }
@@ -2988,6 +3053,16 @@ async function loadProperties() {
         </div>
         ${p.features?.length ? `<div class="flex flex-wrap gap-1 mt-2">${p.features.slice(0,4).map(f => `<span class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">${f}</span>`).join('')}${p.features.length > 4 ? `<span class="text-xs text-gray-400">+${p.features.length-4}</span>` : ''}</div>` : ''}
         ${p.description ? `<p class="text-xs text-gray-400 mt-2 line-clamp-2">${p.description}</p>` : ''}
+        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100" onclick="event.stopPropagation()">
+          <span class="text-xs text-gray-500 font-medium">Portal público</span>
+          <button
+            onclick="togglePortalPublish('${p._id}', ${!p.publishedOnPortal})"
+            class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${p.publishedOnPortal ? 'bg-indigo-500' : 'bg-gray-200'}"
+            title="${p.publishedOnPortal ? 'Publicado en portal' : 'No publicado'}"
+          >
+            <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${p.publishedOnPortal ? 'translate-x-4' : 'translate-x-0.5'}"></span>
+          </button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -3773,7 +3848,8 @@ async function loadTeam() {
   const isOwner = currentUser?.role === 'owner';
   document.getElementById('inviteBtn').classList.toggle('hidden', !isOwner);
 
-  // Show channel config section for owners and pre-fill values
+  // Show portal & channel config sections for owners
+  document.getElementById('portalConfigSection').classList.toggle('hidden', !isOwner);
   const cfgSection = document.getElementById('channelConfigSection');
   if (isOwner) {
     cfgSection.classList.remove('hidden');
@@ -5724,6 +5800,91 @@ async function syncGoogleCalendar() {
     window.history.replaceState({}, '', window.location.pathname);
   }
 })();
+
+// ── Portal ────────────────────────────────────────────────────────────────────
+
+let _portalActive = false;
+
+async function loadPortalConfig() {
+  try {
+    const cfg = await api('GET', '/api/portal/config/me');
+    _portalActive = cfg.portal?.active || false;
+    document.getElementById('portalAgencyName').value = cfg.portal?.agencyName || '';
+    document.getElementById('portalSlug').value        = cfg.slug || '';
+    document.getElementById('portalTagline').value     = cfg.portal?.tagline || '';
+    document.getElementById('portalWhatsapp').value    = cfg.portal?.whatsapp || '';
+    document.getElementById('portalEmail').value       = cfg.portal?.email || '';
+    document.getElementById('portalColor').value       = cfg.portal?.primaryColor || '#6366F1';
+    _updatePortalToggleUI(_portalActive);
+    _updatePortalLink(cfg.slug);
+  } catch { /* not critical */ }
+}
+
+function _updatePortalToggleUI(active) {
+  const btn  = document.getElementById('portalActiveToggle');
+  const knob = document.getElementById('portalActiveKnob');
+  if (!btn) return;
+  btn.className  = `relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${active ? 'bg-indigo-500' : 'bg-gray-200'}`;
+  knob.className = `inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${active ? 'translate-x-4' : 'translate-x-0.5'}`;
+}
+
+function _updatePortalLink(slug) {
+  const preview = document.getElementById('portalLinkPreview');
+  const link    = document.getElementById('portalLinkHref');
+  if (!slug) { preview.classList.add('hidden'); return; }
+  const url = `${window.location.origin}/portal/${slug}`;
+  link.textContent = url;
+  link.href = url;
+  preview.classList.remove('hidden');
+}
+
+function togglePortalActive() {
+  _portalActive = !_portalActive;
+  _updatePortalToggleUI(_portalActive);
+}
+
+async function savePortalConfig(e) {
+  e.preventDefault();
+  const slug = document.getElementById('portalSlug').value.trim();
+  const body = {
+    slug,
+    portal: {
+      active:       _portalActive,
+      agencyName:   document.getElementById('portalAgencyName').value.trim(),
+      tagline:      document.getElementById('portalTagline').value.trim(),
+      primaryColor: document.getElementById('portalColor').value,
+      whatsapp:     document.getElementById('portalWhatsapp').value.trim(),
+      email:        document.getElementById('portalEmail').value.trim(),
+    }
+  };
+  try {
+    await api('PUT', '/api/portal/config/me', body);
+    _updatePortalLink(slug);
+    const msg = document.getElementById('portalSaveMsg');
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 3000);
+  } catch (err) {
+    showToast('Error al guardar portal: ' + err.message, 'error');
+  }
+}
+
+function copyPortalLink() {
+  const url = document.getElementById('portalLinkHref').textContent;
+  if (!url) return;
+  navigator.clipboard.writeText(url).then(() => showToast('¡Link copiado!')).catch(() => {});
+}
+
+async function togglePortalPublish(id, published) {
+  try {
+    await api('PATCH', `/api/portal/config/properties/${id}/publish`, { published });
+    const p = allProps.find(x => x._id === id);
+    if (p) p.publishedOnPortal = published;
+    loadProperties();
+    showToast(published ? '✅ Publicado en portal' : 'Quitado del portal');
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 initVersion();

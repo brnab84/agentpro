@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '2.0.0'; // major: Google Calendar + OAuth + clean code refactor
+export const APP_VERSION = '2.1.0'; // minor: public property portal + CRM portal settings
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

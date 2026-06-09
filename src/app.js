@@ -22,16 +22,17 @@ import emailAccountRoutes from './modules/email-accounts/email-accounts.routes.j
 import emailSignatureRoutes from './modules/email-signatures/email-signatures.routes.js';
 import domainRoutes from './modules/domains/domains.routes.js';
 import googleRoutes from './modules/google/google.routes.js';
+import portalRoutes from './modules/portal/portal.routes.js';
 
-let indexHtml;
-let landingHtml;
-try {
-  indexHtml  = readFileSync(join(process.cwd(), 'public', 'index.html'),  'utf-8');
-  landingHtml = readFileSync(join(process.cwd(), 'public', 'landing.html'), 'utf-8');
-} catch {
-  indexHtml   = '<h1>AgentPro API</h1>';
-  landingHtml = indexHtml;
-}
+const readHtml = (filename, fallback = '<h1>AgentPro</h1>') => {
+  try { return readFileSync(join(process.cwd(), 'public', filename), 'utf-8'); }
+  catch { return fallback; }
+};
+
+const indexHtml          = readHtml('index.html');
+const landingHtml        = readHtml('landing.html', indexHtml);
+const portalListingHtml  = readHtml('portal-listing.html', indexHtml);
+const portalPropertyHtml = readHtml('portal-property.html', indexHtml);
 
 export function createApp() {
   const app = express();
@@ -49,6 +50,10 @@ export function createApp() {
 
   // Landing page
   app.get('/landing', (_req, res) => res.type('html').send(landingHtml));
+
+  // Public portal pages (SPA-style, JS fetches data from /api/portal/:slug)
+  app.get('/portal/:slug/propiedad/:id', (_req, res) => res.type('html').send(portalPropertyHtml));
+  app.get('/portal/:slug', (_req, res) => res.type('html').send(portalListingHtml));
 
   // App (SPA — no-cache so version polling works)
   app.get('/', (_req, res) => {
@@ -73,6 +78,7 @@ export function createApp() {
   app.use('/api/email-signatures', emailSignatureRoutes);
   app.use('/api/domains', domainRoutes);
   app.use('/api/google', googleRoutes);
+  app.use('/api/portal', portalRoutes);
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
   app.use(errorHandler);
