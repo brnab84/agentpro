@@ -24,3 +24,9 @@ export const remove = asyncHandler(async (req, res) => {
   await service.remove(req.tenantId, req.params.id);
   res.status(204).send();
 });
+
+export const importLeads = asyncHandler(async (req, res) => {
+  const { rows } = req.body;
+  const result = await service.importLeads(req.tenantId, rows);
+  res.status(201).json(result);
+});

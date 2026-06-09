@@ -9,6 +9,7 @@ const router = Router();
 router.use(auth, tenantScope);
 
 router.get('/', controller.list);
+router.post('/import', controller.importLeads);
 router.post('/', validate(createLeadSchema), controller.create);
 router.get('/:id', controller.getById);
 router.patch('/:id', validate(updateLeadSchema), controller.update);
