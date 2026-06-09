@@ -247,6 +247,7 @@
       </div>
       <h1 class="font-bold text-gray-900" style="font-size:26px;letter-spacing:-0.04em">AgentPro</h1>
       <p class="text-sm mt-1" style="color:var(--text-2)">CRM Predictivo Inmobiliario</p>
+      <p id="loginVersion" class="text-xs mt-2 font-mono" style="color:var(--accent);background:var(--accent-light);display:inline-block;padding:2px 8px;border-radius:99px"></p>
     </div>
     <div id="loginError" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4"></div>
     <form id="loginForm" class="space-y-4">
@@ -264,7 +265,6 @@
       <p class="text-sm text-gray-500 mb-3">¿No tenés cuenta?</p>
       <button onclick="showRegister()" class="text-blue-600 text-sm font-medium hover:underline">Crear cuenta gratis</button>
     </div>
-    <p class="text-center text-xs text-gray-300 mt-6" id="loginVersion"></p>
   </div>
 </div>
 
@@ -1154,9 +1154,17 @@
 </div>
 
 <script>
+// ── Global error handler (catch silent crashes) ───────────────────────────────
+window.onerror = function(msg, src, line) {
+  const el = document.getElementById('loginError');
+  if (el) { el.textContent = `JS Error (${line}): ${msg}`; el.classList.remove('hidden'); }
+  console.error('Global error:', msg, src, line);
+  return false;
+};
+
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.5.7'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.5.8'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {

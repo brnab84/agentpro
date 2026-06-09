@@ -34,7 +34,11 @@ export function createApp() {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok', version: APP_VERSION }));
   app.get('/api/version', (_req, res) => res.json({ version: APP_VERSION }));
-  app.get('/', (_req, res) => res.type('html').send(indexHtml));
+  app.get('/', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.type('html').send(indexHtml);
+  });
 
   app.use('/api/auth', authRoutes);
   app.use('/api/leads', leadRoutes);
