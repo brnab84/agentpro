@@ -1,6 +1,7 @@
 import { AppError } from '../../utils/AppError.js';
 import { Funnel } from '../../models/Funnel.js';
 import { FunnelExecution } from '../../models/FunnelExecution.js';
+import { Conversation } from '../../models/Conversation.js';
 
 export const list = (tenantId) =>
   Funnel.find({ tenantId }).sort({ createdAt: -1 });
@@ -75,3 +76,30 @@ export const findActiveByKeyword = (tenantId, keyword) =>
 
 export const findRunningExecution = (tenantId, externalId) =>
   FunnelExecution.findOne({ tenantId, externalId, status: 'running' }).populate('funnelId');
+
+export const listExecutions = async (tenantId, query = {}) => {
+  const { status, limit = 100 } = query;
+  const filter = { tenantId };
+  if (status) filter.status = status;
+
+  const executions = await FunnelExecution.find(filter)
+    .populate('leadId', 'name contact stage')
+    .populate('funnelId', 'name channel')
+    .sort({ updatedAt: -1 })
+    .limit(Number(limit))
+    .lean();
+
+  // Attach last message from each conversation
+  const convIds = executions.map((e) => e.conversationId).filter(Boolean);
+  const convs = await Conversation.find({ _id: { $in: convIds } }, 'messages lastMessageAt').lean();
+  const convMap = Object.fromEntries(convs.map((c) => [c._id.toString(), c]));
+
+  return executions.map((e) => {
+    const conv = convMap[e.conversationId?.toString()];
+    const lastMsg = conv?.messages?.at(-1) || null;
+    return {
+      ...e,
+      lastMessage: lastMsg ? { role: lastMsg.role, content: lastMsg.content.slice(0, 120), at: conv.lastMessageAt } : null,
+    };
+  });
+};

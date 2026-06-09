@@ -6,6 +6,7 @@ import * as controller from './funnels.controller.js';
 const router = Router();
 router.use(auth, tenantScope);
 
+router.get('/executions', controller.listExecutions);
 router.get('/', controller.list);
 router.post('/', controller.create);
 router.get('/:id', controller.getById);

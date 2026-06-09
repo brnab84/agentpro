@@ -81,3 +81,8 @@ export const deleteContextFile = asyncHandler(async (req, res) => {
   await service.removeContextFile(req.tenantId, req.params.id, req.params.fileId);
   res.status(204).send();
 });
+
+// ── Active executions view ─────────────────────────────────────────────────────
+export const listExecutions = asyncHandler(async (req, res) => {
+  res.json(await service.listExecutions(req.tenantId, req.query));
+});

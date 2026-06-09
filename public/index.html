@@ -340,6 +340,11 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
         Campañas
       </a>
+      <a onclick="showTab('active')" class="nav-item" data-tab="active">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>Activas</span>
+        <span id="activeBadge" class="hidden ml-auto bg-green-400 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+      </a>
       <a id="teamNavItem" onclick="showTab('team')" class="nav-item hide-mobile" data-tab="team">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         Equipo
@@ -669,6 +674,83 @@
           <svg class="w-14 h-14 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
           <p class="text-sm">Todavía no creaste ninguna campaña</p>
           <p class="text-xs mt-1">Segmentá tus leads y enviá mensajes de seguimiento masivos</p>
+        </div>
+      </div>
+
+      <!-- ── Conversaciones Activas ── -->
+      <div id="tab-active" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="page-title">Conversaciones Activas</h2>
+            <p class="page-sub">Seguimiento en tiempo real de todos los funnels en curso</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <select id="activeFilter" onchange="loadActiveConversations()" class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none" style="color:var(--text-2)">
+              <option value="">Todos los estados</option>
+              <option value="running">En curso</option>
+              <option value="completed">Completados</option>
+              <option value="cancelled">Cancelados</option>
+            </select>
+            <button onclick="loadActiveConversations()" class="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 text-sm hover:bg-gray-50 transition" style="color:var(--text-2)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Actualizar
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats strip -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="card p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#E8F1FC">
+              <svg class="w-5 h-5" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div>
+              <p class="text-2xl font-bold" style="color:var(--text-1);letter-spacing:-0.04em" id="activeRunning">0</p>
+              <p class="text-xs" style="color:var(--text-2)">En curso</p>
+            </div>
+          </div>
+          <div class="card p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#D1FAE5">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-green-600" style="letter-spacing:-0.04em" id="activeCompleted">0</p>
+              <p class="text-xs" style="color:var(--text-2)">Completados</p>
+            </div>
+          </div>
+          <div class="card p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#FFE5E5">
+              <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-red-500" style="letter-spacing:-0.04em" id="activeCancelled">0</p>
+              <p class="text-xs" style="color:var(--text-2)">Cancelados</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm min-w-max">
+              <thead style="background:var(--surface-2);border-bottom:1px solid var(--border)">
+                <tr>
+                  <th class="text-left px-5 py-3 text-xs font-semibold" style="color:var(--text-2);letter-spacing:0.03em;text-transform:uppercase">Contacto</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold" style="color:var(--text-2);letter-spacing:0.03em;text-transform:uppercase">Canal</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold" style="color:var(--text-2);letter-spacing:0.03em;text-transform:uppercase">Funnel</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold" style="color:var(--text-2);letter-spacing:0.03em;text-transform:uppercase">Estado</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold" style="color:var(--text-2);letter-spacing:0.03em;text-transform:uppercase">Perfil</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold" style="color:var(--text-2);letter-spacing:0.03em;text-transform:uppercase">Último mensaje</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold" style="color:var(--text-2);letter-spacing:0.03em;text-transform:uppercase">Hace</th>
+                </tr>
+              </thead>
+              <tbody id="activeTable"></tbody>
+            </table>
+          </div>
+          <div id="activeEmpty" class="hidden text-center py-16" style="color:var(--text-3)">
+            <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <p class="text-sm">No hay conversaciones para mostrar</p>
+          </div>
         </div>
       </div>
 
@@ -1164,7 +1246,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.5.9'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.6.0'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1288,6 +1370,7 @@ const tabTitles = {
   dashboard: 'Dashboard', leads: 'Leads', agenda: 'Agenda',
   properties: 'Propiedades', pipeline: 'Pipeline', team: 'Equipo',
   inbox: 'Mensajes', funnels: 'Funnels', campaigns: 'Campañas',
+  active: 'Conversaciones Activas',
 };
 function showTab(tab) {
   closeSidebar();
@@ -1310,6 +1393,7 @@ function showTab(tab) {
   if (tab === 'inbox') loadInbox();
   if (tab === 'funnels') loadFunnels();
   if (tab === 'campaigns') loadCampaigns();
+  if (tab === 'active') loadActiveConversations();
   if (tab === 'team') loadTeam();
 }
 
@@ -3177,6 +3261,79 @@ async function deleteFunnelFromDetail() {
     closeFunnelDetail();
     loadFunnels();
   } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── Conversaciones Activas ────────────────────────────────────────────────────
+function timeAgo(dateStr) {
+  if (!dateStr) return '—';
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 60) return `${diff}s`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h`;
+  return `${Math.floor(diff/86400)}d`;
+}
+
+async function loadActiveConversations() {
+  const statusFilter = document.getElementById('activeFilter')?.value || '';
+  const url = '/api/funnels/executions' + (statusFilter ? `?status=${statusFilter}` : '');
+  try {
+    const data = await api('GET', url);
+    const running   = data.filter(e => e.status === 'running').length;
+    const completed = data.filter(e => e.status === 'completed').length;
+    const cancelled = data.filter(e => e.status === 'cancelled').length;
+
+    document.getElementById('activeRunning').textContent   = running;
+    document.getElementById('activeCompleted').textContent = completed;
+    document.getElementById('activeCancelled').textContent = cancelled;
+
+    // Update sidebar badge
+    const badge = document.getElementById('activeBadge');
+    if (running > 0) { badge.textContent = running; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+
+    const tbody = document.getElementById('activeTable');
+    const empty = document.getElementById('activeEmpty');
+    if (!data.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+
+    const statusBadge = (s) => {
+      if (s === 'running')   return `<span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700"><span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse inline-block"></span>En curso</span>`;
+      if (s === 'completed') return `<span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-700">Completado</span>`;
+      return `<span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-500">Cancelado</span>`;
+    };
+    const channelIcon = (ch) => ch === 'instagram'
+      ? `<span class="text-pink-500 text-xs font-semibold">IG</span>`
+      : `<span class="text-green-600 text-xs font-semibold">WA</span>`;
+
+    tbody.innerHTML = data.map(e => {
+      const lead = e.leadId;
+      const funnel = e.funnelId;
+      const msg = e.lastMessage;
+      const msgText = msg ? (msg.role === 'assistant' ? '🤖 ' : '👤 ') + msg.content : '<span style="color:var(--text-3)">Sin mensajes</span>';
+      return `<tr class="border-b hover:bg-gray-50 transition" style="border-color:var(--border)">
+        <td class="px-5 py-3">
+          <div class="font-medium text-sm" style="color:var(--text-1)">${lead?.name || e.externalId || '—'}</div>
+          <div class="text-xs" style="color:var(--text-3)">${lead?.contact || ''}</div>
+        </td>
+        <td class="px-5 py-3">${channelIcon(e.channel)}</td>
+        <td class="px-5 py-3">
+          <span class="text-sm font-medium" style="color:var(--text-1)">${funnel?.name || '—'}</span>
+        </td>
+        <td class="px-5 py-3">${statusBadge(e.status)}</td>
+        <td class="px-5 py-3">
+          ${e.profile
+            ? `<span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:var(--accent-light);color:var(--accent)">${e.profile}</span>`
+            : `<span style="color:var(--text-3)" class="text-xs">—</span>`}
+        </td>
+        <td class="px-5 py-3 max-w-xs">
+          <p class="text-xs truncate" style="color:var(--text-2);max-width:260px">${msgText}</p>
+        </td>
+        <td class="px-5 py-3 text-xs whitespace-nowrap" style="color:var(--text-3)">
+          ${timeAgo(e.lastMessage?.at || e.updatedAt)}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(err) { showToast(err.message, 'error'); }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
