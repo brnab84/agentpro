@@ -418,6 +418,12 @@
           <h2 id="pageTitle" style="font-size:17px;font-weight:700;letter-spacing:-0.025em;color:var(--text-1)">Dashboard</h2>
         </div>
         <div class="flex items-center gap-3">
+          <!-- Global search trigger -->
+          <button onclick="openGlobalSearch()" class="hide-mobile flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm transition" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-3)" title="Búsqueda global (⌘K)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span style="font-size:12px">Buscar…</span>
+            <kbd class="text-xs px-1.5 py-0.5 rounded" style="background:var(--border);font-family:var(--font-mono)">⌘K</kbd>
+          </button>
           <span style="font-size:13px;color:var(--text-2)" id="userLabel" class="hide-mobile"></span>
           <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-white font-semibold" style="font-size:13px" id="userAvatar">U</div>
         </div>
@@ -964,64 +970,31 @@
         </div>
       </div>
 
-      <!-- ── Campaign Modal ── -->
+      <!-- ── Campaign Wizard Modal ── -->
       <div id="campaignModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center hidden p-4 sm:p-6">
-        <div class="modal-box bg-white w-full max-w-lg">
-          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 id="campaignModalTitle" class="text-lg font-bold text-gray-900">Nueva campaña</h2>
+        <div class="modal-box bg-white w-full max-w-lg flex flex-col max-h-[90vh]">
+          <!-- Header -->
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+            <div>
+              <h2 id="campaignModalTitle" class="text-lg font-bold text-gray-900">Nueva campaña</h2>
+              <div class="flex items-center gap-2 mt-1.5" id="cWizardDots"></div>
+            </div>
             <button onclick="closeCampaignModal()" class="text-gray-400 hover:text-gray-600">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
-          <div class="px-6 py-5 space-y-4">
-            <div>
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Nombre de la campaña</label>
-              <input id="cName" type="text" placeholder="Ej: Seguimiento Caliente A - Junio"
-                class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Mensaje</label>
-              <textarea id="cMessage" rows="4" placeholder="Escribí el mensaje que recibirán los leads..."
-                class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-              <p class="text-xs text-gray-400 mt-1">Podés usar {nombre} para personalizar con el nombre del lead.</p>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Canal</label>
-                <select id="cChannel" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="whatsapp">📱 WhatsApp</option>
-                  <option value="instagram">📸 Instagram</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Filtrar por etapa</label>
-                <select id="cStage" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">Todas las etapas</option>
-                  <option value="new">Nuevo</option>
-                  <option value="contacted">Contactado</option>
-                  <option value="qualified">Calificado</option>
-                  <option value="proposal">Propuesta</option>
-                  <option value="closed">Cerrado</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Filtrar por perfil de funnel (opcional)</label>
-              <input id="cProfile" type="text" placeholder="Ej: Caliente A"
-                class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div id="cPreview" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800"></div>
-          </div>
-          <div class="px-6 py-4 border-t border-gray-100 flex gap-3">
-            <button onclick="previewCampaignTargets()" class="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2.5 rounded-xl hover:bg-gray-50 transition">
-              👁 Ver destinatarios
-            </button>
-            <button onclick="saveCampaign()" class="flex-1 gradient-bg text-white text-sm font-semibold py-2.5 rounded-xl hover:opacity-90 transition">
-              Guardar campaña
-            </button>
+          <!-- Body (rendered by JS) -->
+          <div id="cWizardBody" class="flex-1 overflow-y-auto px-6 py-5"></div>
+          <!-- Footer -->
+          <div class="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+            <button id="cBtnBack" onclick="campaignWizardBack()" class="border border-gray-300 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-50 transition hidden">← Atrás</button>
+            <button id="cBtnNext" onclick="campaignWizardNext()" class="flex-1 gradient-bg text-white text-sm font-semibold py-2.5 rounded-xl hover:opacity-90 transition">Siguiente →</button>
           </div>
         </div>
       </div>
+
+      <!-- hidden fields kept for compatibility -->
+      <input id="cName" type="hidden" /><input id="cMessage" type="hidden" /><input id="cChannel" type="hidden" value="whatsapp" /><input id="cStage" type="hidden" /><input id="cProfile" type="hidden" />
 
       <!-- ── EQUIPO ── -->
       <!-- ── Funnels ── -->
@@ -1641,6 +1614,24 @@
 
 <!-- funnelDetailModal removed — detail is now shown in the inline split-pane panel -->
 
+<!-- ══ Global Search Modal ══ -->
+<div id="globalSearchModal" class="fixed inset-0 z-[100] hidden" onclick="if(event.target===this)closeGlobalSearch()">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,0.4);backdrop-filter:blur(4px)"></div>
+  <div class="relative mx-auto mt-20 w-full max-w-xl px-4">
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex items-center gap-3 px-4 py-3.5 border-b" style="border-color:var(--border)">
+        <svg class="w-5 h-5 flex-shrink-0" style="color:var(--text-3)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input id="globalSearchInput" type="text" placeholder="Buscar leads, funnels, campañas…" oninput="runGlobalSearch(this.value)"
+          class="flex-1 text-sm bg-transparent outline-none" style="color:var(--text-1)" autocomplete="off" />
+        <kbd class="text-xs px-1.5 py-0.5 rounded flex-shrink-0" style="background:var(--surface-2);color:var(--text-3);font-family:var(--font-mono)">Esc</kbd>
+      </div>
+      <div id="globalSearchResults" class="max-h-96 overflow-y-auto py-2">
+        <p class="text-xs text-center py-8" style="color:var(--text-3)">Escribí para buscar…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Global error handler (catch silent crashes) ───────────────────────────────
 window.onerror = function(msg, src, line) {
@@ -1652,7 +1643,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.7.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.7.1'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -2714,14 +2705,11 @@ function editCurrentCampaign() {
   const c = allCampaigns.find(x => x._id === currentCampaignId);
   if (!c) return;
   editingCampaignId = c._id;
+  cWizardStep = 1;
+  cWizardData = { channel: c.channel || 'whatsapp', name: c.name, message: c.message, stage: c.filter?.stage || '', funnelProfile: c.filter?.funnelProfile || '' };
   document.getElementById('campaignModalTitle').textContent = 'Editar campaña';
-  document.getElementById('cName').value = c.name;
-  document.getElementById('cMessage').value = c.message;
-  document.getElementById('cChannel').value = c.channel || 'whatsapp';
-  document.getElementById('cStage').value = c.filter?.stage || '';
-  document.getElementById('cProfile').value = c.filter?.funnelProfile || '';
-  document.getElementById('cPreview').classList.add('hidden');
   document.getElementById('campaignModal').classList.remove('hidden');
+  renderCampaignWizardStep();
 }
 
 async function deleteCurrentCampaign() {
@@ -2736,26 +2724,145 @@ async function deleteCurrentCampaign() {
   } catch(e) { showToast(e.message, 'error'); }
 }
 
+// ── Campaign Wizard ───────────────────────────────────────────────────────────
+let cWizardStep = 0;
+let cWizardData = {};
+const C_STEPS = ['Canal', 'Mensaje', 'Audiencia'];
+
 function openCampaignModal() {
   editingCampaignId = null;
+  cWizardStep = 0;
+  cWizardData = { channel: 'whatsapp', name: '', message: '', stage: '', funnelProfile: '' };
   document.getElementById('campaignModalTitle').textContent = 'Nueva campaña';
-  document.getElementById('cName').value = '';
-  document.getElementById('cMessage').value = '';
-  document.getElementById('cChannel').value = 'whatsapp';
-  document.getElementById('cStage').value = '';
-  document.getElementById('cProfile').value = '';
-  document.getElementById('cPreview').classList.add('hidden');
   document.getElementById('campaignModal').classList.remove('hidden');
+  renderCampaignWizardStep();
 }
 
 function closeCampaignModal() {
   document.getElementById('campaignModal').classList.add('hidden');
 }
 
+function renderCampaignWizardStep() {
+  // Dots
+  const dotsEl = document.getElementById('cWizardDots');
+  dotsEl.innerHTML = C_STEPS.map((label, i) => `
+    <span class="text-xs font-medium px-2 py-0.5 rounded-full ${i === cWizardStep ? 'bg-blue-600 text-white' : i < cWizardStep ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}">${i+1} ${label}</span>`
+  ).join('');
+  // Back/Next buttons
+  document.getElementById('cBtnBack').classList.toggle('hidden', cWizardStep === 0);
+  const nextBtn = document.getElementById('cBtnNext');
+
+  const body = document.getElementById('cWizardBody');
+
+  if (cWizardStep === 0) {
+    // Step 1: Canal
+    nextBtn.textContent = 'Siguiente →';
+    body.innerHTML = `
+      <p class="text-sm font-medium mb-4" style="color:var(--text-2)">¿Por qué canal enviarás esta campaña?</p>
+      <div class="space-y-3">
+        <button onclick="cWizardData.channel='whatsapp';renderCampaignWizardStep()" class="w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition text-left ${cWizardData.channel==='whatsapp' ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-green-300'}">
+          <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+          </div>
+          <div>
+            <p class="font-semibold text-sm" style="color:var(--text-1)">WhatsApp</p>
+            <p class="text-xs" style="color:var(--text-3)">Envío masivo por WhatsApp Business</p>
+          </div>
+          ${cWizardData.channel==='whatsapp' ? '<span class="ml-auto text-green-500"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></span>' : ''}
+        </button>
+        <button onclick="cWizardData.channel='instagram';renderCampaignWizardStep()" class="w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition text-left ${cWizardData.channel==='instagram' ? 'border-pink-400 bg-pink-50' : 'border-gray-200 hover:border-pink-300'}">
+          <div class="w-10 h-10 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-pink-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          </div>
+          <div>
+            <p class="font-semibold text-sm" style="color:var(--text-1)">Instagram DM</p>
+            <p class="text-xs" style="color:var(--text-3)">Envío masivo por mensajes directos de Instagram</p>
+          </div>
+          ${cWizardData.channel==='instagram' ? '<span class="ml-auto text-pink-500"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></span>' : ''}
+        </button>
+      </div>`;
+  } else if (cWizardStep === 1) {
+    // Step 2: Mensaje
+    nextBtn.textContent = 'Siguiente →';
+    body.innerHTML = `
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-medium uppercase tracking-wide" style="color:var(--text-3)">Nombre de la campaña *</label>
+          <input id="cNameInput" type="text" value="${cWizardData.name || ''}" placeholder="Ej: Seguimiento Caliente A - Junio"
+            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="cWizardData.name=this.value" />
+        </div>
+        <div>
+          <label class="text-xs font-medium uppercase tracking-wide" style="color:var(--text-3)">Mensaje *</label>
+          <textarea id="cMessageInput" rows="5" placeholder="Escribí el mensaje que recibirán los leads..."
+            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" oninput="cWizardData.message=this.value">${cWizardData.message || ''}</textarea>
+          <p class="text-xs mt-1" style="color:var(--text-3)">Podés usar {nombre} para personalizar con el nombre del lead.</p>
+        </div>
+      </div>`;
+    setTimeout(() => {
+      const ni = document.getElementById('cNameInput'); if (ni) ni.value = cWizardData.name || '';
+      const mi = document.getElementById('cMessageInput'); if (mi) mi.value = cWizardData.message || '';
+    }, 0);
+  } else if (cWizardStep === 2) {
+    // Step 3: Audiencia
+    nextBtn.textContent = '✓ Guardar campaña';
+    body.innerHTML = `
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-medium uppercase tracking-wide" style="color:var(--text-3)">Filtrar por etapa</label>
+          <select id="cStageInput" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="cWizardData.stage=this.value">
+            <option value="" ${!cWizardData.stage ? 'selected' : ''}>Todas las etapas</option>
+            <option value="new" ${cWizardData.stage==='new' ? 'selected' : ''}>Nuevo</option>
+            <option value="contacted" ${cWizardData.stage==='contacted' ? 'selected' : ''}>Contactado</option>
+            <option value="qualified" ${cWizardData.stage==='qualified' ? 'selected' : ''}>Calificado</option>
+            <option value="proposal" ${cWizardData.stage==='proposal' ? 'selected' : ''}>Propuesta</option>
+            <option value="closed" ${cWizardData.stage==='closed' ? 'selected' : ''}>Cerrado</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium uppercase tracking-wide" style="color:var(--text-3)">Filtrar por perfil de funnel (opcional)</label>
+          <input id="cProfileInput" type="text" value="${cWizardData.funnelProfile || ''}" placeholder="Ej: Caliente A"
+            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="cWizardData.funnelProfile=this.value" />
+        </div>
+        <button onclick="previewCampaignTargets()" class="w-full text-sm font-medium border rounded-xl py-2.5 hover:bg-gray-50 transition" style="border-color:var(--border);color:var(--text-2)">👁 Ver destinatarios</button>
+        <div id="cPreview" class="hidden rounded-xl p-3 text-xs" style="background:var(--accent-light);color:var(--accent-dark)"></div>
+      </div>`;
+  }
+}
+
+function campaignWizardBack() {
+  if (cWizardStep > 0) { cWizardStep--; renderCampaignWizardStep(); }
+}
+
+function campaignWizardNext() {
+  if (cWizardStep === 0) {
+    cWizardStep = 1; renderCampaignWizardStep();
+  } else if (cWizardStep === 1) {
+    const name = document.getElementById('cNameInput')?.value.trim() || cWizardData.name;
+    const message = document.getElementById('cMessageInput')?.value.trim() || cWizardData.message;
+    cWizardData.name = name; cWizardData.message = message;
+    if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
+    if (!message) { showToast('El mensaje es obligatorio', 'error'); return; }
+    cWizardStep = 2; renderCampaignWizardStep();
+  } else if (cWizardStep === 2) {
+    saveCampaign();
+  }
+}
+
+function editCurrentCampaignWizard() {
+  const c = allCampaigns.find(x => x._id === currentCampaignId);
+  if (!c) return;
+  editingCampaignId = c._id;
+  cWizardStep = 1;
+  cWizardData = { channel: c.channel || 'whatsapp', name: c.name, message: c.message, stage: c.filter?.stage || '', funnelProfile: c.filter?.funnelProfile || '' };
+  document.getElementById('campaignModalTitle').textContent = 'Editar campaña';
+  document.getElementById('campaignModal').classList.remove('hidden');
+  renderCampaignWizardStep();
+}
+
 async function previewCampaignTargets() {
   const filter = {
-    stage: document.getElementById('cStage').value,
-    funnelProfile: document.getElementById('cProfile').value,
+    stage: document.getElementById('cStageInput')?.value || cWizardData?.stage || '',
+    funnelProfile: document.getElementById('cProfileInput')?.value || cWizardData?.funnelProfile || '',
   };
   try {
     const res = await api('POST', '/api/campaigns/preview-targets', { filter });
@@ -2767,16 +2874,17 @@ async function previewCampaignTargets() {
 }
 
 async function saveCampaign() {
-  const name = document.getElementById('cName').value.trim();
-  const message = document.getElementById('cMessage').value.trim();
+  // Read from wizard data (cWizardData) or fallback to hidden inputs for compat
+  const name = (cWizardData?.name || document.getElementById('cName')?.value || '').trim();
+  const message = (cWizardData?.message || document.getElementById('cMessage')?.value || '').trim();
   if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
   if (!message) { showToast('El mensaje es obligatorio', 'error'); return; }
   const payload = {
     name, message,
-    channel: document.getElementById('cChannel').value,
+    channel: cWizardData?.channel || document.getElementById('cChannel')?.value || 'whatsapp',
     filter: {
-      stage: document.getElementById('cStage').value,
-      funnelProfile: document.getElementById('cProfile').value,
+      stage: cWizardData?.stage || document.getElementById('cStage')?.value || '',
+      funnelProfile: cWizardData?.funnelProfile || document.getElementById('cProfile')?.value || '',
     },
   };
   try {
@@ -4042,6 +4150,57 @@ function timeAgo(dateStr) {
   if (diff < 86400) return `${Math.floor(diff/3600)}h`;
   return `${Math.floor(diff/86400)}d`;
 }
+
+// ── Global Search ─────────────────────────────────────────────────────────────
+function openGlobalSearch() {
+  document.getElementById('globalSearchModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('globalSearchInput')?.focus(), 50);
+}
+function closeGlobalSearch() {
+  document.getElementById('globalSearchModal').classList.add('hidden');
+  document.getElementById('globalSearchInput').value = '';
+  document.getElementById('globalSearchResults').innerHTML = '<p class="text-xs text-center py-8" style="color:var(--text-3)">Escribí para buscar…</p>';
+}
+
+function runGlobalSearch(q) {
+  const el = document.getElementById('globalSearchResults');
+  if (!q.trim()) { el.innerHTML = '<p class="text-xs text-center py-8" style="color:var(--text-3)">Escribí para buscar…</p>'; return; }
+  const ql = q.toLowerCase();
+  const results = [];
+
+  // Leads
+  (allLeads || []).filter(l => l.name?.toLowerCase().includes(ql) || l.contact?.toLowerCase().includes(ql)).slice(0,5).forEach(l =>
+    results.push({ type:'lead', icon:'👤', title: l.name, sub: l.contact || l.stage || '', action: () => { closeGlobalSearch(); openLeadModal(l._id); } })
+  );
+  // Funnels
+  (allFunnels || []).filter(f => f.name?.toLowerCase().includes(ql)).slice(0,5).forEach(f =>
+    results.push({ type:'funnel', icon:'🔽', title: f.name, sub: `${f.channel} · ${f.status}`, action: () => { closeGlobalSearch(); showTab('funnels'); setTimeout(() => openFunnelDetail(f._id), 200); } })
+  );
+  // Campaigns
+  (allCampaigns || []).filter(c => c.name?.toLowerCase().includes(ql)).slice(0,5).forEach(c =>
+    results.push({ type:'campaign', icon:'📣', title: c.name, sub: `${c.channel} · ${c.status}`, action: () => { closeGlobalSearch(); showTab('campaigns'); setTimeout(() => openCampaignDetail(c._id), 200); } })
+  );
+
+  if (!results.length) { el.innerHTML = '<p class="text-xs text-center py-8" style="color:var(--text-3)">Sin resultados</p>'; return; }
+
+  const typeLabels = { lead:'Lead', funnel:'Funnel', campaign:'Campaña' };
+  el.innerHTML = results.map((r, i) => `
+    <button class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition" onclick="searchResults[${i}].action()">
+      <span class="text-xl flex-shrink-0">${r.icon}</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium truncate" style="color:var(--text-1)">${r.title}</p>
+        <p class="text-xs truncate" style="color:var(--text-3)">${typeLabels[r.type]} · ${r.sub}</p>
+      </div>
+    </button>`).join('');
+  // Store results globally for onclick access
+  window.searchResults = results;
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openGlobalSearch(); }
+  if (e.key === 'Escape') closeGlobalSearch();
+});
 
 // ── Phone Numbers ─────────────────────────────────────────────────────────────
 let allPhoneNumbers = [];
