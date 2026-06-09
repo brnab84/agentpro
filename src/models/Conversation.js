@@ -17,6 +17,8 @@ const conversationSchema = new mongoose.Schema(
     externalId: { type: String, required: true }, // phone number, ig_user_id, or email address
     messages: [messageSchema],
     lastMessageAt: { type: Date, default: Date.now },
+    botEnabled: { type: Boolean, default: true },
+    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true },
 );

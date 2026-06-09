@@ -38,6 +38,15 @@ ${qList}
     if (docs) docsSection = `\n\nDOCUMENTOS DE REFERENCIA (usá esta información para responder consultas):\n${docs}`;
   }
 
+  // Capture-data fields injection
+  const captureStep = (funnel.flow || []).find((s) => s.type === 'capture_data');
+  let captureSection = '';
+  if (captureStep?.fields?.length) {
+    const fieldLabels = { name: 'nombre completo', email: 'correo electrónico', phone: 'número de teléfono' };
+    const fieldList = captureStep.fields.map((f) => fieldLabels[f] || f).join(', ');
+    captureSection = `\n- Antes de clasificar, asegurate de obtener los siguientes datos del lead: ${fieldList}.`;
+  }
+
   // Custom prompt overrides the base role description
   const roleBase = funnel.customPrompt?.trim()
     ? funnel.customPrompt.trim()
@@ -57,7 +66,7 @@ REGLAS:
 - Hacé UNA sola pregunta por mensaje. Sé conciso y amigable.
 - Cuando tengas suficiente información, terminá tu respuesta con exactamente: [PROFILE:NombreDePerfil]
 - El nombre del perfil debe ser EXACTAMENTE uno de la lista. Nunca inventes perfiles.
-- ${funnel.requireEmail ? 'Antes de finalizar, solicitá el correo del cliente.' : ''}`;
+- ${funnel.requireEmail ? 'Antes de finalizar, solicitá el correo del cliente.' : ''}${captureSection}`;
 }
 
 async function findOrCreateLead(tenantId, channel, externalId, displayName) {
@@ -86,9 +95,9 @@ async function findOrCreateLead(tenantId, channel, externalId, displayName) {
   return { lead, conv };
 }
 
-// Execute synchronous flow steps (message, move_stage, add_tag, wait-skip).
+// Execute a flat list of non-branching flow steps.
+// Stops before a 'profiling' step when stopAtProfiling=true.
 // Returns { messages: string[], nextStepIndex: number }
-// Stops before a 'profiling' step (stopAtProfiling=true).
 async function runSyncFlowSteps(flow, fromIndex, lead, conv, stopAtProfiling = true) {
   const messages = [];
   let i = fromIndex;
@@ -96,7 +105,7 @@ async function runSyncFlowSteps(flow, fromIndex, lead, conv, stopAtProfiling = t
   for (; i < flow.length; i++) {
     const step = flow[i];
 
-    if (step.type === 'profiling' && stopAtProfiling) break;
+    if ((step.type === 'profiling' || step.type === 'capture_data') && stopAtProfiling) break;
 
     if (step.type === 'message' && step.text?.trim()) {
       conv.messages.push({ role: 'assistant', content: step.text });
@@ -104,18 +113,43 @@ async function runSyncFlowSteps(flow, fromIndex, lead, conv, stopAtProfiling = t
       messages.push(step.text);
 
     } else if (step.type === 'move_stage' && step.stage) {
-      await Lead.findOneAndUpdate({ _id: lead._id }, { stage: step.stage });
+      lead = await Lead.findOneAndUpdate({ _id: lead._id }, { stage: step.stage }, { new: true });
 
     } else if (step.type === 'add_tag' && step.tag) {
       await Lead.findOneAndUpdate({ _id: lead._id }, { $addToSet: { tags: step.tag } });
 
+    } else if (step.type === 'paths') {
+      // Paths are handled post-profiling in continueProfilingConversation
+      // Skip during pre-profiling pass
     } else if (step.type === 'wait') {
-      // wait is async/timer — skip in engine v1, handled externally
+      // Timer-based wait — skipped in sync pass (handled externally)
     }
+    // capture_data is handled like profiling: it hands off to the AI
   }
 
   if (messages.length) await conv.save();
   return { messages, nextStepIndex: i };
+}
+
+// Execute per-profile branch steps from a 'paths' block
+async function runPathBranch(branches, profileName, lead, conv) {
+  const branch = branches.find((b) => b.profileName.toLowerCase() === profileName.toLowerCase());
+  if (!branch?.steps?.length) return [];
+
+  const messages = [];
+  for (const step of branch.steps) {
+    if (step.type === 'message' && step.text?.trim()) {
+      conv.messages.push({ role: 'assistant', content: step.text });
+      conv.lastMessageAt = new Date();
+      messages.push(step.text);
+    } else if (step.type === 'move_stage' && step.stage) {
+      await Lead.findOneAndUpdate({ _id: lead._id }, { stage: step.stage });
+    } else if (step.type === 'add_tag' && step.tag) {
+      await Lead.findOneAndUpdate({ _id: lead._id }, { $addToSet: { tags: step.tag } });
+    }
+  }
+  if (messages.length) await conv.save();
+  return messages;
 }
 
 async function applyProfileActions(funnel, profileName, tenantId, leadId) {
@@ -212,9 +246,22 @@ async function continueProfilingConversation(funnel, conv, lead, execution, user
 
     // Advance past profiling step in flow and run post-profiling sync steps
     const flow = funnel.flow || [];
-    const profilingIdx = flow.findIndex((s) => s.type === 'profiling');
+    const profilingIdx = flow.findIndex((s) => s.type === 'profiling' || s.type === 'capture_data');
     const afterProfiling = profilingIdx >= 0 ? profilingIdx + 1 : flow.length;
-    const { messages: postMessages } = await runSyncFlowSteps(flow, afterProfiling, lead, conv, false);
+
+    // Execute 'paths' branches and remaining sync steps
+    const pathsStep = flow.slice(afterProfiling).find((s) => s.type === 'paths');
+    const branchMessages = pathsStep
+      ? await runPathBranch(pathsStep.branches || [], profileName, lead, conv)
+      : [];
+
+    const { messages: postMessages } = await runSyncFlowSteps(
+      flow.filter((s) => s.type !== 'paths'),
+      afterProfiling,
+      lead,
+      conv,
+      false,
+    );
 
     await FunnelExecution.findByIdAndUpdate(execution._id, {
       status: 'completed',
@@ -227,7 +274,7 @@ async function continueProfilingConversation(funnel, conv, lead, execution, user
     await Funnel.findByIdAndUpdate(funnel._id, { $inc: { completedExecutions: 1 } });
     await applyProfileActions(funnel, profileName, execution.tenantId, execution.leadId);
 
-    const allMessages = [replyText, pathProfile?.message, ...postMessages].filter(Boolean);
+    const allMessages = [replyText, pathProfile?.message, ...branchMessages, ...postMessages].filter(Boolean);
     return allMessages.join('\n\n');
   }
 

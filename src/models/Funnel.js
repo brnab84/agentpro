@@ -38,13 +38,39 @@ const contextFileSchema = new Schema(
   { _id: true },
 );
 
+// Branch inside a 'paths' flow block — one per profile
+const pathBranchSchema = new Schema(
+  {
+    profileName: { type: String, required: true, trim: true },
+    steps: [
+      {
+        type: { type: String, enum: ['message', 'move_stage', 'add_tag', 'wait'] },
+        text: { type: String, trim: true },
+        minutes: { type: Number },
+        stage: { type: String, trim: true },
+        tag: { type: String, trim: true },
+        _id: false,
+      },
+    ],
+  },
+  { _id: false },
+);
+
 const flowStepSchema = new Schema(
   {
-    type: { type: String, enum: ['message', 'profiling', 'wait', 'move_stage', 'add_tag'], required: true },
+    type: {
+      type: String,
+      enum: ['message', 'profiling', 'wait', 'move_stage', 'add_tag', 'paths', 'capture_data'],
+      required: true,
+    },
     text: { type: String, trim: true },
     minutes: { type: Number },
     stage: { type: String, trim: true },
     tag: { type: String, trim: true },
+    // For 'capture_data' block
+    fields: { type: [String], default: [] }, // e.g. ['name','email','phone']
+    // For 'paths' block
+    branches: { type: [pathBranchSchema], default: [] },
   },
   { _id: true },
 );

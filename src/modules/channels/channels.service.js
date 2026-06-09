@@ -46,6 +46,12 @@ export async function handleIncomingMessage({ tenantId, channel, externalId, dis
   conv.messages.push({ role: 'user', content: text });
   conv.lastMessageAt = new Date();
 
+  // If an agent took over the conversation, skip bot reply
+  if (conv.botEnabled === false) {
+    await conv.save();
+    return null;
+  }
+
   // Generate chatbot reply
   const reply = await generateChatbotReply(conv.messages.slice(0, -1), text);
   conv.messages.push({ role: 'assistant', content: reply });
@@ -74,6 +80,5 @@ export async function resolveTenantByWhatsapp(phoneNumberId) {
 
 // Looks up tenantId by the Meta instagram_page_id stored on Tenant.
 export async function resolveTenantByInstagram(pageId) {
-  const tenant = await Tenant.findOne({ 'channels.instagramPageId': pageId });
-  return tenant;
+  return Tenant.findOne({ 'channels.instagramPageId': pageId });
 }

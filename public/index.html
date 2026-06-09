@@ -130,6 +130,10 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
         Funnels
       </a>
+      <a onclick="showTab('campaigns')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="campaigns">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+        Campañas
+      </a>
       <a id="teamNavItem" onclick="showTab('team')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-blue-100 hover:bg-white/10 cursor-pointer transition text-sm font-medium" data-tab="team">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         Equipo
@@ -387,6 +391,7 @@
                   <p id="chatMeta" class="text-xs text-gray-400"></p>
                 </div>
                 <span id="chatChannelBadge" class="text-xs px-2 py-0.5 rounded-full font-medium"></span>
+                <button id="botToggleBtn" onclick="toggleBot()" title="Activar/desactivar bot" class="ml-2 text-xs px-3 py-1.5 rounded-lg border font-medium transition"></button>
               </div>
 
               <!-- Messages -->
@@ -406,6 +411,85 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Campañas ── -->
+      <div id="tab-campaigns" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Campañas</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Envía mensajes masivos segmentados a tus leads</p>
+          </div>
+          <button onclick="openCampaignModal()" class="gradient-bg text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Nueva campaña
+          </button>
+        </div>
+        <div id="campaignGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+        <div id="campaignEmpty" class="hidden text-center py-20 text-gray-400">
+          <svg class="w-14 h-14 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+          <p class="text-sm">Todavía no creaste ninguna campaña</p>
+          <p class="text-xs mt-1">Segmentá tus leads y enviá mensajes de seguimiento masivos</p>
+        </div>
+      </div>
+
+      <!-- ── Campaign Modal ── -->
+      <div id="campaignModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 id="campaignModalTitle" class="text-lg font-bold text-gray-900">Nueva campaña</h2>
+            <button onclick="closeCampaignModal()" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="px-6 py-5 space-y-4">
+            <div>
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Nombre de la campaña</label>
+              <input id="cName" type="text" placeholder="Ej: Seguimiento Caliente A - Junio"
+                class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Mensaje</label>
+              <textarea id="cMessage" rows="4" placeholder="Escribí el mensaje que recibirán los leads..."
+                class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              <p class="text-xs text-gray-400 mt-1">Podés usar {nombre} para personalizar con el nombre del lead.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Canal</label>
+                <select id="cChannel" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="whatsapp">📱 WhatsApp</option>
+                  <option value="instagram">📸 Instagram</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Filtrar por etapa</label>
+                <select id="cStage" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Todas las etapas</option>
+                  <option value="new">Nuevo</option>
+                  <option value="contacted">Contactado</option>
+                  <option value="qualified">Calificado</option>
+                  <option value="proposal">Propuesta</option>
+                  <option value="closed">Cerrado</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Filtrar por perfil de funnel (opcional)</label>
+              <input id="cProfile" type="text" placeholder="Ej: Caliente A"
+                class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div id="cPreview" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800"></div>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 flex gap-3">
+            <button onclick="previewCampaignTargets()" class="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2.5 rounded-xl hover:bg-gray-50 transition">
+              👁 Ver destinatarios
+            </button>
+            <button onclick="saveCampaign()" class="flex-1 gradient-bg text-white text-sm font-semibold py-2.5 rounded-xl hover:opacity-90 transition">
+              Guardar campaña
+            </button>
           </div>
         </div>
       </div>
@@ -784,6 +868,7 @@
         <p id="fdSubtitle" class="text-xs text-gray-400 mt-0.5"></p>
       </div>
       <div class="flex items-center gap-2">
+        <button onclick="editCurrentFunnel()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-blue-300 text-blue-600 hover:bg-blue-50 transition">✏️ Editar</button>
         <button id="fdToggleBtn" onclick="toggleFunnelStatus()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition"></button>
         <button onclick="deleteFunnelFromDetail()" class="text-xs text-red-500 hover:text-red-700 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition">Eliminar</button>
         <button onclick="closeFunnelDetail()" class="text-gray-400 hover:text-gray-600 ml-2 transition">
@@ -834,7 +919,7 @@
 <script>
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.5.4'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.5.5'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -959,6 +1044,7 @@ function showTab(tab) {
   if (tab === 'pipeline') loadPipeline();
   if (tab === 'inbox') loadInbox();
   if (tab === 'funnels') loadFunnels();
+  if (tab === 'campaigns') loadCampaigns();
   if (tab === 'team') loadTeam();
 }
 
@@ -1666,6 +1752,31 @@ async function openConv(id) {
   container.scrollTop = container.scrollHeight;
 
   document.getElementById('replyInput').dataset.convId = id;
+
+  // Bot toggle button
+  const botBtn = document.getElementById('botToggleBtn');
+  if (botBtn) {
+    const botOn = conv.botEnabled !== false;
+    botBtn.textContent = botOn ? '🤖 Bot activo' : '👤 Agente';
+    botBtn.className = `ml-2 text-xs px-3 py-1.5 rounded-lg border font-medium transition ${botOn ? 'border-green-300 text-green-700 bg-green-50' : 'border-orange-300 text-orange-700 bg-orange-50'}`;
+    botBtn.dataset.botEnabled = botOn;
+  }
+}
+
+async function toggleBot() {
+  if (!activeConvId) return;
+  const res = await api('PATCH', `/api/channels/conversations/${activeConvId}/bot`).catch(e => { showToast(e.message, 'error'); return null; });
+  if (res == null) return;
+  const btn = document.getElementById('botToggleBtn');
+  if (btn) {
+    const botOn = res.botEnabled;
+    btn.textContent = botOn ? '🤖 Bot activo' : '👤 Agente';
+    btn.className = `ml-2 text-xs px-3 py-1.5 rounded-lg border font-medium transition ${botOn ? 'border-green-300 text-green-700 bg-green-50' : 'border-orange-300 text-orange-700 bg-orange-50'}`;
+    // Update cached conv
+    const conv = allConvs.find(c => c._id === activeConvId);
+    if (conv) conv.botEnabled = botOn;
+  }
+  showToast(res.botEnabled ? 'Bot reactivado' : 'Agente tomó el control');
 }
 
 async function sendReply() {
@@ -1711,6 +1822,122 @@ async function loadPipeline() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── Campaigns ─────────────────────────────────────────────────────────────────
+let allCampaigns = [];
+let editingCampaignId = null;
+
+async function loadCampaigns() {
+  try {
+    allCampaigns = await api('GET', '/api/campaigns');
+    renderCampaigns();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function renderCampaigns() {
+  const grid = document.getElementById('campaignGrid');
+  const empty = document.getElementById('campaignEmpty');
+  if (!allCampaigns.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  const statusMap = {
+    draft:   { color: 'bg-gray-100 text-gray-600',   label: 'Borrador' },
+    sending: { color: 'bg-blue-100 text-blue-700',   label: 'Enviando' },
+    sent:    { color: 'bg-green-100 text-green-700', label: 'Enviada' },
+    failed:  { color: 'bg-red-100 text-red-700',     label: 'Error' },
+  };
+  grid.innerHTML = allCampaigns.map(c => {
+    const st = statusMap[c.status] || statusMap.draft;
+    const date = new Date(c.createdAt).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' });
+    return `<div class="card p-5">
+      <div class="flex items-start justify-between mb-3">
+        <p class="font-semibold text-gray-900 text-sm">${c.name}</p>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${st.color}">${st.label}</span>
+      </div>
+      <p class="text-xs text-gray-500 mb-3 line-clamp-2">${c.message}</p>
+      <div class="flex items-center gap-3 text-xs text-gray-400 mb-4">
+        <span>📱 ${c.channel}</span>
+        ${c.filter?.stage ? `<span>· etapa: ${c.filter.stage}</span>` : ''}
+        ${c.sentCount ? `<span>· ${c.sentCount}/${c.targetCount} enviados</span>` : ''}
+        <span>· ${date}</span>
+      </div>
+      <div class="flex gap-2">
+        ${c.status === 'draft' ? `
+          <button onclick="sendCampaign('${c._id}')" class="flex-1 gradient-bg text-white text-xs font-semibold py-2 rounded-lg hover:opacity-90 transition">🚀 Enviar ahora</button>
+          <button onclick="deleteCampaign('${c._id}')" class="text-xs text-red-400 hover:text-red-600 px-3 py-2 rounded-lg border border-red-100 hover:bg-red-50 transition">Eliminar</button>
+        ` : `<p class="text-xs text-gray-400">${c.sentAt ? 'Enviada el ' + new Date(c.sentAt).toLocaleDateString('es') : ''}</p>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCampaignModal() {
+  editingCampaignId = null;
+  document.getElementById('campaignModalTitle').textContent = 'Nueva campaña';
+  document.getElementById('cName').value = '';
+  document.getElementById('cMessage').value = '';
+  document.getElementById('cChannel').value = 'whatsapp';
+  document.getElementById('cStage').value = '';
+  document.getElementById('cProfile').value = '';
+  document.getElementById('cPreview').classList.add('hidden');
+  document.getElementById('campaignModal').classList.remove('hidden');
+}
+
+function closeCampaignModal() {
+  document.getElementById('campaignModal').classList.add('hidden');
+}
+
+async function previewCampaignTargets() {
+  const filter = {
+    stage: document.getElementById('cStage').value,
+    funnelProfile: document.getElementById('cProfile').value,
+  };
+  try {
+    const res = await api('POST', '/api/campaigns/preview-targets', { filter });
+    const prev = document.getElementById('cPreview');
+    prev.classList.remove('hidden');
+    const names = res.leads.map(l => l.name).join(', ');
+    prev.innerHTML = `<strong>${res.count} lead${res.count !== 1 ? 's' : ''}</strong> recibirán esta campaña${res.leads.length ? `: <span class="font-medium">${names}${res.count > 5 ? '…' : ''}</span>` : '.'} `;
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function saveCampaign() {
+  const name = document.getElementById('cName').value.trim();
+  const message = document.getElementById('cMessage').value.trim();
+  if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
+  if (!message) { showToast('El mensaje es obligatorio', 'error'); return; }
+  const payload = {
+    name, message,
+    channel: document.getElementById('cChannel').value,
+    filter: {
+      stage: document.getElementById('cStage').value,
+      funnelProfile: document.getElementById('cProfile').value,
+    },
+  };
+  try {
+    await api('POST', '/api/campaigns', payload);
+    closeCampaignModal();
+    showToast('Campaña guardada como borrador');
+    loadCampaigns();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function sendCampaign(id) {
+  if (!confirm('¿Confirmar envío de esta campaña? Esta acción no se puede deshacer.')) return;
+  try {
+    const res = await api('POST', `/api/campaigns/${id}/send`);
+    showToast(`Campaña enviada: ${res.sentCount} mensajes`);
+    loadCampaigns();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteCampaign(id) {
+  if (!confirm('¿Eliminar esta campaña?')) return;
+  try {
+    await api('DELETE', `/api/campaigns/${id}`);
+    showToast('Campaña eliminada');
+    loadCampaigns();
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 // ── Team ─────────────────────────────────────────────────────────────────────
@@ -1817,6 +2044,7 @@ let currentFunnelId = null;
 
 // Wizard state
 let wizardStep = 0;
+let editingFunnelId = null;
 const WIZARD_STEPS = ['Plantilla', 'Básico', 'Perfilamiento', 'Flujo', 'Contexto', 'Activar'];
 const EMPTY_WIZARD_DATA = () => ({ template: '', name: '', channel: 'whatsapp', keyword: '', context: '', customPrompt: '', requireEmail: false, cancelMinutes: 60, profiles: [], questions: [], flow: [], pendingFiles: [] });
 let wizardData = EMPTY_WIZARD_DATA();
@@ -1914,7 +2142,32 @@ function renderFunnels() {
 // ── Wizard ────────────────────────────────────────────────────────────────────
 function openFunnelWizard() {
   wizardStep = 0;
+  editingFunnelId = null;
   wizardData = EMPTY_WIZARD_DATA();
+  document.getElementById('funnelWizardModal').classList.remove('hidden');
+  renderWizardStep();
+}
+
+function editCurrentFunnel() {
+  const funnel = allFunnels.find(f => f._id === currentFunnelId);
+  if (!funnel) return;
+  editingFunnelId = funnel._id;
+  wizardStep = 1; // Skip template picker when editing
+  wizardData = {
+    template: funnel.template || '',
+    name: funnel.name || '',
+    channel: funnel.channel || 'whatsapp',
+    keyword: funnel.trigger?.keyword || '',
+    context: funnel.context || '',
+    customPrompt: funnel.customPrompt || '',
+    requireEmail: funnel.requireEmail || false,
+    cancelMinutes: funnel.cancelMinutes || 60,
+    profiles: (funnel.profiles || []).map(p => ({ ...p })),
+    questions: (funnel.questions || []).map(q => ({ ...q, options: [...(q.options || [])] })),
+    flow: (funnel.flow || []).map(s => ({ ...s, branches: (s.branches || []).map(b => ({ ...b, steps: [...(b.steps || [])] })) })),
+    pendingFiles: [],
+  };
+  closeFunnelDetail();
   document.getElementById('funnelWizardModal').classList.remove('hidden');
   renderWizardStep();
 }
@@ -2106,11 +2359,13 @@ function renderWizardStep() {
   // ── Step 3: Flujo ─────────────────────────────────────────────────────────
   } else if (wizardStep === 3) {
     const BLOCK_TYPES = [
-      { type: 'message',    icon: '💬', label: 'Mensaje',         color: 'border-blue-200 bg-blue-50',   badge: 'bg-blue-100 text-blue-700'   },
-      { type: 'profiling',  icon: '🤖', label: 'Perfilamiento IA',color: 'border-purple-200 bg-purple-50',badge: 'bg-purple-100 text-purple-700'},
-      { type: 'wait',       icon: '⏱️', label: 'Espera',          color: 'border-orange-200 bg-orange-50',badge: 'bg-orange-100 text-orange-700'},
-      { type: 'move_stage', icon: '📊', label: 'Mover etapa CRM', color: 'border-teal-200 bg-teal-50',   badge: 'bg-teal-100 text-teal-700'   },
-      { type: 'add_tag',    icon: '🏷️', label: 'Agregar tag',     color: 'border-gray-200 bg-gray-50',   badge: 'bg-gray-100 text-gray-700'   },
+      { type: 'message',      icon: '💬', label: 'Mensaje',          color: 'border-blue-200 bg-blue-50',    badge: 'bg-blue-100 text-blue-700'    },
+      { type: 'profiling',    icon: '🤖', label: 'Perfilamiento IA', color: 'border-purple-200 bg-purple-50', badge: 'bg-purple-100 text-purple-700' },
+      { type: 'capture_data', icon: '📋', label: 'Capturar datos',   color: 'border-cyan-200 bg-cyan-50',    badge: 'bg-cyan-100 text-cyan-700'    },
+      { type: 'paths',        icon: '🔀', label: 'Paths por perfil', color: 'border-pink-200 bg-pink-50',    badge: 'bg-pink-100 text-pink-700'    },
+      { type: 'wait',         icon: '⏱️', label: 'Espera',           color: 'border-orange-200 bg-orange-50', badge: 'bg-orange-100 text-orange-700'},
+      { type: 'move_stage',   icon: '📊', label: 'Mover etapa CRM',  color: 'border-teal-200 bg-teal-50',    badge: 'bg-teal-100 text-teal-700'    },
+      { type: 'add_tag',      icon: '🏷️', label: 'Agregar tag',      color: 'border-gray-200 bg-gray-50',    badge: 'bg-gray-100 text-gray-700'    },
     ];
     const typeMap = Object.fromEntries(BLOCK_TYPES.map(b => [b.type, b]));
 
@@ -2143,6 +2398,41 @@ function renderWizardStep() {
           placeholder="Nombre del tag..." />`;
       } else if (step.type === 'profiling') {
         config = `<p class="text-xs text-purple-600 mt-1">Usa los perfiles y preguntas configurados en el paso anterior.</p>`;
+      } else if (step.type === 'capture_data') {
+        const allFields = ['name','email','phone'];
+        const labels = { name:'Nombre', email:'Email', phone:'Teléfono' };
+        config = `<div class="flex gap-2 mt-1 flex-wrap">${allFields.map(f => {
+          const checked = (step.fields||[]).includes(f);
+          return `<label class="flex items-center gap-1 text-xs cursor-pointer">
+            <input type="checkbox" ${checked?'checked':''} onchange="toggleCaptureField(${i},'${f}',this.checked)" class="rounded" />
+            <span class="text-cyan-700">${labels[f]}</span></label>`;
+        }).join('')}</div>
+        <p class="text-xs text-cyan-500 mt-1">La IA pedirá estos datos antes de clasificar al lead.</p>`;
+      } else if (step.type === 'paths') {
+        const branches = step.branches || [];
+        const profileNames = wizardData.profiles.filter(p=>p.name?.trim()).map(p=>p.name);
+        config = `<div class="mt-2 space-y-2">
+          ${profileNames.length === 0 ? '<p class="text-xs text-pink-500">Agregá perfiles en el paso anterior para configurar los paths.</p>' :
+            profileNames.map((pName, pi) => {
+              const branch = branches.find(b=>b.profileName===pName) || { profileName: pName, steps: [] };
+              const stepSummary = branch.steps.length ? branch.steps.map(s=>({message:'💬',move_stage:'📊',add_tag:'🏷️',wait:'⏱️'})[s.type]||'?').join(' ') : 'Sin pasos';
+              return `<div class="bg-white border border-pink-200 rounded-lg p-2">
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-semibold text-pink-700">→ ${pName}</p>
+                  <span class="text-xs text-gray-400">${stepSummary}</span>
+                </div>
+                <div class="flex gap-1 mt-1 flex-wrap">
+                  <button onclick="addPathStep(${i},${pi},'message')" class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded hover:bg-blue-100">+💬</button>
+                  <button onclick="addPathStep(${i},${pi},'move_stage')" class="text-xs bg-teal-50 text-teal-600 px-1.5 py-0.5 rounded hover:bg-teal-100">+📊</button>
+                  <button onclick="addPathStep(${i},${pi},'add_tag')" class="text-xs bg-gray-50 text-gray-600 px-1.5 py-0.5 rounded hover:bg-gray-100">+🏷️</button>
+                  ${branch.steps.map((ps,psi)=>`<button onclick="removePathStep(${i},${pi},${psi})" class="text-xs bg-red-50 text-red-400 px-1 py-0.5 rounded">✕${psi+1}</button>`).join('')}
+                </div>
+              </div>`;
+            }).join('')}
+        </div>`;
+        // Update branches to match current profiles
+        step.branches = profileNames.map(pName => branches.find(b=>b.profileName===pName) || { profileName: pName, steps: [] });
+      }
       }
       return `
         <div class="relative">
@@ -2180,6 +2470,8 @@ function renderWizardStep() {
                   <p class="text-xs text-gray-400">${{
                     message: 'Envía un mensaje al lead',
                     profiling: 'IA califica con preguntas',
+                    capture_data: 'Captura nombre/email/teléfono',
+                    paths: 'Bifurca el flujo por perfil',
                     wait: 'Pausa antes del siguiente paso',
                     move_stage: 'Cambia etapa en el CRM',
                     add_tag: 'Etiqueta al lead',
@@ -2305,7 +2597,34 @@ function applyFunnelTemplate(key) {
 }
 
 function addFlowStep(type) {
-  wizardData.flow.push({ type, text: '', minutes: 60, stage: '', tag: '' });
+  const step = { type, text: '', minutes: 60, stage: '', tag: '', fields: [], branches: [] };
+  if (type === 'capture_data') step.fields = ['name', 'email'];
+  if (type === 'paths') {
+    step.branches = wizardData.profiles.filter(p => p.name?.trim()).map(p => ({ profileName: p.name, steps: [] }));
+  }
+  wizardData.flow.push(step);
+  renderWizardStep();
+}
+
+function toggleCaptureField(stepIdx, field, checked) {
+  const step = wizardData.flow[stepIdx];
+  if (!step) return;
+  step.fields = step.fields || [];
+  if (checked && !step.fields.includes(field)) step.fields.push(field);
+  if (!checked) step.fields = step.fields.filter(f => f !== field);
+}
+
+function addPathStep(flowIdx, branchIdx, type) {
+  const step = wizardData.flow[flowIdx];
+  if (!step?.branches?.[branchIdx]) return;
+  step.branches[branchIdx].steps.push({ type, text: '', stage: '', tag: '' });
+  renderWizardStep();
+}
+
+function removePathStep(flowIdx, branchIdx, stepIdx) {
+  const step = wizardData.flow[flowIdx];
+  if (!step?.branches?.[branchIdx]) return;
+  step.branches[branchIdx].steps.splice(stepIdx, 1);
   renderWizardStep();
 }
 
@@ -2401,7 +2720,10 @@ async function saveFunnel() {
       flow: wizardData.flow,
       status: 'active',
     };
-    const created = await api('POST', '/api/funnels', payload);
+    const isEdit = !!editingFunnelId;
+    const created = isEdit
+      ? await api('PATCH', `/api/funnels/${editingFunnelId}`, payload)
+      : await api('POST', '/api/funnels', payload);
     // Upload pending PDF files
     if (wizardData.pendingFiles?.length && created?._id) {
       for (const f of wizardData.pendingFiles) {
@@ -2413,7 +2735,8 @@ async function saveFunnel() {
       }
     }
     closeFunnelWizard();
-    showToast('Funnel creado exitosamente');
+    showToast(editingFunnelId ? 'Funnel actualizado' : 'Funnel creado exitosamente');
+    editingFunnelId = null;
     loadFunnels();
   } catch(e) { showToast(e.message, 'error'); }
 }

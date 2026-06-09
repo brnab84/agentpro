@@ -15,6 +15,7 @@ import channelRoutes from './modules/channels/channels.routes.js';
 import analyticsRoutes from './modules/analytics/analytics.routes.js';
 import userRoutes from './modules/users/users.routes.js';
 import funnelRoutes from './modules/funnels/funnels.routes.js';
+import campaignRoutes from './modules/campaigns/campaigns.routes.js';
 
 let indexHtml;
 try {
@@ -44,6 +45,7 @@ export function createApp() {
   app.use('/api/analytics', analyticsRoutes);
   app.use('/api/users', userRoutes);
   app.use('/api/funnels', funnelRoutes);
+  app.use('/api/campaigns', campaignRoutes);
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
   app.use(errorHandler);

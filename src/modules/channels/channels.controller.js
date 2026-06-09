@@ -170,7 +170,6 @@ export const replyToConversation = asyncHandler(async (req, res) => {
   conv.lastMessageAt = new Date();
   await conv.save();
 
-  // Send via the appropriate channel
   if (conv.channel === 'whatsapp') {
     const { Tenant } = await import('../../models/Tenant.js');
     const tenant = await Tenant.findById(req.tenantId);
@@ -180,5 +179,13 @@ export const replyToConversation = asyncHandler(async (req, res) => {
     await sendInstagramMessage(conv.externalId, conv.externalId, text);
   }
 
-  res.json({ ok: true });
+  res.json({ ok: true, message: conv.messages.at(-1) });
+});
+
+export const toggleConversationBot = asyncHandler(async (req, res) => {
+  const conv = await Conversation.findOne({ _id: req.params.id, tenantId: req.tenantId });
+  if (!conv) return res.status(404).json({ error: 'Not found' });
+  conv.botEnabled = !conv.botEnabled;
+  await conv.save();
+  res.json({ botEnabled: conv.botEnabled });
 });

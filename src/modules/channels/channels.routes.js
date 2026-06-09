@@ -10,6 +10,7 @@ import {
   getConversations,
   getConversation,
   replyToConversation,
+  toggleConversationBot,
 } from './channels.controller.js';
 
 const router = Router();
@@ -23,10 +24,11 @@ router.post('/instagram', receiveInstagram);
 
 router.post('/email', receiveEmail);
 
-// ── Protected: agents reading conversations ───────────────────────────────────
+// ── Protected: agents reading/managing conversations ──────────────────────────
 router.use(auth, tenantScope);
 router.get('/conversations', getConversations);
 router.get('/conversations/:id', getConversation);
 router.post('/conversations/:id/reply', replyToConversation);
+router.patch('/conversations/:id/bot', toggleConversationBot);
 
 export default router;
