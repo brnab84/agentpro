@@ -809,8 +809,22 @@
       </div>
       <!-- Profiles distribution -->
       <div id="fdProfiles" class="mb-6"></div>
+      <!-- Context files -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold text-gray-900 text-sm">Archivos de contexto (IA)</h3>
+          <button onclick="document.getElementById('fdPdfInput').click()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Subir PDF
+          </button>
+          <input id="fdPdfInput" type="file" accept="application/pdf" multiple class="hidden" onchange="uploadContextFileDirect(this)" />
+        </div>
+        <div id="fdContextFiles" class="space-y-1.5">
+          <p class="text-xs text-gray-400">Sin archivos de contexto. Subí PDFs con info del proyecto para que la IA los use.</p>
+        </div>
+      </div>
       <!-- Leads table -->
-      <h3 class="font-semibold text-gray-900 mb-3">Leads calificados</h3>
+      <h3 class="font-semibold text-gray-900 mb-3 text-sm">Leads calificados</h3>
       <div id="fdLeads" class="space-y-2"></div>
       <p id="fdLeadsEmpty" class="text-sm text-gray-400 hidden">Aún no hay leads calificados por este funnel.</p>
     </div>
@@ -820,7 +834,7 @@
 <script>
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.5.3'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.5.4'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1804,7 +1818,7 @@ let currentFunnelId = null;
 // Wizard state
 let wizardStep = 0;
 const WIZARD_STEPS = ['Plantilla', 'Básico', 'Perfilamiento', 'Flujo', 'Contexto', 'Activar'];
-const EMPTY_WIZARD_DATA = () => ({ template: '', name: '', channel: 'whatsapp', keyword: '', context: '', requireEmail: false, cancelMinutes: 60, profiles: [], questions: [], flow: [] });
+const EMPTY_WIZARD_DATA = () => ({ template: '', name: '', channel: 'whatsapp', keyword: '', context: '', customPrompt: '', requireEmail: false, cancelMinutes: 60, profiles: [], questions: [], flow: [], pendingFiles: [] });
 let wizardData = EMPTY_WIZARD_DATA();
 
 // Profile color palette
@@ -2201,27 +2215,51 @@ function renderWizardStep() {
   // ── Step 4: Contexto ───────────────────────────────────────────────────────
   } else if (wizardStep === 4) {
     body.innerHTML = `
-      <div class="space-y-4">
+      <div class="space-y-5">
         <div>
-          <label class="text-xs text-gray-500 font-medium">Contexto del proyecto para la IA</label>
-          <textarea id="wContext" rows="5" placeholder="Ej: Somos una desarrolladora inmobiliaria. El proyecto Torre Mirador ofrece departamentos de 1, 2 y 3 ambientes en Palermo. Entrega diciembre 2026. Precios desde USD 85.000."
+          <label class="text-xs text-gray-500 font-medium uppercase tracking-wide">Contexto del proyecto</label>
+          <textarea id="wContext" rows="3" placeholder="Ej: Somos una desarrolladora inmobiliaria. El proyecto Torre Mirador ofrece departamentos de 1, 2 y 3 ambientes en Palermo. Entrega diciembre 2026. Precios desde USD 85.000."
             class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">${wizardData.context}</textarea>
-          <p class="text-xs text-gray-400 mt-1">La IA usa este texto para responder preguntas del lead sobre el proyecto.</p>
-        </div>
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-          <div>
-            <p class="text-sm font-medium text-gray-900">Solicitar email</p>
-            <p class="text-xs text-gray-400">La IA pedirá el correo antes de finalizar</p>
-          </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="wRequireEmail" ${wizardData.requireEmail?'checked':''} class="sr-only peer" />
-            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition peer-checked:bg-blue-600"></div>
-          </label>
+          <p class="text-xs text-gray-400 mt-1">Información general del proyecto. La IA la usa como contexto base.</p>
         </div>
         <div>
-          <label class="text-xs text-gray-500 font-medium">Cancelar conversación inactiva después de (minutos)</label>
-          <input id="wCancel" type="number" min="10" max="1440" value="${wizardData.cancelMinutes}"
-            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <label class="text-xs text-gray-500 font-medium uppercase tracking-wide">Prompt personalizado (opcional)</label>
+          <textarea id="wCustomPrompt" rows="4" placeholder="Ej: Eres Valentina, asesora de ventas de Torre Mirador. Tenés un tono cálido y profesional. Tu objetivo es calificar al lead y agendar una visita..."
+            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">${wizardData.customPrompt||''}</textarea>
+          <p class="text-xs text-gray-400 mt-1">Si completás este campo, reemplaza el rol por defecto de la IA. Podés darle nombre, personalidad y objetivos específicos.</p>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium uppercase tracking-wide">Archivos de contexto (PDFs)</label>
+          <p class="text-xs text-gray-400 mt-0.5 mb-2">Subí brochures, listas de precios o fichas técnicas. La IA los usará para responder consultas. Máx. 4 archivos · 5 MB c/u.</p>
+          <div class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center cursor-pointer hover:border-blue-300 transition" onclick="document.getElementById('wPdfInput').click()">
+            <input id="wPdfInput" type="file" accept="application/pdf" multiple class="hidden" onchange="handleWizardPdfUpload(this)" />
+            <p class="text-sm text-gray-500">📄 Hacé click para seleccionar PDFs</p>
+            <p class="text-xs text-gray-400 mt-1">o arrastrá los archivos aquí</p>
+          </div>
+          <div id="wPdfList" class="mt-2 space-y-1">
+            ${(wizardData.pendingFiles||[]).map((f,i)=>`
+              <div class="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5 text-xs">
+                <span class="text-blue-700 font-medium">📄 ${f.name}</span>
+                <button onclick="wizardData.pendingFiles.splice(${i},1);renderWizardStep()" class="text-gray-400 hover:text-red-500">✕</button>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl col-span-2">
+            <div>
+              <p class="text-sm font-medium text-gray-900">Solicitar email</p>
+              <p class="text-xs text-gray-400">La IA pedirá el correo antes de finalizar</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="wRequireEmail" ${wizardData.requireEmail?'checked':''} class="sr-only peer" />
+              <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+          <div class="col-span-2">
+            <label class="text-xs text-gray-500 font-medium">Cancelar conversación inactiva después de (minutos)</label>
+            <input id="wCancel" type="number" min="10" max="1440" value="${wizardData.cancelMinutes}"
+              class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
         </div>
       </div>`;
 
@@ -2342,6 +2380,7 @@ function captureWizardInputs() {
     wizardData.keyword = document.getElementById('wKeyword')?.value ?? wizardData.keyword;
   } else if (wizardStep === 4) {
     wizardData.context = document.getElementById('wContext')?.value ?? wizardData.context;
+    wizardData.customPrompt = document.getElementById('wCustomPrompt')?.value ?? wizardData.customPrompt;
     wizardData.requireEmail = document.getElementById('wRequireEmail')?.checked ?? wizardData.requireEmail;
     wizardData.cancelMinutes = parseInt(document.getElementById('wCancel')?.value) || wizardData.cancelMinutes;
   }
@@ -2354,6 +2393,7 @@ async function saveFunnel() {
       channel: wizardData.channel,
       trigger: { keyword: wizardData.keyword },
       context: wizardData.context,
+      customPrompt: wizardData.customPrompt,
       requireEmail: wizardData.requireEmail,
       cancelMinutes: wizardData.cancelMinutes,
       profiles: wizardData.profiles.filter(p => p.name?.trim()),
@@ -2361,11 +2401,39 @@ async function saveFunnel() {
       flow: wizardData.flow,
       status: 'active',
     };
-    await api('POST', '/api/funnels', payload);
+    const created = await api('POST', '/api/funnels', payload);
+    // Upload pending PDF files
+    if (wizardData.pendingFiles?.length && created?._id) {
+      for (const f of wizardData.pendingFiles) {
+        try {
+          await api('POST', `/api/funnels/${created._id}/context-files`, {
+            name: f.name, base64: f.base64, size: f.size,
+          });
+        } catch(e) { console.warn('PDF upload failed:', f.name, e.message); }
+      }
+    }
     closeFunnelWizard();
     showToast('Funnel creado exitosamente');
     loadFunnels();
   } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function handleWizardPdfUpload(input) {
+  const files = Array.from(input.files);
+  const current = wizardData.pendingFiles || [];
+  if (current.length + files.length > 4) { showToast('Máximo 4 archivos', 'error'); return; }
+  for (const file of files) {
+    if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} supera 5 MB`, 'error'); continue; }
+    const base64 = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result.split(',')[1]);
+      reader.onerror = rej;
+      reader.readAsDataURL(file);
+    });
+    current.push({ name: file.name, base64, size: file.size });
+  }
+  wizardData.pendingFiles = current;
+  renderWizardStep();
 }
 
 // ── Funnel Detail ─────────────────────────────────────────────────────────────
@@ -2403,6 +2471,8 @@ async function openFunnelDetail(id) {
           ).join('')}
         </div>`;
     } else { pfDiv.innerHTML = ''; }
+    // Context files
+    renderDetailContextFiles(allFunnels.find(f => f._id === id)?.contextFiles || []);
     // Leads
     const leadsDiv = document.getElementById('fdLeads');
     const leadsEmpty = document.getElementById('fdLeadsEmpty');
@@ -2428,6 +2498,70 @@ async function openFunnelDetail(id) {
         </div>`;
       }).join('');
     }
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function renderDetailContextFiles(files) {
+  const div = document.getElementById('fdContextFiles');
+  if (!div) return;
+  if (!files?.length) {
+    div.innerHTML = '<p class="text-xs text-gray-400">Sin archivos. Subí PDFs con info del proyecto para que la IA los use.</p>';
+    return;
+  }
+  div.innerHTML = files.map(f => `
+    <div class="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 text-xs">
+      <div class="flex items-center gap-2">
+        <span class="text-indigo-500">📄</span>
+        <div>
+          <p class="font-medium text-indigo-800">${f.name}</p>
+          <p class="text-indigo-400">${f.text?.length ? (f.text.length/1000).toFixed(1)+'k chars extraídos' : 'Sin texto'}</p>
+        </div>
+      </div>
+      <button onclick="deleteContextFileDirect('${f._id}')" class="text-gray-300 hover:text-red-500 transition text-sm px-1">✕</button>
+    </div>`).join('');
+}
+
+async function uploadContextFileDirect(input) {
+  const files = Array.from(input.files);
+  const funnel = allFunnels.find(f => f._id === currentFunnelId);
+  if (!funnel) return;
+  if ((funnel.contextFiles?.length || 0) + files.length > 4) {
+    showToast('Máximo 4 archivos por funnel', 'error'); return;
+  }
+  for (const file of files) {
+    if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} supera 5 MB`, 'error'); continue; }
+    const toastEl = document.createElement('div');
+    toastEl.className = 'fixed bottom-5 right-5 z-[9999] px-4 py-3 rounded-xl text-sm font-medium shadow-lg bg-blue-600 text-white';
+    toastEl.textContent = `Procesando ${file.name}...`;
+    document.body.appendChild(toastEl);
+    try {
+      const base64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      const newFile = await api('POST', `/api/funnels/${currentFunnelId}/context-files`, {
+        name: file.name, base64, size: file.size,
+      });
+      funnel.contextFiles = funnel.contextFiles || [];
+      funnel.contextFiles.push(newFile);
+      renderDetailContextFiles(funnel.contextFiles);
+      showToast(`${file.name} subido y procesado`);
+    } catch(e) { showToast(`Error: ${e.message}`, 'error'); }
+    finally { toastEl.remove(); }
+  }
+  input.value = '';
+}
+
+async function deleteContextFileDirect(fileId) {
+  if (!currentFunnelId) return;
+  try {
+    await api('DELETE', `/api/funnels/${currentFunnelId}/context-files/${fileId}`);
+    const funnel = allFunnels.find(f => f._id === currentFunnelId);
+    if (funnel) funnel.contextFiles = funnel.contextFiles.filter(f => f._id !== fileId);
+    renderDetailContextFiles(funnel?.contextFiles || []);
+    showToast('Archivo eliminado');
   } catch(e) { showToast(e.message, 'error'); }
 }
 

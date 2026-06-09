@@ -28,14 +28,29 @@ ${qList}
 - Una vez respondidas las preguntas obligatorias, clasificá al lead.`;
   }
 
-  return `Eres un asistente de ventas inmobiliario experto. Tu misión es calificar al prospecto con preguntas naturales y breves.
+  // Context files injected as reference docs
+  let docsSection = '';
+  if (funnel.contextFiles?.length > 0) {
+    const docs = funnel.contextFiles
+      .filter((f) => f.text?.trim())
+      .map((f) => `=== ${f.name} ===\n${f.text}`)
+      .join('\n\n');
+    if (docs) docsSection = `\n\nDOCUMENTOS DE REFERENCIA (usá esta información para responder consultas):\n${docs}`;
+  }
+
+  // Custom prompt overrides the base role description
+  const roleBase = funnel.customPrompt?.trim()
+    ? funnel.customPrompt.trim()
+    : `Eres un asistente de ventas inmobiliario experto. Tu misión es calificar al prospecto con preguntas naturales y breves.`;
+
+  return `${roleBase}
 
 CONTEXTO DEL PROYECTO:
 ${funnel.context || 'Proyecto inmobiliario de alta calidad.'}
 
 PERFILES DE CLASIFICACIÓN:
 ${profileList}
-${questionsSection}
+${questionsSection}${docsSection}
 
 REGLAS:
 - Respondé en el mismo idioma que el cliente (español por defecto).

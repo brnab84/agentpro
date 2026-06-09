@@ -46,6 +46,26 @@ export const getLeads = (tenantId, funnelId) =>
     .sort({ createdAt: -1 })
     .limit(100);
 
+export const addContextFile = async (tenantId, id, fileData) => {
+  const funnel = await Funnel.findOneAndUpdate(
+    { _id: id, tenantId },
+    { $push: { contextFiles: fileData } },
+    { new: true },
+  );
+  if (!funnel) throw new AppError('Funnel not found', 404);
+  return funnel;
+};
+
+export const removeContextFile = async (tenantId, id, fileId) => {
+  const funnel = await Funnel.findOneAndUpdate(
+    { _id: id, tenantId },
+    { $pull: { contextFiles: { _id: fileId } } },
+    { new: true },
+  );
+  if (!funnel) throw new AppError('Funnel not found', 404);
+  return funnel;
+};
+
 export const findActiveByKeyword = (tenantId, keyword) =>
   Funnel.findOne({
     tenantId,

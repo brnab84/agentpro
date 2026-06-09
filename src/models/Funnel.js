@@ -28,6 +28,16 @@ const questionSchema = new Schema(
   { _id: true },
 );
 
+const contextFileSchema = new Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    text: { type: String, default: '' },
+    size: { type: Number, default: 0 },
+    uploadedAt: { type: Date, default: Date.now },
+  },
+  { _id: true },
+);
+
 const flowStepSchema = new Schema(
   {
     type: { type: String, enum: ['message', 'profiling', 'wait', 'move_stage', 'add_tag'], required: true },
@@ -54,6 +64,8 @@ const funnelSchema = new Schema(
     profiles: { type: [profileSchema], default: [] },
     questions: { type: [questionSchema], default: [] },
     flow: { type: [flowStepSchema], default: [] },
+    customPrompt: { type: String, trim: true, default: '' },
+    contextFiles: { type: [contextFileSchema], default: [] },
     totalExecutions: { type: Number, default: 0 },
     completedExecutions: { type: Number, default: 0 },
     cancelledExecutions: { type: Number, default: 0 },
