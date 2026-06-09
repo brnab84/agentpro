@@ -1830,7 +1830,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.8.6'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.8.7'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1904,6 +1904,19 @@ function logout() {
   showLogin();
 }
 
+function showVersionBanner(serverVer) {
+  // Show "nueva versión disponible" banner and reload automatically
+  const existing = document.getElementById('versionBanner');
+  if (existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'versionBanner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#1a3a6b,#0071E3);color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,0.2)';
+  banner.innerHTML = `<span>🚀 Nueva versión disponible (v${serverVer})</span><button onclick="location.reload(true)" style="background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.4);color:#fff;border-radius:8px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer">Actualizar ahora</button>`;
+  document.body.prepend(banner);
+  // Auto-reload after 8s if user doesn't click
+  setTimeout(() => location.reload(true), 8000);
+}
+
 async function initVersion() {
   // Show local constant immediately (no flicker)
   const setVersion = (v) => {
@@ -1914,11 +1927,22 @@ async function initVersion() {
     if (el2) el2.textContent = label;
   };
   setVersion(APP_VERSION);
-  // Then try to confirm from server
+  // Then confirm from server
   try {
     const d = await fetch(API + '/api/version').then(r => r.json());
-    if (d?.version) setVersion(d.version);
+    if (d?.version) {
+      setVersion(d.version);
+      // If server version differs from this build, force reload
+      if (d.version !== APP_VERSION) showVersionBanner(d.version);
+    }
   } catch {}
+  // Poll every 5 minutes for new deployments
+  setInterval(async () => {
+    try {
+      const d = await fetch(API + '/api/version?t=' + Date.now()).then(r => r.json());
+      if (d?.version && d.version !== APP_VERSION) showVersionBanner(d.version);
+    } catch {}
+  }, 5 * 60 * 1000);
 }
 
 document.getElementById('loginForm').onsubmit = async (e) => {
@@ -3308,10 +3332,18 @@ async function loadTeam() {
         <span class="inline-block mt-2 text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[a.role] || 'bg-gray-100 text-gray-600'}">${roleLabels[a.role] || a.role}</span>
       </div>
       ${isOwner && a.role !== 'owner' ? `
-      <button onclick="removeAgent('${a._id}', '${a.name}')" class="text-gray-300 hover:text-red-500 transition flex-shrink-0" title="Eliminar agente">
+      <button data-action="remove-agent" data-id="${a._id}" class="text-gray-300 hover:text-red-500 transition flex-shrink-0" title="Eliminar agente">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
       </button>` : ''}
     </div>`).join('');
+
+  // Event delegation for team grid
+  document.getElementById('teamGrid').onclick = e => {
+    const btn = e.target.closest('[data-action="remove-agent"]');
+    if (!btn) return;
+    const agent = allAgents.find(a => a._id === btn.dataset.id);
+    if (agent) removeAgent(agent._id, agent.name);
+  };
 }
 
 function openInviteModal() {
@@ -4292,10 +4324,10 @@ async function loadWaTemplates() {
             </div>
           </div>
           <div class="flex gap-1 flex-shrink-0">
-            <button onclick="editTemplate('${t._id}')" class="p-1.5 rounded-lg hover:bg-gray-100 transition" style="color:var(--text-3)" title="Editar">
+            <button data-action="edit-tpl" data-id="${t._id}" class="p-1.5 rounded-lg hover:bg-gray-100 transition" style="color:var(--text-3)" title="Editar">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
             </button>
-            <button onclick="deleteTemplate('${t._id}','${t.name}')" class="p-1.5 rounded-lg hover:bg-red-50 transition text-red-400" title="Eliminar">
+            <button data-action="delete-tpl" data-id="${t._id}" class="p-1.5 rounded-lg hover:bg-red-50 transition text-red-400" title="Eliminar">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
           </div>
@@ -4305,6 +4337,15 @@ async function loadWaTemplates() {
         ${t.footerText ? `<p class="text-xs italic" style="color:var(--text-3)">${t.footerText}</p>` : ''}
         ${t.syncedAt ? `<p class="text-xs" style="color:var(--text-3)">🔄 Sincronizado ${timeAgo(t.syncedAt)}</p>` : ''}
       </div>`).join('');
+
+    // Event delegation — avoids name injection issues
+    document.getElementById('templatesGrid').onclick = e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      if (btn.dataset.action === 'edit-tpl') editTemplate(id);
+      if (btn.dataset.action === 'delete-tpl') deleteTemplate(id, data.find(t=>t._id===id)?.name || '');
+    };
   } catch(err) { showToast(err.message, 'error'); }
 }
 
