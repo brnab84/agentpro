@@ -1,5 +1,6 @@
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as service from './ai.service.js';
+import { getDashboardSuggestions } from './suggestions.service.js';
 
 export const qualify = asyncHandler(async (req, res) => {
   const result = await service.qualifyFromText(
@@ -16,4 +17,7 @@ export const rescore = asyncHandler(async (req, res) => {
 
 export const matches = asyncHandler(async (req, res) => {
   res.json(await service.getMatches(req.tenantId, req.params.leadId));
+});
+export const suggestions = asyncHandler(async (req, res) => {
+  res.json(await getDashboardSuggestions(req.tenantId));
 });

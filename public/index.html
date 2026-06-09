@@ -385,6 +385,14 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
         Mis firmas
       </a>
+      <a onclick="showTab('domains')" class="nav-item" data-tab="domains">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+        Mis Dominios
+      </a>
+      <a onclick="showTab('reports')" class="nav-item" data-tab="reports">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Reportes PDF
+      </a>
       <a id="teamNavItem" onclick="showTab('team')" class="nav-item hide-mobile" data-tab="team">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         Equipo
@@ -579,7 +587,7 @@
         </div>
 
         <!-- Row 4: Recent leads + Activity feed -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div class="card p-6">
             <h3 class="section-title mb-4">Leads recientes</h3>
             <div id="recentLeads" class="space-y-3"></div>
@@ -590,6 +598,40 @@
               <button onclick="showTab('active')" class="text-xs font-medium" style="color:var(--accent)">Ver todas →</button>
             </div>
             <div id="activityFeed" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Row 5: AI Suggestions + At-Risk Leads -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- AI Suggestions -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#667eea,#764ba2)">
+                  <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <h3 class="font-semibold text-gray-900">Sugerencias IA</h3>
+              </div>
+              <button onclick="loadDashboardSuggestions()" class="text-xs font-medium" style="color:var(--accent)">↻ Actualizar</button>
+            </div>
+            <div id="suggestionsLoading" class="text-center py-6 text-gray-400 text-sm">Analizando tu pipeline con IA…</div>
+            <div id="suggestionsList" class="space-y-3 hidden"></div>
+          </div>
+          <!-- At-Risk Leads -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-red-50">
+                  <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <h3 class="font-semibold text-gray-900">Leads en riesgo</h3>
+              </div>
+              <span class="text-xs text-gray-400">sin actividad &gt;7 días</span>
+            </div>
+            <div id="atRiskList" class="space-y-2"></div>
+            <div id="atRiskEmpty" class="hidden text-center py-6 text-sm text-gray-400">
+              ✅ No hay leads en riesgo. ¡Excelente seguimiento!
+            </div>
           </div>
         </div>
       </div>
@@ -1330,6 +1372,95 @@
         </div>
       </div>
 
+      <!-- ── MIS DOMINIOS ── -->
+      <div id="tab-domains" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold" style="color:var(--text-1)">Mis Dominios</h2>
+            <p class="text-sm mt-1" style="color:var(--text-3)">Verificá tus dominios para enviar emails desde tu propio dominio</p>
+          </div>
+          <button onclick="openAddDomainModal()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Agregar dominio
+          </button>
+        </div>
+        <!-- DNS Info Banner -->
+        <div class="card p-4 mb-6 flex items-start gap-3" style="background:#EFF6FF;border:1px solid #BFDBFE">
+          <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div class="text-sm text-blue-700">
+            <strong>¿Cómo verificar tu dominio?</strong> Agrega los registros DNS que se muestran en tu panel de hosting (GoDaddy, Namecheap, Cloudflare, etc.). La verificación puede tardar hasta 24hs en propagarse.
+          </div>
+        </div>
+        <div id="domainsList" class="space-y-4"></div>
+        <div id="domainsEmpty" class="hidden card p-12 text-center">
+          <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+          <p class="text-gray-400 font-medium">Sin dominios configurados</p>
+          <p class="text-gray-300 text-sm mt-1">Agrega tu primer dominio para enviar emails personalizados</p>
+        </div>
+      </div>
+
+      <!-- ── REPORTES PDF ── -->
+      <div id="tab-reports" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold" style="color:var(--text-1)">Reportes</h2>
+            <p class="text-sm mt-1" style="color:var(--text-3)">Generá reportes de tu negocio en formato PDF</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div class="card p-6 flex flex-col gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:#EFF6FF">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900">Reporte de Leads</h3>
+              <p class="text-sm text-gray-500 mt-1">Estado del pipeline, scores, fuentes y conversiones</p>
+            </div>
+            <button onclick="generateReport('leads')" class="mt-auto gradient-bg text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Generar PDF
+            </button>
+          </div>
+          <div class="card p-6 flex flex-col gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-green-50">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900">Reporte de Comisiones</h3>
+              <p class="text-sm text-gray-500 mt-1">Comisiones ganadas, proyectadas y por agente</p>
+            </div>
+            <button onclick="generateReport('commissions')" class="mt-auto gradient-bg text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Generar PDF
+            </button>
+          </div>
+          <div class="card p-6 flex flex-col gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-50">
+              <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900">Reporte de Agenda</h3>
+              <p class="text-sm text-gray-500 mt-1">Citas del mes, tasas de confirmación y cancelación</p>
+            </div>
+            <button onclick="generateReport('agenda')" class="mt-auto gradient-bg text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Generar PDF
+            </button>
+          </div>
+        </div>
+        <!-- Report Preview Area -->
+        <div id="reportPreview" class="hidden card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 id="reportTitle" class="font-semibold text-gray-900">Vista previa</h3>
+            <button onclick="printReport()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Imprimir / Guardar PDF
+            </button>
+          </div>
+          <div id="reportContent" class="text-sm text-gray-700 space-y-4"></div>
+        </div>
+      </div>
+
     </main>
   </div>
 </div>
@@ -1373,6 +1504,21 @@
         <button type="button" onclick="closeLeadModal()" class="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
       </div>
     </form>
+    <!-- Property matches (only shown when editing) -->
+    <div id="leadMatchesSection" class="hidden mt-4 pt-4" style="border-top:1px solid var(--border)">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-semibold text-gray-700">🏠 Propiedades que coinciden</h4>
+        <span id="leadMatchesCount" class="text-xs text-gray-400"></span>
+      </div>
+      <div id="leadMatchesList" class="space-y-2 max-h-56 overflow-y-auto"></div>
+    </div>
+    <!-- Activity timeline (only shown when editing) -->
+    <div id="leadActivitySection" class="hidden mt-4 pt-4" style="border-top:1px solid var(--border)">
+      <h4 class="text-sm font-semibold text-gray-700 mb-3">📋 Historial de actividad</h4>
+      <div id="leadActivityList" class="space-y-2 max-h-48 overflow-y-auto text-xs" style="color:var(--text-2)">
+        <p class="text-gray-400 text-center py-2">Cargando historial…</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1830,7 +1976,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.8.7'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.9.0'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -2032,6 +2178,8 @@ function showTab(tab) {
   if (tab === 'email-signatures') loadEmailSignatures();
   if (tab === 'templates') loadWaTemplates();
   if (tab === 'team') loadTeam();
+  if (tab === 'domains') loadDomains();
+  if (tab === 'reports') document.getElementById('reportPreview')?.classList.add('hidden');
 }
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
@@ -2043,18 +2191,18 @@ async function loadDashboard() {
   ]);
 
   if (!stats) return;
-  const { overview, pipeline, commissions, sources, appointments, topLeads } = stats;
+  const { overview, pipeline, commissions, sources, appointments, topLeads, conversations, atRiskLeads } = stats;
 
-  // Funnel execution stats
-  const running   = executions.filter(e => e.status === 'running').length;
-  const completed = executions.filter(e => e.status === 'completed').length;
-  const total     = executions.length;
-  const profilingRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+  // Funnel execution stats — use server-side conversations if available
+  const convRunning   = conversations?.running   ?? executions.filter(e => e.status === 'running').length;
+  const convCompleted = conversations?.completed ?? executions.filter(e => e.status === 'completed').length;
+  const convTotal     = executions.length || (convRunning + convCompleted + (conversations?.cancelled ?? 0));
+  const profilingRate = convTotal > 0 ? Math.round((convCompleted / convTotal) * 100) : 0;
 
   document.getElementById('statLeads').textContent    = overview.totalLeads;
   document.getElementById('statQualified').textContent = overview.totalLeads - (pipeline.stageCounts.new || 0);
   document.getElementById('statProfiling').textContent = profilingRate + '%';
-  document.getElementById('statRunning').textContent  = running;
+  document.getElementById('statRunning').textContent  = convRunning;
   document.getElementById('statScore').textContent    = overview.avgScore;
   document.getElementById('statAppts').textContent    = overview.todayAppts;
 
@@ -2204,6 +2352,61 @@ async function loadDashboard() {
         </div>`;
       }).join('')
     : `<p class="text-sm" style="color:var(--text-3)">Sin actividad reciente.</p>`;
+
+  // At-risk leads
+  const riskLeads = atRiskLeads || [];
+  const riskEl = document.getElementById('atRiskList');
+  const riskEmpty = document.getElementById('atRiskEmpty');
+  if (riskLeads.length === 0) {
+    riskEl.innerHTML = ''; riskEmpty.classList.remove('hidden');
+  } else {
+    riskEmpty.classList.add('hidden');
+    const urgencyColor = d => d >= 14 ? '#DC2626' : d >= 7 ? '#F59E0B' : '#6B7280';
+    riskEl.innerHTML = riskLeads.map(l => `
+      <div class="flex items-center justify-between py-2.5" style="border-bottom:1px solid var(--border)">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style="background:${urgencyColor(l.daysSince)}">${l.daysSince}d</div>
+          <div class="min-w-0">
+            <p class="text-sm font-medium truncate" style="color:var(--text-1)">${l.name}</p>
+            <p class="text-xs" style="color:var(--text-3)">${stageLabel(l.stage)} · score ${l.score || 0}</p>
+          </div>
+        </div>
+        <button onclick="openEditLeadModal('${l._id}')" class="text-xs font-medium px-2 py-1 rounded-lg" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE">
+          Contactar
+        </button>
+      </div>`).join('');
+  }
+
+  // Load AI suggestions async
+  loadDashboardSuggestions();
+}
+
+async function loadDashboardSuggestions() {
+  const loading = document.getElementById('suggestionsLoading');
+  const list    = document.getElementById('suggestionsList');
+  if (!loading || !list) return;
+  loading.classList.remove('hidden'); list.classList.add('hidden');
+  try {
+    const suggestions = await api('GET', '/api/ai/suggestions').catch(() => []);
+    const prioColor = { alta: '#DC2626', media: '#F59E0B', baja: '#6B7280' };
+    const prioBg    = { alta: '#FEF2F2', media: '#FFFBEB', baja: '#F9FAFB' };
+    const tipoIcon  = { seguimiento: '📞', cita: '📅', cierre: '🤝', pipeline: '📊', alerta: '⚠️' };
+    list.innerHTML = suggestions.map(s => `
+      <div class="rounded-xl p-3.5 flex gap-3" style="background:${prioBg[s.prioridad] || '#F9FAFB'};border:1px solid ${prioColor[s.prioridad] || '#E5E7EB'}22">
+        <span class="text-lg flex-shrink-0 mt-0.5">${tipoIcon[s.tipo] || '💡'}</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <p class="text-sm font-semibold" style="color:var(--text-1)">${s.titulo}</p>
+            <span class="text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:${prioColor[s.prioridad]}22;color:${prioColor[s.prioridad]}">${s.prioridad.toUpperCase()}</span>
+          </div>
+          <p class="text-xs" style="color:var(--text-2)">${s.descripcion}</p>
+          ${s.leadNombre ? `<p class="text-xs font-medium mt-1" style="color:var(--accent)">👤 ${s.leadNombre}</p>` : ''}
+        </div>
+      </div>`).join('') || '<p class="text-sm text-gray-400">Sin sugerencias por ahora.</p>';
+    loading.classList.add('hidden'); list.classList.remove('hidden');
+  } catch {
+    loading.textContent = 'No se pudieron cargar las sugerencias.';
+  }
 }
 
 // ── Leads ────────────────────────────────────────────────────────────────────
@@ -2285,6 +2488,8 @@ async function openNewLeadModal() {
   document.getElementById('leadSource').value = 'manual';
   document.getElementById('leadStage').value = 'new';
   await populateAgentSelect('');
+  document.getElementById('leadMatchesSection').classList.add('hidden');
+  document.getElementById('leadActivitySection').classList.add('hidden');
   document.getElementById('leadModal').classList.remove('hidden');
 }
 async function openEditLeadModal(id) {
@@ -2301,6 +2506,78 @@ async function openEditLeadModal(id) {
   const assignedId = l.assignedTo?._id || l.assignedTo || '';
   await populateAgentSelect(assignedId);
   document.getElementById('leadModal').classList.remove('hidden');
+  // Load property matches and activity timeline in background
+  document.getElementById('leadMatchesSection').classList.remove('hidden');
+  document.getElementById('leadActivitySection').classList.remove('hidden');
+  loadLeadMatches(id);
+  loadLeadActivity(id);
+}
+
+async function loadLeadMatches(leadId) {
+  const container = document.getElementById('leadMatchesList');
+  const countEl   = document.getElementById('leadMatchesCount');
+  try {
+    const matches = await api('GET', `/api/ai/leads/${leadId}/matches`).catch(() => []);
+    if (!matches?.length) {
+      container.innerHTML = '<p class="text-xs text-gray-400">Sin propiedades que coincidan aún.</p>';
+      countEl.textContent = '';
+      return;
+    }
+    countEl.textContent = `${matches.length} encontradas`;
+    container.innerHTML = matches.map(m => {
+      const score = m.matchScore ? Math.round(m.matchScore * 100) : '—';
+      return `<div class="flex items-center gap-3 p-2.5 rounded-lg" style="background:var(--surface-2);border:1px solid var(--border)">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#F0FDF4">
+          <span style="font-size:14px">🏠</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-semibold truncate" style="color:var(--text-1)">${m.title || m.address || 'Propiedad'}</p>
+          <p class="text-xs" style="color:var(--text-3)">${m.type || ''} · ${fmtMoney(m.price || 0)}</p>
+        </div>
+        <div class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex-shrink-0">${score}%</div>
+      </div>`;
+    }).join('');
+  } catch {
+    container.innerHTML = '<p class="text-xs text-gray-400">No se pudieron cargar las propiedades.</p>';
+  }
+}
+
+async function loadLeadActivity(leadId) {
+  const container = document.getElementById('leadActivityList');
+  try {
+    const [appts, executions] = await Promise.all([
+      api('GET', `/api/appointments?leadId=${leadId}`).catch(() => []),
+      api('GET', `/api/funnels/executions?leadId=${leadId}&limit=20`).catch(() => []),
+    ]);
+    const events = [];
+    appts.forEach(a => events.push({
+      date: new Date(a.datetime),
+      icon: '📅',
+      text: `Cita ${a.status === 'done' ? 'realizada' : a.status === 'cancelled' ? 'cancelada' : 'programada'}: ${a.title || 'Cita'}`,
+      color: a.status === 'done' ? '#10B981' : a.status === 'cancelled' ? '#EF4444' : '#3B82F6',
+    }));
+    executions.forEach(e => events.push({
+      date: new Date(e.updatedAt),
+      icon: e.status === 'completed' ? '✅' : e.status === 'cancelled' ? '❌' : '⚡',
+      text: `Funnel "${e.funnelId?.name || '—'}": ${e.status}`,
+      color: e.status === 'completed' ? '#10B981' : e.status === 'cancelled' ? '#EF4444' : '#F59E0B',
+    }));
+    events.sort((a, b) => b.date - a.date);
+    if (!events.length) {
+      container.innerHTML = '<p class="text-center text-gray-400 py-2">Sin historial registrado aún.</p>';
+      return;
+    }
+    container.innerHTML = events.map(ev => `
+      <div class="flex items-start gap-2 py-1.5" style="border-bottom:1px solid var(--border)">
+        <span class="flex-shrink-0">${ev.icon}</span>
+        <div class="flex-1 min-w-0">
+          <p style="color:var(--text-2)">${ev.text}</p>
+        </div>
+        <span class="flex-shrink-0 text-gray-400">${timeAgo(ev.date)}</span>
+      </div>`).join('');
+  } catch {
+    container.innerHTML = '<p class="text-center text-gray-400 py-2">Error cargando historial.</p>';
+  }
 }
 async function populateAgentSelect(selectedId) {
   const sel = document.getElementById('leadAssignTo');
@@ -3079,7 +3356,7 @@ function editCurrentCampaign() {
   if (!c) return;
   editingCampaignId = c._id;
   cWizardStep = 1;
-  cWizardData = { channel: c.channel || 'whatsapp', name: c.name, message: c.message, stage: c.filter?.stage || '', funnelProfile: c.filter?.funnelProfile || '' };
+  cWizardData = { channel: c.channel || 'whatsapp', name: c.name, message: c.message, subject: c.subject || '', stage: c.filter?.stage || '', funnelProfile: c.filter?.funnelProfile || '' };
   document.getElementById('campaignModalTitle').textContent = 'Editar campaña';
   document.getElementById('campaignModal').classList.remove('hidden');
   renderCampaignWizardStep();
@@ -3105,7 +3382,7 @@ const C_STEPS = ['Canal', 'Mensaje', 'Audiencia'];
 function openCampaignModal() {
   editingCampaignId = null;
   cWizardStep = 0;
-  cWizardData = { channel: 'whatsapp', name: '', message: '', stage: '', funnelProfile: '' };
+  cWizardData = { channel: 'whatsapp', name: '', message: '', subject: '', stage: '', funnelProfile: '' };
   document.getElementById('campaignModalTitle').textContent = 'Nueva campaña';
   document.getElementById('campaignModal').classList.remove('hidden');
   renderCampaignWizardStep();
@@ -3153,20 +3430,41 @@ function renderCampaignWizardStep() {
           </div>
           ${cWizardData.channel==='instagram' ? '<span class="ml-auto text-pink-500"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></span>' : ''}
         </button>
+        <button onclick="cWizardData.channel='email';renderCampaignWizardStep()" class="w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition text-left ${cWizardData.channel==='email' ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}">
+          <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <p class="font-semibold text-sm" style="color:var(--text-1)">Email</p>
+            <p class="text-xs" style="color:var(--text-3)">Campaña por correo electrónico a tus leads</p>
+          </div>
+          ${cWizardData.channel==='email' ? '<span class="ml-auto text-blue-500"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></span>' : ''}
+        </button>
       </div>`;
   } else if (cWizardStep === 1) {
     // Step 2: Mensaje
     nextBtn.textContent = 'Siguiente →';
+    const isEmail = cWizardData.channel === 'email';
+    const isWA = cWizardData.channel === 'whatsapp';
     body.innerHTML = `
       <div class="space-y-4">
+        ${isWA ? `<div class="flex items-start gap-2 p-3 rounded-xl text-xs text-amber-700 bg-amber-50 border border-amber-200">
+          <span class="text-base flex-shrink-0">⚠️</span>
+          <span><strong>Ventana de 24hs:</strong> WhatsApp solo permite enviar mensajes a contactos que te escribieron en las últimas 24hs, o usando una Plantilla HSM aprobada. Para campañas fuera de ventana, usá la sección "Plantillas WA".</span>
+        </div>` : ''}
         <div>
           <label class="text-xs font-medium uppercase tracking-wide" style="color:var(--text-3)">Nombre de la campaña *</label>
           <input id="cNameInput" type="text" value="${cWizardData.name || ''}" placeholder="Ej: Seguimiento Caliente A - Junio"
             class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="cWizardData.name=this.value" />
         </div>
+        ${isEmail ? `<div>
+          <label class="text-xs font-medium uppercase tracking-wide" style="color:var(--text-3)">Asunto del email *</label>
+          <input id="cSubjectInput" type="text" value="${cWizardData.subject || ''}" placeholder="Ej: Te tenemos una propiedad ideal 🏠"
+            class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="cWizardData.subject=this.value" />
+        </div>` : ''}
         <div>
-          <label class="text-xs font-medium uppercase tracking-wide" style="color:var(--text-3)">Mensaje *</label>
-          <textarea id="cMessageInput" rows="5" placeholder="Escribí el mensaje que recibirán los leads..."
+          <label class="text-xs font-medium uppercase tracking-wide" style="color:var(--text-3)">${isEmail ? 'Cuerpo del email *' : 'Mensaje *'}</label>
+          <textarea id="cMessageInput" rows="${isEmail ? 8 : 5}" placeholder="${isEmail ? 'Estimado {nombre},\n\nTe contactamos porque tenemos...' : 'Escribí el mensaje que recibirán los leads...'}"
             class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" oninput="cWizardData.message=this.value">${cWizardData.message || ''}</textarea>
           <p class="text-xs mt-1" style="color:var(--text-3)">Podés usar {nombre} para personalizar con el nombre del lead.</p>
         </div>
@@ -3226,7 +3524,7 @@ function editCurrentCampaignWizard() {
   if (!c) return;
   editingCampaignId = c._id;
   cWizardStep = 1;
-  cWizardData = { channel: c.channel || 'whatsapp', name: c.name, message: c.message, stage: c.filter?.stage || '', funnelProfile: c.filter?.funnelProfile || '' };
+  cWizardData = { channel: c.channel || 'whatsapp', name: c.name, message: c.message, subject: c.subject || '', stage: c.filter?.stage || '', funnelProfile: c.filter?.funnelProfile || '' };
   document.getElementById('campaignModalTitle').textContent = 'Editar campaña';
   document.getElementById('campaignModal').classList.remove('hidden');
   renderCampaignWizardStep();
@@ -3254,6 +3552,7 @@ async function saveCampaign() {
   if (!message) { showToast('El mensaje es obligatorio', 'error'); return; }
   const payload = {
     name, message,
+    subject: (cWizardData?.subject || '').trim() || undefined,
     channel: cWizardData?.channel || document.getElementById('cChannel')?.value || 'whatsapp',
     filter: {
       stage: cWizardData?.stage || document.getElementById('cStage')?.value || '',
@@ -4981,6 +5280,187 @@ async function loadActiveConversations() {
       </tr>`;
     }).join('');
   } catch(err) { showToast(err.message, 'error'); }
+}
+
+// ── Mis Dominios ─────────────────────────────────────────────────────────────
+async function loadDomains() {
+  try {
+    const domains = await api('GET', '/api/domains');
+    const container = document.getElementById('domainsList');
+    const empty = document.getElementById('domainsEmpty');
+    if (!domains.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    container.innerHTML = domains.map(d => {
+      const statusColor = d.status === 'verified' ? '#10B981' : d.status === 'failed' ? '#EF4444' : '#F59E0B';
+      const statusBg    = d.status === 'verified' ? '#F0FDF4' : d.status === 'failed' ? '#FFF1F2' : '#FFFBEB';
+      const statusLabel = d.status === 'verified' ? '✅ Verificado' : d.status === 'failed' ? '❌ Fallido' : '⏳ Pendiente';
+      return `<div class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#EFF6FF">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">${d.domain}</p>
+              <p class="text-xs text-gray-400">Agregado ${timeAgo(d.createdAt)}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background:${statusBg};color:${statusColor}">${statusLabel}</span>
+            ${d.status !== 'verified' ? `<button data-action="verify-domain" data-id="${d._id}" class="text-xs font-medium px-3 py-1.5 rounded-lg" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE">Verificar</button>` : ''}
+            <button data-action="delete-domain" data-id="${d._id}" class="text-xs font-medium px-3 py-1.5 rounded-lg" style="background:#FFF1F2;color:#DC2626;border:1px solid #FECACA">Eliminar</button>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="p-3 rounded-lg font-mono text-xs" style="background:var(--surface-2);border:1px solid var(--border)">
+            <p class="text-gray-500 mb-1 font-sans font-semibold text-xs">Registro DKIM (TXT):</p>
+            <p class="break-all" style="color:var(--text-2)">${d.dkimKey || '—'}</p>
+          </div>
+          <div class="p-3 rounded-lg font-mono text-xs" style="background:var(--surface-2);border:1px solid var(--border)">
+            <p class="text-gray-500 mb-1 font-sans font-semibold text-xs">Registro SPF (TXT):</p>
+            <p class="break-all" style="color:var(--text-2)">${d.spfRecord || '—'}</p>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    // Event delegation
+    container.onclick = async e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      if (btn.dataset.action === 'delete-domain') {
+        if (!confirm('¿Eliminar este dominio?')) return;
+        try { await api('DELETE', `/api/domains/${id}`); showToast('Dominio eliminado'); loadDomains(); }
+        catch(err) { showToast(err.message, 'error'); }
+      }
+      if (btn.dataset.action === 'verify-domain') {
+        btn.textContent = 'Verificando…'; btn.disabled = true;
+        try { await api('POST', `/api/domains/${id}/verify`); showToast('✅ Dominio verificado'); loadDomains(); }
+        catch(err) { showToast(err.message, 'error'); loadDomains(); }
+      }
+    };
+  } catch(err) { showToast(err.message, 'error'); }
+}
+
+function openAddDomainModal() {
+  const d = prompt('Ingresá tu dominio (ej: miagencia.com):');
+  if (!d?.trim()) return;
+  api('POST', '/api/domains', { domain: d.trim() })
+    .then(() => { showToast('Dominio agregado. Configurá los registros DNS.'); loadDomains(); })
+    .catch(err => showToast(err.message, 'error'));
+}
+
+// ── Reportes PDF ──────────────────────────────────────────────────────────────
+async function generateReport(type) {
+  const titleMap = { leads: 'Reporte de Leads', commissions: 'Reporte de Comisiones', agenda: 'Reporte de Agenda' };
+  const preview = document.getElementById('reportPreview');
+  const titleEl = document.getElementById('reportTitle');
+  const contentEl = document.getElementById('reportContent');
+
+  titleEl.textContent = titleMap[type] || 'Reporte';
+  contentEl.innerHTML = '<p class="text-gray-400 text-center py-4">Generando reporte…</p>';
+  preview.classList.remove('hidden');
+  preview.scrollIntoView({ behavior: 'smooth' });
+
+  try {
+    const [stats, leads, appts] = await Promise.all([
+      api('GET', '/api/analytics').catch(() => null),
+      api('GET', '/api/leads').catch(() => []),
+      api('GET', '/api/appointments').catch(() => []),
+    ]);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    let html = `<div style="font-family:sans-serif">
+      <div style="border-bottom:2px solid #3B82F6;padding-bottom:12px;margin-bottom:20px">
+        <h1 style="font-size:22px;font-weight:800;color:#1E3A5F;margin:0">${titleMap[type]}</h1>
+        <p style="color:#6B7280;margin:4px 0 0;font-size:13px">Generado el ${dateStr} · AgentPro</p>
+      </div>`;
+
+    if (type === 'leads' && stats) {
+      const { pipeline, sources, overview } = stats;
+      html += `<h2 style="font-size:15px;font-weight:700;color:#374151;margin:16px 0 8px">Resumen del Pipeline</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="background:#EFF6FF"><th style="text-align:left;padding:8px;border:1px solid #BFDBFE">Etapa</th><th style="padding:8px;border:1px solid #BFDBFE;text-align:right">Leads</th><th style="padding:8px;border:1px solid #BFDBFE;text-align:right">Valor</th></tr>
+        ${['new','qualified','visit','closed','lost'].map(s => `
+          <tr><td style="padding:7px 8px;border:1px solid #E5E7EB">${stageLabel(s)}</td>
+          <td style="padding:7px 8px;border:1px solid #E5E7EB;text-align:right">${pipeline.stageCounts[s] || 0}</td>
+          <td style="padding:7px 8px;border:1px solid #E5E7EB;text-align:right">${fmtMoney(pipeline.stageBudget[s] || 0)}</td></tr>`).join('')}
+      </table>
+      <h2 style="font-size:15px;font-weight:700;color:#374151;margin:20px 0 8px">Top 10 Leads por Score</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="background:#EFF6FF"><th style="text-align:left;padding:8px;border:1px solid #BFDBFE">Nombre</th><th style="padding:8px;border:1px solid #BFDBFE">Stage</th><th style="padding:8px;border:1px solid #BFDBFE;text-align:right">Score</th><th style="padding:8px;border:1px solid #BFDBFE;text-align:right">Presupuesto</th></tr>
+        ${leads.sort((a,b)=>b.score-a.score).slice(0,10).map(l => `
+          <tr><td style="padding:7px 8px;border:1px solid #E5E7EB">${l.name}</td>
+          <td style="padding:7px 8px;border:1px solid #E5E7EB;text-align:center">${stageLabel(l.stage)}</td>
+          <td style="padding:7px 8px;border:1px solid #E5E7EB;text-align:right;font-weight:700;color:#3B82F6">${l.score || 0}</td>
+          <td style="padding:7px 8px;border:1px solid #E5E7EB;text-align:right">${fmtMoney(l.budget || 0)}</td></tr>`).join('')}
+      </table>`;
+    } else if (type === 'commissions' && stats) {
+      const { commissions, pipeline } = stats;
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:16px;text-align:center">
+          <p style="color:#6B7280;font-size:12px;margin:0 0 4px">Comisiones Ganadas</p>
+          <p style="font-size:24px;font-weight:800;color:#15803D;margin:0">${fmtMoney(commissions.earned)}</p>
+          <p style="color:#6B7280;font-size:11px;margin:4px 0 0">sobre cierres confirmados</p>
+        </div>
+        <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:16px;text-align:center">
+          <p style="color:#6B7280;font-size:12px;margin:0 0 4px">Comisiones Proyectadas</p>
+          <p style="font-size:24px;font-weight:800;color:#1D4ED8;margin:0">${fmtMoney(commissions.projected)}</p>
+          <p style="color:#6B7280;font-size:11px;margin:4px 0 0">pipeline activo × 40%</p>
+        </div>
+      </div>
+      <h2 style="font-size:15px;font-weight:700;color:#374151;margin:16px 0 8px">Pipeline por Valor</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="background:#EFF6FF"><th style="text-align:left;padding:8px;border:1px solid #BFDBFE">Etapa</th><th style="padding:8px;border:1px solid #BFDBFE;text-align:right">Valor</th><th style="padding:8px;border:1px solid #BFDBFE;text-align:right">Comisión (3%)</th></tr>
+        ${['new','qualified','visit','closed'].map(s => {
+          const v = pipeline.stageBudget[s] || 0;
+          return `<tr><td style="padding:7px 8px;border:1px solid #E5E7EB">${stageLabel(s)}</td>
+          <td style="padding:7px 8px;border:1px solid #E5E7EB;text-align:right">${fmtMoney(v)}</td>
+          <td style="padding:7px 8px;border:1px solid #E5E7EB;text-align:right;font-weight:700;color:#15803D">${fmtMoney(v * 0.03)}</td></tr>`;
+        }).join('')}
+      </table>`;
+    } else if (type === 'agenda') {
+      const now2 = new Date();
+      const thisMonth = appts.filter(a => {
+        const d = new Date(a.datetime);
+        return d.getMonth() === now2.getMonth() && d.getFullYear() === now2.getFullYear();
+      });
+      const byStatus = { scheduled:0, confirmed:0, done:0, cancelled:0 };
+      thisMonth.forEach(a => { if (byStatus[a.status] !== undefined) byStatus[a.status]++; });
+      html += `<h2 style="font-size:15px;font-weight:700;color:#374151;margin:0 0 12px">Citas este mes (${now.toLocaleDateString('es',{month:'long',year:'numeric'})})</h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+        ${[['Programadas','scheduled','#3B82F6'],['Confirmadas','confirmed','#10B981'],['Realizadas','done','#6B7280'],['Canceladas','cancelled','#EF4444']].map(([l,k,c])=>`
+          <div style="background:#F9FAFB;border-radius:10px;padding:12px;text-align:center;border:1px solid #E5E7EB">
+            <p style="color:${c};font-size:22px;font-weight:800;margin:0">${byStatus[k]}</p>
+            <p style="color:#6B7280;font-size:11px;margin:3px 0 0">${l}</p>
+          </div>`).join('')}
+      </div>
+      <h2 style="font-size:15px;font-weight:700;color:#374151;margin:16px 0 8px">Detalle de citas</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="background:#EFF6FF"><th style="text-align:left;padding:8px;border:1px solid #BFDBFE">Fecha</th><th style="text-align:left;padding:8px;border:1px solid #BFDBFE">Título</th><th style="padding:8px;border:1px solid #BFDBFE">Estado</th></tr>
+        ${thisMonth.sort((a,b)=>new Date(a.datetime)-new Date(b.datetime)).map(a => `
+          <tr><td style="padding:7px 8px;border:1px solid #E5E7EB">${new Date(a.datetime).toLocaleDateString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+          <td style="padding:7px 8px;border:1px solid #E5E7EB">${a.title || '—'}</td>
+          <td style="padding:7px 8px;border:1px solid #E5E7EB;text-align:center">${a.status}</td></tr>`).join('')}
+      </table>`;
+    }
+
+    html += `<p style="color:#9CA3AF;font-size:11px;margin-top:24px;text-align:center">Reporte generado por AgentPro · ${dateStr}</p></div>`;
+    contentEl.innerHTML = html;
+  } catch(err) {
+    contentEl.innerHTML = `<p class="text-red-500">${err.message}</p>`;
+  }
+}
+
+function printReport() {
+  const content = document.getElementById('reportContent').innerHTML;
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte AgentPro</title>
+    <style>body{font-family:sans-serif;padding:24px;max-width:900px;margin:0 auto}@media print{body{padding:0}}</style></head>
+    <body>${content}</body></html>`);
+  w.document.close();
+  w.print();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────

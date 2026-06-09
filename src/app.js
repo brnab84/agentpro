@@ -20,6 +20,7 @@ import waTemplateRoutes from './modules/wa-templates/wa-templates.routes.js';
 import phoneNumberRoutes from './modules/phone-numbers/phone-numbers.routes.js';
 import emailAccountRoutes from './modules/email-accounts/email-accounts.routes.js';
 import emailSignatureRoutes from './modules/email-signatures/email-signatures.routes.js';
+import domainRoutes from './modules/domains/domains.routes.js';
 
 let indexHtml;
 try {
@@ -58,6 +59,7 @@ export function createApp() {
   app.use('/api/phone-numbers', phoneNumberRoutes);
   app.use('/api/email-accounts', emailAccountRoutes);
   app.use('/api/email-signatures', emailSignatureRoutes);
+  app.use('/api/domains', domainRoutes);
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
   app.use(errorHandler);

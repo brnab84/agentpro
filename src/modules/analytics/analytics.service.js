@@ -1,14 +1,16 @@
 import { Lead } from '../../models/Lead.js';
 import { Appointment } from '../../models/Appointment.js';
 import { Property } from '../../models/Property.js';
+import { FunnelExecution } from '../../models/FunnelExecution.js';
 
 const COMMISSION_RATE = 0.03;
 
 export async function getDashboardStats(tenantId) {
-  const [leads, appointments, properties] = await Promise.all([
+  const [leads, appointments, properties, executions] = await Promise.all([
     Lead.find({ tenantId }).lean(),
     Appointment.find({ tenantId }).lean(),
     Property.find({ tenantId }).lean(),
+    FunnelExecution.find({ tenantId }).lean(),
   ]);
 
   const now = new Date();
@@ -48,6 +50,22 @@ export async function getDashboardStats(tenantId) {
     .slice(0, 5)
     .map(l => ({ _id: l._id, name: l.name, score: l.score, stage: l.stage, predictedCloseProb: l.predictedCloseProb }));
 
+  // ── Conversaciones (funnel executions) ──────────────────────────────────────
+  const convRunning   = executions.filter(e => e.status === 'running').length;
+  const convCompleted = executions.filter(e => e.status === 'completed').length;
+  const convCancelled = executions.filter(e => e.status === 'cancelled').length;
+
+  // ── At-risk leads (sin contacto > 7 días, etapas activas) ──────────────────
+  const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+  const atRiskLeads = leads
+    .filter(l => ['new', 'qualified', 'visit'].includes(l.stage) && new Date(l.updatedAt) < sevenDaysAgo)
+    .sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt))
+    .slice(0, 5)
+    .map(l => ({
+      _id: l._id, name: l.name, stage: l.stage, score: l.score,
+      daysSince: Math.round((now - new Date(l.updatedAt)) / 86400000),
+    }));
+
   return {
     overview: {
       totalLeads: leads.length,
@@ -72,5 +90,7 @@ export async function getDashboardStats(tenantId) {
       byStatus: apptsByStatus,
     },
     topLeads,
+    conversations: { running: convRunning, completed: convCompleted, cancelled: convCancelled },
+    atRiskLeads,
   };
 }
