@@ -31,272 +31,254 @@ const FETCH_HEADERS = {
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
   'Accept-Language': 'es-419,es;q=0.9,en;q=0.7',
   'Cache-Control': 'no-cache',
+  'Pragma': 'no-cache',
 };
 
-const SKIP_PHOTO_PATTERNS = /logo|icon|avatar|sprite|pixel|banner|ad[_\-]|tracking|placeholder|blank|button|flag|star|heart|thumb_up|checkmark|loading|default-user|no-image|empty|favicon/i;
+const SKIP_PHOTO = /logo|icon|avatar|sprite|pixel|banner|ad[_\-]|tracking|placeholder|blank|button|flag|star|heart|thumb_up|checkmark|loading|default-user|no-image|empty|favicon|captcha|recaptcha/i;
 
-/** Collect images from any HTML, JSON-LD, og:image, __NEXT_DATA__, data-src */
+const parseNum = v => {
+  if (v == null) return undefined;
+  const n = parseFloat(String(v).replace(/[^\d.]/g, ''));
+  return isNaN(n) ? undefined : n;
+};
+
 function harvestPhotos(html) {
   const set = new Set();
-
   // og:image / twitter:image
   for (const m of html.matchAll(/(?:og:image|twitter:image)[^>]*content=["']([^"']+)["']/gi)) set.add(m[1]);
   for (const m of html.matchAll(/content=["']([^"']+)["'][^>]*(?:og:image|twitter:image)/gi)) set.add(m[1]);
-
   // JSON-LD
   for (const m of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       const obj = JSON.parse(m[1]);
-      const imgs = [obj.image, obj.photo, ...(obj.images || [])].flat().filter(Boolean);
-      imgs.forEach(i => typeof i === 'string' ? set.add(i) : i?.url && set.add(i.url));
+      [obj.image, obj.photo, ...(obj.images||[])].flat().filter(Boolean)
+        .forEach(i => typeof i === 'string' ? set.add(i) : i?.url && set.add(i.url));
     } catch { /* ignore */ }
   }
-
   // data-src / lazy
   for (const m of html.matchAll(/(?:data-src|data-lazy-src|data-original|data-full-src|data-image)=["']([^"']{20,})["']/gi)) {
-    const u = m[1];
-    if (u.startsWith('http') && /\.(jpg|jpeg|png|webp|avif)(\?|$)/i.test(u)) set.add(u);
+    if (m[1].startsWith('http') && /\.(jpg|jpeg|png|webp|avif)(\?|$)/i.test(m[1])) set.add(m[1]);
   }
-
-  // src= images
+  // src=
   for (const m of html.matchAll(/\bsrc=["']([^"']{20,})["']/gi)) {
-    const u = m[1];
-    if (u.startsWith('http') && /\.(jpg|jpeg|png|webp|avif)(\?|$)/i.test(u)) set.add(u);
+    if (m[1].startsWith('http') && /\.(jpg|jpeg|png|webp)(\?|$)/i.test(m[1])) set.add(m[1]);
   }
+  // JSON strings
+  for (const m of html.matchAll(/"(https?:\/\/[^"]{15,}\.(jpg|jpeg|png|webp)(?:\?[^"]{0,120})?)"/gi)) set.add(m[1]);
 
-  // JSON strings in page
-  for (const m of html.matchAll(/"(https?:\/\/[^"]{15,}\.(jpg|jpeg|png|webp|avif)(?:\?[^"]{0,120})?)"/gi)) set.add(m[1]);
-
-  return [...set]
-    .filter(u => u.startsWith('http') && !SKIP_PHOTO_PATTERNS.test(u))
-    .slice(0, 15);
+  return [...set].filter(u => u.startsWith('http') && !SKIP_PHOTO.test(u)).slice(0, 15);
 }
 
-/** Recursively walk an object and collect string image URLs */
-function deepFindImages(obj, set = new Set(), depth = 0) {
+function deepImages(obj, set = new Set(), depth = 0) {
   if (depth > 10 || !obj || typeof obj !== 'object') return;
-  for (const key of Object.keys(obj)) {
-    const val = obj[key];
+  for (const [key, val] of Object.entries(obj)) {
     if (typeof val === 'string') {
       if (val.startsWith('http') && /\.(jpg|jpeg|png|webp)/i.test(val)) set.add(val);
-      else if (key.match(/photo|image|picture|foto|imagen|url/i) && val.startsWith('http')) set.add(val);
-    } else if (Array.isArray(val)) val.forEach(v => deepFindImages(v, set, depth + 1));
-    else if (typeof val === 'object') deepFindImages(val, set, depth + 1);
+      else if (/photo|image|picture|foto|imagen|url/i.test(key) && val.startsWith('http')) set.add(val);
+    } else if (Array.isArray(val)) val.forEach(v => deepImages(v, set, depth + 1));
+    else if (typeof val === 'object') deepImages(val, set, depth + 1);
   }
 }
 
-/** Parse MercadoLibre item API response into structured property data */
-function parseMercadoLibreItem(item) {
-  const result = {};
+/** Parse ML REST API item into structured property */
+function parseMlItem(item) {
+  const r = {};
+  r.title = item.title || '';
 
-  result.title = item.title || '';
-  result.price = item.price || 0;
+  const currMap = { USD:'USD', ARS:'ARS', PEN:'PEN', BRL:'BRL', COP:'COP', MXN:'MXN', CLP:'CLP', UYU:'UYU', PAB:'USD', GTQ:'GTQ', HNL:'HNL', NIO:'NIO', CRC:'CRC' };
+  r.currency = currMap[item.currency_id] || item.currency_id || 'USD';
+  r.price = item.price || 0;
 
-  // Currency
-  const currencyMap = { USD: 'USD', ARS: 'ARS', PEN: 'PEN', BRL: 'BRL', COP: 'COP', MXN: 'MXN', CLP: 'CLP', UYU: 'UYU' };
-  result.currency = currencyMap[item.currency_id] || item.currency_id || 'USD';
+  const tl = (item.title || '').toLowerCase();
+  r.operation = (tl.includes('alquiler') || tl.includes('arriendo') || tl.includes('renta') || item.listing_type_id?.includes('rental')) ? 'rent' : 'sale';
+  r.type = tl.includes('departamento') || tl.includes('apartamento') ? 'apartment'
+         : tl.includes('terreno') || tl.includes('lote') ? 'land'
+         : tl.includes('local') || tl.includes('oficina') ? 'commercial'
+         : 'house';
 
-  // Operation: sale vs rent
-  if (item.category_id?.toLowerCase().includes('alquiler') || item.title?.toLowerCase().includes('alquiler') || item.title?.toLowerCase().includes('arriendo')) {
-    result.operation = 'rent';
-  } else {
-    result.operation = 'sale';
-  }
-
-  // Type
-  const titleLow = (item.title || '').toLowerCase();
-  if (titleLow.includes('departamento') || titleLow.includes('apartamento') || titleLow.includes('piso')) result.type = 'apartment';
-  else if (titleLow.includes('terreno') || titleLow.includes('lote')) result.type = 'land';
-  else if (titleLow.includes('local') || titleLow.includes('oficina') || titleLow.includes('comercial')) result.type = 'commercial';
-  else result.type = 'house';
-
-  // Address / location
+  // Location
   const loc = item.seller_address || item.location || {};
   const parts = [
     loc.street_name && loc.street_number ? `${loc.street_name} ${loc.street_number}` : loc.street_name,
-    loc.neighborhood?.name,
-    loc.city?.name,
-    loc.state?.name,
-    loc.country?.name,
+    loc.neighborhood?.name, loc.city?.name, loc.state?.name,
   ].filter(Boolean);
-  if (parts.length) result.address = parts.join(', ');
-  result.zone = loc.neighborhood?.name || loc.city?.name || '';
+  if (parts.length) r.address = parts.join(', ');
+  r.zone = loc.neighborhood?.name || loc.city?.name || '';
 
-  // Attributes
-  const attrMap = {};
+  // Build attribute lookup (by id AND by name, both lowercase)
+  const attr = {};
   for (const a of (item.attributes || [])) {
-    if (a.id && a.value_name) attrMap[a.id.toLowerCase()] = a.value_name;
-    if (a.name && a.value_name) attrMap[a.name.toLowerCase()] = a.value_name;
-  }
-
-  const parseNum = v => { const n = parseFloat(String(v).replace(/[^\d.]/g, '')); return isNaN(n) ? undefined : n; };
-
-  result.beds    = parseNum(attrMap['rooms'] || attrMap['bedrooms'] || attrMap['dormitorios'] || attrMap['habitaciones'] || attrMap['ambientes']);
-  result.baths   = parseNum(attrMap['bathrooms'] || attrMap['bathrooms_quantity'] || attrMap['baños'] || attrMap['banos']);
-  result.area    = parseNum(attrMap['covered_area'] || attrMap['superficie_cubierta'] || attrMap['floor_space'] || attrMap['superficie'] || attrMap['surface_covered']);
-  result.areaTotal = parseNum(attrMap['total_area'] || attrMap['superficie_total'] || attrMap['land_area']);
-  result.parking = parseNum(attrMap['parking_lots'] || attrMap['cocheras'] || attrMap['garage'] || attrMap['covered_parking_lots']);
-  result.floor   = parseNum(attrMap['floor'] || attrMap['piso'] || attrMap['floor_number']);
-  result.age     = parseNum(attrMap['property_age'] || attrMap['antiguedad'] || attrMap['antigüedad'] || attrMap['age']);
-
-  // Features from attributes
-  const featureKeywords = ['piscina', 'pileta', 'gimnasio', 'quincho', 'seguridad', 'vigilancia', 'amenidades', 'laundry', 'salon', 'sauna', 'spa', 'terraza', 'balcon', 'balcón', 'jardín', 'jardin', 'parrilla', 'sum'];
-  const features = [];
-  for (const [k, v] of Object.entries(attrMap)) {
-    const combined = `${k} ${v}`.toLowerCase();
-    for (const kw of featureKeywords) {
-      if (combined.includes(kw) && !features.includes(kw)) features.push(kw);
-    }
-    if (v === 'Sí' || v === 'Si' || v === 'Yes' || v === 'true') {
-      const clean = k.replace(/_/g, ' ').trim().toLowerCase();
-      if (clean && !features.includes(clean)) features.push(clean);
+    if (a.value_name && a.value_name !== 'No') {
+      if (a.id) attr[a.id.toLowerCase()] = a.value_name;
+      if (a.name) attr[a.name.toLowerCase()] = a.value_name;
     }
   }
-  result.features = [...new Set(features)].slice(0, 10);
 
-  // Description from item
-  if (item.descriptions?.length) {
-    // full descriptions fetched separately — skip here, AI handles text
+  r.beds     = parseNum(attr['rooms'] || attr['bedrooms'] || attr['dormitorios'] || attr['habitaciones'] || attr['ambientes'] || attr['property_rooms']);
+  r.baths    = parseNum(attr['bathrooms'] || attr['bathrooms_quantity'] || attr['baños'] || attr['banos']);
+  r.area     = parseNum(attr['covered_area'] || attr['superficie_cubierta'] || attr['floor_space'] || attr['superficie'] || attr['surface_covered'] || attr['covered_surface']);
+  r.areaTotal= parseNum(attr['total_area'] || attr['superficie_total'] || attr['land_area'] || attr['total_surface']);
+  r.parking  = parseNum(attr['parking_lots'] || attr['cocheras'] || attr['garage'] || attr['covered_parking_lots'] || attr['parking']);
+  r.floor    = parseNum(attr['floor'] || attr['piso'] || attr['floor_number'] || attr['floors']);
+  r.age      = parseNum(attr['property_age'] || attr['antiguedad'] || attr['antigüedad'] || attr['age_since']);
+
+  // Features
+  const kwMap = { piscina:'piscina', pileta:'piscina', gimnasio:'gimnasio', quincho:'quincho', sum:'salón de usos múltiples', laundry:'laundry', sauna:'sauna', spa:'spa', terraza:'terraza', balcon:'balcón', balcón:'balcón', jardín:'jardín', jardin:'jardín', parrilla:'parrilla', seguridad:'seguridad 24hs', vigilancia:'vigilancia' };
+  const features = new Set();
+  for (const [k, v] of Object.entries(attr)) {
+    const txt = `${k} ${v}`.toLowerCase();
+    for (const [kw, label] of Object.entries(kwMap)) if (txt.includes(kw)) features.add(label);
+    if (v === 'Sí' || v === 'Si' || v === 'Yes') { const clean = k.replace(/_/g,' ').trim(); if (clean.length > 2) features.add(clean); }
   }
+  r.features = [...features].slice(0, 10);
 
   // Photos
-  const photos = [];
-  for (const p of (item.pictures || [])) {
-    if (p.url) photos.push(p.url.replace(/-[A-Z]\.jpg$/i, '-O.jpg'));
-  }
-  result.photos = [...new Set(photos)].slice(0, 12);
+  r.photos = [...new Set(
+    (item.pictures || []).map(p => p.url ? p.url.replace(/-[A-Z]\.jpg$/i, '-O.jpg') : null).filter(Boolean)
+  )].slice(0, 12);
 
-  return result;
+  return r;
 }
 
-/** Try to parse ZonaProp / Argenprop / similar __NEXT_DATA__ JSON for property data */
-function parseNextData(ndObj) {
-  const result = {};
-  // Walk the object looking for property-like nodes
-  const tryExtract = (obj, depth = 0) => {
-    if (depth > 6 || !obj || typeof obj !== 'object') return;
-    // ZonaProp uses realEstate.postingData or similar
-    if (obj.mainCategory) result.type = obj.mainCategory;
-    if (obj.operations) {
+/** Try to pull structured data from ZonaProp / Argenprop __NEXT_DATA__ */
+function parseNextData(nd) {
+  const r = {};
+  const tryNode = (obj, depth = 0) => {
+    if (depth > 8 || !obj || typeof obj !== 'object') return;
+    if (obj.operations?.[0]) {
       const op = obj.operations[0];
-      if (op?.operationType?.id === 'Rent' || op?.operationType?.name?.toLowerCase().includes('alquiler')) result.operation = 'rent';
-      else result.operation = 'sale';
-      if (op?.prices?.[0]) {
-        result.price    = op.prices[0].price;
-        result.currency = op.prices[0].currency || 'USD';
-      }
+      if (op.operationType?.id === 'Rent' || op.operationType?.name?.toLowerCase().includes('alquiler')) r.operation = 'rent';
+      else if (!r.operation) r.operation = 'sale';
+      if (!r.price && op.prices?.[0]) { r.price = op.prices[0].price; r.currency = op.prices[0].currency || 'USD'; }
     }
-    if (obj.addressFormatted || obj.address) result.address = obj.addressFormatted || obj.address;
-    if (obj.location?.full) result.address = obj.location.full;
-    if (obj.location?.divisions) {
-      result.zone = (obj.location.divisions || []).slice(-1)[0]?.prettyName || result.zone;
-    }
-    if (obj.mainFeatures) {
-      for (const f of (obj.mainFeatures || [])) {
+    if (!r.address && (obj.addressFormatted || obj.address)) r.address = obj.addressFormatted || obj.address;
+    if (!r.address && obj.location?.full) r.address = obj.location.full;
+    if (!r.zone && obj.location?.divisions?.length) r.zone = obj.location.divisions.slice(-1)[0]?.prettyName || '';
+    if (obj.mainFeatures?.length) {
+      for (const f of obj.mainFeatures) {
         const k = (f.icon || f.key || '').toLowerCase();
-        const v = f.value || f.label;
-        if (k.includes('room') || k.includes('dormit') || k.includes('habitac')) result.beds = parseFloat(v) || result.beds;
-        if (k.includes('bath') || k.includes('baño')) result.baths = parseFloat(v) || result.baths;
-        if (k.includes('area') || k.includes('superf') || k.includes('cubierta')) result.area = parseFloat(v) || result.area;
-        if (k.includes('total')) result.areaTotal = parseFloat(v) || result.areaTotal;
-        if (k.includes('garag') || k.includes('coche')) result.parking = parseFloat(v) || result.parking;
-        if (k.includes('piso') || k.includes('floor')) result.floor = parseFloat(v) || result.floor;
-        if (k.includes('antig') || k.includes('age')) result.age = parseFloat(v) || result.age;
+        const v = f.value || f.label || '';
+        if ((k.includes('room') || k.includes('dormit')) && !r.beds) r.beds = parseNum(v);
+        if (k.includes('bath') && !r.baths) r.baths = parseNum(v);
+        if ((k.includes('superf') || k.includes('cubierta')) && !r.area) r.area = parseNum(v);
+        if (k.includes('total') && !r.areaTotal) r.areaTotal = parseNum(v);
+        if ((k.includes('garag') || k.includes('coche')) && !r.parking) r.parking = parseNum(v);
+        if ((k.includes('piso') || k.includes('floor')) && r.floor == null) r.floor = parseNum(v);
+        if ((k.includes('antig') || k.includes('age')) && r.age == null) r.age = parseNum(v);
       }
     }
-    if (typeof obj.title === 'string' && obj.title.length > 5 && !result.title) result.title = obj.title;
-    if (typeof obj.description === 'string' && obj.description.length > 20 && !result.description) result.description = obj.description.slice(0, 600);
-    if (Array.isArray(obj.amenities)) result.features = obj.amenities.map(a => a.name || a).filter(Boolean).slice(0, 10);
-    if (Array.isArray(obj.allFeatures)) result.features = obj.allFeatures.map(a => a.label || a.name || a).filter(Boolean).slice(0, 10);
-    for (const v of Object.values(obj)) {
-      if (v && typeof v === 'object') tryExtract(v, depth + 1);
+    if (!r.title && typeof obj.title === 'string' && obj.title.length > 5) r.title = obj.title;
+    if (!r.description && typeof obj.description === 'string' && obj.description.length > 20) r.description = obj.description.slice(0, 600);
+    if (!r.features?.length) {
+      const amenArr = obj.amenities || obj.allFeatures || obj.tags || [];
+      if (amenArr.length) r.features = amenArr.map(a => a.name || a.label || a).filter(Boolean).slice(0, 10);
     }
+    for (const v of Object.values(obj)) if (v && typeof v === 'object') tryNode(v, depth + 1);
   };
-  tryExtract(ndObj);
-  return result;
+  tryNode(nd);
+  return r;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main import controller
+// Main import endpoint
 // ─────────────────────────────────────────────────────────────────────────────
 export const importFromUrl = asyncHandler(async (req, res) => {
   const { url } = req.body;
   if (!url) throw new AppError('url is required', 400);
 
+  // 1. Fetch HTML
   let html = '';
+  let fetchOk = false;
   try {
     const resp = await fetch(url, {
       headers: FETCH_HEADERS,
-      signal: AbortSignal.timeout(18000),
+      signal: AbortSignal.timeout(20000),
       redirect: 'follow',
     });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    // Accept any 2xx or 3xx; some portals return 403 but still serve content
     html = await resp.text();
+    fetchOk = resp.ok;
+    if (!fetchOk) console.warn(`import-url: HTTP ${resp.status} for ${url}`);
   } catch (err) {
     throw new AppError(`No se pudo acceder a la URL: ${err.message}`, 422);
   }
 
-  let preExtracted = {};
+  // If we got a very short response it's likely a block page
+  if (html.length < 500) {
+    throw new AppError('El portal bloqueó el acceso automático. Intentá copiar los datos manualmente.', 422);
+  }
+
   const photoSet = new Set();
+  let preExtracted = {}; // filled by site-specific parsers
 
-  // ── 1. MercadoLibre REST API ──────────────────────────────────────────────
-  // ML item ID can be MLA-XXXXXXXX or MLA-XXXXXXXX inside the URL path
-  const mlIdMatch = url.match(/\b(M[A-Z]{1,2}[-_]?\d{6,12})\b/i)
-    || url.match(/\/([A-Z]{2,3}\d{6,12})(?:[#?_\-]|$)/i);
+  // ── 2. MercadoLibre: detect item ID → call REST API ───────────────────────
+  const isMl = /mercadolibre\.|meli\.com/i.test(url);
+  if (isMl) {
+    // ML item IDs: MLA-123456789, MLB123456, MLM-12345678 etc.
+    const mlIdRe = /\b(M[A-Z]{1,2}[-]?\d{6,12})\b/i;
+    const mlMatch = url.match(mlIdRe) || html.match(/"item_id"\s*:\s*"([A-Z]{2,3}\d{6,12})"/i)
+      || html.match(/"id"\s*:\s*"([A-Z]{2,3}\d{6,12})"/i);
 
-  if (mlIdMatch && /mercadolibre/i.test(url)) {
-    try {
-      const rawId = mlIdMatch[1].replace('-', '').replace('_', '').toUpperCase();
-      // Try items API
-      const itemResp = await fetch(`https://api.mercadolibre.com/items/${rawId}`, {
-        headers: { 'User-Agent': FETCH_HEADERS['User-Agent'] },
-        signal: AbortSignal.timeout(10000),
-      });
-      if (itemResp.ok) {
-        const item = await itemResp.json();
-        preExtracted = parseMercadoLibreItem(item);
-        preExtracted.photos.forEach(p => photoSet.add(p));
+    if (mlMatch) {
+      const rawId = mlMatch[1].replace(/-/g, '').toUpperCase();
+      console.log('ML item ID detected:', rawId);
+      try {
+        const [itemResp, descResp] = await Promise.all([
+          fetch(`https://api.mercadolibre.com/items/${rawId}`, {
+            headers: { 'User-Agent': FETCH_HEADERS['User-Agent'] },
+            signal: AbortSignal.timeout(12000),
+          }),
+          fetch(`https://api.mercadolibre.com/items/${rawId}/description`, {
+            headers: { 'User-Agent': FETCH_HEADERS['User-Agent'] },
+            signal: AbortSignal.timeout(8000),
+          }).catch(() => null),
+        ]);
 
-        // Also try to get full description
-        try {
-          const descResp = await fetch(`https://api.mercadolibre.com/items/${rawId}/description`, { signal: AbortSignal.timeout(5000) });
-          if (descResp.ok) {
-            const descJson = await descResp.json();
-            if (descJson.plain_text) preExtracted.description = descJson.plain_text.slice(0, 600);
+        if (itemResp.ok) {
+          const item = await itemResp.json();
+          preExtracted = parseMlItem(item);
+          preExtracted.photos.forEach(p => photoSet.add(p));
+          // Augment html with attribute text for Claude fallback
+          html += ' ' + (item.attributes || []).map(a => `${a.name}:${a.value_name}`).join(' ');
+
+          if (descResp?.ok) {
+            const dj = await descResp.json();
+            if (dj.plain_text) preExtracted.description = dj.plain_text.slice(0, 600);
           }
-        } catch { /* no description */ }
+          console.log('ML API success:', preExtracted.title);
+        } else {
+          console.warn('ML API returned', (await itemResp.json().catch(() => ({}))).message || itemResp.status);
+        }
+      } catch (err) {
+        console.warn('ML API error:', err.message);
       }
-
-      // Augment with text built from API attributes for Claude
-      const loc = /* already extracted */ '';
-      html += ` ${item?.title || ''} ${item?.price || ''} ${item?.currency_id || ''} `
-        + (item?.attributes || []).map(a => `${a.name}:${a.value_name}`).join(' ');
-    } catch (err) {
-      console.warn('ML API failed:', err.message);
+    } else {
+      // No item ID — this is a listing/search page, not a property detail
+      console.warn('ML: no item ID found in URL or HTML — is this a search page?');
+      // Try __NEXT_DATA__ anyway
     }
   }
 
-  // ── 2. __NEXT_DATA__ (ZonaProp, Argenprop, etc.) ─────────────────────────
-  const nextDataMatch = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
-  if (nextDataMatch) {
+  // ── 3. __NEXT_DATA__ (ZonaProp, Argenprop, Encuentra24, etc.) ────────────
+  const ndMatch = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (ndMatch) {
     try {
-      const nd = JSON.parse(nextDataMatch[1]);
+      const nd = JSON.parse(ndMatch[1]);
       const fromNext = parseNextData(nd);
-      // Merge — don't overwrite ML data
+      // Merge — don't overwrite data already obtained from ML API
       for (const [k, v] of Object.entries(fromNext)) {
-        if (!preExtracted[k] && v !== undefined && v !== null && !(Array.isArray(v) && v.length === 0)) {
+        if (!preExtracted[k] && v !== undefined && v !== null && !(Array.isArray(v) && !v.length)) {
           preExtracted[k] = v;
         }
       }
-      // Also harvest images from __NEXT_DATA__
-      deepFindImages(nd, photoSet);
-    } catch { /* ignore */ }
+      deepImages(nd, photoSet);
+    } catch (e) { console.warn('__NEXT_DATA__ parse error:', e.message); }
   }
 
-  // ── 3. Harvest photos from raw HTML ──────────────────────────────────────
+  // ── 4. Harvest photos from raw HTML ──────────────────────────────────────
   harvestPhotos(html).forEach(u => photoSet.add(u));
 
-  // ── 4. Strip HTML for Claude ──────────────────────────────────────────────
+  // ── 5. Strip HTML for Claude ──────────────────────────────────────────────
   const text = html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
@@ -306,68 +288,71 @@ export const importFromUrl = asyncHandler(async (req, res) => {
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 10000);
+    .slice(0, 12000);
 
-  // ── 5. Claude extraction ──────────────────────────────────────────────────
+  // ── 6. Claude extraction ──────────────────────────────────────────────────
   let aiExtracted = {};
   try {
     const client = getAnthropic();
-    const contextHint = Object.keys(preExtracted).length
-      ? `Datos ya extraídos (no repetir si son correctos): ${JSON.stringify(preExtracted)}\n\n`
-      : '';
+    const alreadyHave = Object.entries(preExtracted)
+      .filter(([, v]) => v != null && !(Array.isArray(v) && !v.length))
+      .map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ');
 
-    const message = await client.messages.create({
+    const hint = alreadyHave ? `\n\nYa extraído por API (no repetir si son correctos): ${alreadyHave}\n` : '';
+
+    const msg = await client.messages.create({
       model: env.aiModel,
       max_tokens: 900,
       messages: [{
         role: 'user',
-        content: `${contextHint}Extraé los datos de esta propiedad inmobiliaria del texto y devolvé SOLO un JSON válido.
-Campos a extraer (omití los que no encuentres):
+        content: `${hint}
+Extraé todos los datos de esta propiedad inmobiliaria del texto y devolvé SOLO un JSON válido.
+Campos (omití los que no puedas determinar):
 {
-  "title": "título descriptivo de la propiedad",
-  "price": número sin puntos ni comas,
-  "currency": "USD|ARS|PEN|COP|MXN|CLP|UYU|BRL",
+  "title": "título descriptivo",
+  "price": número,
+  "currency": "USD|ARS|PEN|COP|MXN|CLP|BRL",
   "operation": "sale|rent",
   "type": "house|apartment|land|commercial|office|warehouse",
-  "beds": número de dormitorios,
-  "baths": número de baños,
-  "area": número en m2 (cubiertos),
-  "areaTotal": número en m2 (total o terreno),
-  "parking": número de cocheras/garages,
-  "floor": número de piso,
-  "age": antigüedad en años,
-  "zone": "barrio o zona",
+  "beds": número,
+  "baths": número,
+  "area": número_m2_cubiertos,
+  "areaTotal": número_m2_total,
+  "parking": número,
+  "floor": número,
+  "age": años,
+  "zone": "barrio/zona",
   "address": "dirección completa",
   "features": ["amenidad1","amenidad2"],
-  "description": "descripción breve de 2-3 oraciones"
+  "description": "descripción de 2-3 oraciones"
 }
-
 Texto: ${text}`,
       }],
     });
 
-    const jsonMatch = message.content[0].text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) aiExtracted = JSON.parse(jsonMatch[0]);
+    const jm = msg.content[0].text.match(/\{[\s\S]*\}/);
+    if (jm) aiExtracted = JSON.parse(jm[0]);
   } catch (err) {
     console.warn('Claude extraction failed:', err.message);
   }
 
-  // ── 6. Merge: pre-extracted (API) wins, Claude fills gaps ─────────────────
+  // ── 7. Merge: ML/Next API wins, Claude fills gaps ─────────────────────────
   const merged = { ...aiExtracted };
   for (const [k, v] of Object.entries(preExtracted)) {
-    if (k === 'photos') continue; // handled separately
-    if (v !== undefined && v !== null && !(Array.isArray(v) && v.length === 0)) {
-      merged[k] = v;
-    }
+    if (k === 'photos') continue;
+    if (v !== undefined && v !== null && !(Array.isArray(v) && !v.length)) merged[k] = v;
   }
 
-  // ── 7. Final photo list ───────────────────────────────────────────────────
+  // ── 8. Final photos ───────────────────────────────────────────────────────
   const aiPhotos = (aiExtracted.photos || []).filter(u => typeof u === 'string' && u.startsWith('http'));
-  const prePhotos = preExtracted.photos || [];
-  const allPhotos = [...new Set([...prePhotos, ...photoSet, ...aiPhotos])]
-    .filter(u => u.startsWith('http') && !SKIP_PHOTO_PATTERNS.test(u))
+  const allPhotos = [...new Set([...(preExtracted.photos || []), ...photoSet, ...aiPhotos])]
+    .filter(u => u.startsWith('http') && !SKIP_PHOTO.test(u))
     .slice(0, 12);
 
   delete merged.photos;
+
+  const fieldsFilled = Object.values(merged).filter(v => v != null && v !== '' && !(Array.isArray(v) && !v.length)).length;
+  console.log(`import-url: ${fieldsFilled} fields extracted for ${url}`);
+
   res.json({ ...merged, photos: allPhotos, sourceUrl: url });
 });
