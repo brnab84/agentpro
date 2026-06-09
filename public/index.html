@@ -1164,7 +1164,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.5.8'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.5.9'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -2697,7 +2697,6 @@ function renderWizardStep() {
         </div>`;
         // Update branches to match current profiles
         step.branches = profileNames.map(pName => branches.find(b=>b.profileName===pName) || { profileName: pName, steps: [] });
-      }
       }
       return `
         <div class="relative">
