@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>AgentPro — CRM Inmobiliario</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -128,9 +131,9 @@
     }
     .nav-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 9px 12px; border-radius: 10px;
+      padding: 7px 12px; border-radius: 10px;
       color: rgba(255,255,255,0.65);
-      font-size: 13.5px; font-weight: 500; letter-spacing: -0.01em;
+      font-size: 13px; font-weight: 500; letter-spacing: -0.01em;
       cursor: pointer; transition: var(--transition);
       text-decoration: none;
     }
@@ -325,7 +328,7 @@
       </div>
       <p style="color:rgba(255,255,255,0.45);font-size:11px;margin-top:3px;letter-spacing:-0.01em" id="tenantLabel">Mi Agencia</p>
     </div>
-    <nav class="flex-1 overflow-y-auto" style="padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+    <nav class="flex-1 overflow-y-auto" style="padding:8px 10px;display:flex;flex-direction:column;gap:1px">
       <a onclick="showTab('dashboard')" class="nav-item" data-tab="dashboard">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Dashboard
@@ -1827,7 +1830,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.8.4'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.8.5'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1877,12 +1880,17 @@ function showApp() {
   document.getElementById('userAvatar').textContent = (currentUser?.name || 'U')[0].toUpperCase();
   // Sidebar user info
   const initials = (currentUser?.name || 'U')[0].toUpperCase();
-  const el = document.getElementById('sidebarAvatar');
-  if (el) el.textContent = initials;
+  const avatarEl = document.getElementById('sidebarAvatar');
+  if (avatarEl) avatarEl.textContent = initials;
   const nameEl = document.getElementById('sidebarUserName');
   if (nameEl) nameEl.textContent = currentUser?.name || 'Usuario';
   const roleEl = document.getElementById('sidebarUserRole');
   if (roleEl) roleEl.textContent = currentUser?.role === 'owner' ? 'Propietario' : currentUser?.role === 'agent' ? 'Agente' : currentUser?.role || '';
+  // Load tenant name in background
+  api('GET', '/api/users/channels').then(t => {
+    const tl = document.getElementById('tenantLabel');
+    if (tl && t?.name) tl.textContent = t.name;
+  }).catch(() => {});
   // agents can't manage team
   if (currentUser?.role !== 'owner') {
     document.getElementById('teamNavItem')?.classList.add('hidden');
@@ -2305,7 +2313,7 @@ async function runAiQualify() {
       <p class="text-gray-600 text-xs mt-2">${l.aiSummary || ''}</p>`;
     result.classList.remove('hidden');
     loadLeads();
-  } catch (err) { alert('Error: ' + err.message); }
+  } catch (err) { showToast(err.message, 'error'); }
   finally {
     btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Calificar con IA';
     btn.disabled = false;
@@ -2431,20 +2439,26 @@ document.getElementById('apptForm').onsubmit = async (e) => {
     datetime: new Date(`${date}T${time}`).toISOString(),
     status: document.getElementById('apptStatus').value,
   };
-  await (id ? api('PATCH', '/api/appointments/' + id, body) : api('POST', '/api/appointments', body));
-  closeApptModal();
-  allAppts = await api('GET', '/api/appointments').catch(() => []);
-  renderCalendar();
-  if (selectedDay) showDayAppts(selectedDay);
+  try {
+    await (id ? api('PATCH', '/api/appointments/' + id, body) : api('POST', '/api/appointments', body));
+    closeApptModal();
+    showToast(id ? 'Cita actualizada' : 'Cita agendada');
+    allAppts = await api('GET', '/api/appointments').catch(() => []);
+    renderCalendar();
+    if (selectedDay) showDayAppts(selectedDay);
+  } catch(err) { showToast(err.message, 'error'); }
 };
 async function deleteAppt() {
   const id = document.getElementById('apptId').value;
   if (!id || !confirm('¿Eliminar esta cita?')) return;
-  await api('DELETE', '/api/appointments/' + id);
-  closeApptModal();
-  allAppts = await api('GET', '/api/appointments').catch(() => []);
-  renderCalendar();
-  if (selectedDay) showDayAppts(selectedDay);
+  try {
+    await api('DELETE', '/api/appointments/' + id);
+    closeApptModal();
+    showToast('Cita eliminada');
+    allAppts = await api('GET', '/api/appointments').catch(() => []);
+    renderCalendar();
+    if (selectedDay) showDayAppts(selectedDay);
+  } catch(err) { showToast(err.message, 'error'); }
 }
 
 // ── Properties ────────────────────────────────────────────────────────────────
@@ -2538,8 +2552,12 @@ function openEditPropertyModal(id) {
 async function deletePropFromModal() {
   const id = document.getElementById('propId').value;
   if (!id || !confirm('¿Eliminar esta propiedad?')) return;
-  await api('DELETE', '/api/properties/' + id);
-  closePropModal(); loadProperties();
+  try {
+    await api('DELETE', '/api/properties/' + id);
+    closePropModal();
+    showToast('Propiedad eliminada');
+    loadProperties();
+  } catch(err) { showToast(err.message, 'error'); }
 }
 
 function closePropModal() { document.getElementById('propertyModal').classList.add('hidden'); }
@@ -2639,12 +2657,20 @@ async function submitPropForm() {
     photos: propPhotos,
     sourceUrl: document.getElementById('propImportUrl').value || undefined,
   };
-  if (id) await api('PATCH', '/api/properties/' + id, body);
-  else await api('POST', '/api/properties', body);
-  closePropModal(); loadProperties();
+  try {
+    if (id) await api('PATCH', '/api/properties/' + id, body);
+    else await api('POST', '/api/properties', body);
+    closePropModal();
+    showToast(id ? 'Propiedad actualizada' : 'Propiedad creada');
+    loadProperties();
+  } catch(err) { showToast(err.message, 'error'); }
 }
 
-async function deleteProp(id) { if (!confirm('¿Eliminar propiedad?')) return; await api('DELETE', '/api/properties/' + id); loadProperties(); }
+async function deleteProp(id) {
+  if (!confirm('¿Eliminar propiedad?')) return;
+  try { await api('DELETE', '/api/properties/' + id); showToast('Propiedad eliminada'); loadProperties(); }
+  catch(err) { showToast(err.message, 'error'); }
+}
 
 // ── Inbox ─────────────────────────────────────────────────────────────────────
 let allConvs = [], activeConvId = null, inboxChannelFilter = 'all';
@@ -3282,18 +3308,21 @@ document.getElementById('channelForm').onsubmit = async (e) => {
   e.preventDefault();
   const msg = document.getElementById('channelSaveMsg');
   msg.classList.add('hidden');
-  await api('PATCH', '/api/users/channels', {
-    whatsappPhoneNumberId: document.getElementById('cfgPhoneId').value.trim(),
-    instagramPageId: document.getElementById('cfgInstaId').value.trim(),
-  });
-  msg.classList.remove('hidden');
-  setTimeout(() => msg.classList.add('hidden'), 3000);
+  try {
+    await api('PATCH', '/api/users/channels', {
+      whatsappPhoneNumberId: document.getElementById('cfgPhoneId').value.trim(),
+      instagramPageId: document.getElementById('cfgInstaId').value.trim(),
+    });
+    showToast('Canales guardados');
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 3000);
+  } catch(err) { showToast(err.message, 'error'); }
 };
 
 async function removeAgent(id, name) {
   if (!confirm(`¿Eliminar a ${name} del equipo?`)) return;
-  await api('DELETE', '/api/users/' + id);
-  loadTeam();
+  try { await api('DELETE', '/api/users/' + id); showToast(`${name} eliminado del equipo`); loadTeam(); }
+  catch(err) { showToast(err.message, 'error'); }
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
