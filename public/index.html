@@ -345,6 +345,10 @@
         <span>Activas</span>
         <span id="activeBadge" class="hidden ml-auto bg-green-400 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
       </a>
+      <a onclick="showTab('templates')" class="nav-item" data-tab="templates">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Plantillas WA
+      </a>
       <a id="teamNavItem" onclick="showTab('team')" class="nav-item hide-mobile" data-tab="team">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         Equipo
@@ -803,6 +807,43 @@
         </div>
       </div>
 
+      <!-- ── Plantillas WhatsApp ── -->
+      <div id="tab-templates" class="tab-content hidden fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="page-title">Plantillas WhatsApp</h2>
+            <p class="page-sub">Gestiona tus templates HSM aprobados por Meta para envíos fuera de las 24hs</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="openSyncModal()" class="flex items-center gap-2 border text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-50 transition" style="border-color:var(--border);color:var(--text-2)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Sincronizar con Meta
+            </button>
+            <button onclick="openTemplateModal()" class="gradient-bg text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Nueva plantilla
+            </button>
+          </div>
+        </div>
+
+        <!-- Info banner -->
+        <div class="rounded-2xl p-4 mb-6 flex items-start gap-3" style="background:var(--accent-light)">
+          <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div class="text-xs" style="color:var(--accent-dark)">
+            <p class="font-semibold mb-0.5">¿Qué son las plantillas HSM?</p>
+            <p>Son mensajes pre-aprobados por Meta que podés enviar a leads fuera de la ventana de 24 horas. Necesitás que Meta las apruebe antes de usarlas en campañas. Usá <strong>Sincronizar con Meta</strong> para importar las que ya tenés aprobadas.</p>
+          </div>
+        </div>
+
+        <!-- Grid -->
+        <div id="templatesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="templatesEmpty" class="hidden text-center py-20" style="color:var(--text-3)">
+          <svg class="w-14 h-14 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <p class="text-sm">Sin plantillas todavía</p>
+          <p class="text-xs mt-1">Sincronizá con Meta o creá una manualmente</p>
+        </div>
+      </div>
+
       <!-- ── Campaign Modal ── -->
       <div id="campaignModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center hidden p-4 sm:p-6">
         <div class="modal-box bg-white w-full max-w-lg">
@@ -1007,6 +1048,95 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         Calificar con IA
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── WA Template Modal (create/edit) ── -->
+<div id="templateModal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+  <div class="modal-box bg-white w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 id="templateModalTitle" class="text-lg font-semibold" style="color:var(--text-1)">Nueva Plantilla</h3>
+      <button onclick="closeTemplateModal()" style="color:var(--text-3)"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <form id="templateForm" class="space-y-4" onsubmit="saveTemplate(event)">
+      <input id="templateId" type="hidden" />
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="label block mb-1">Nombre (snake_case)</label>
+          <input id="tplName" type="text" required placeholder="bienvenida_proyecto" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <p class="text-xs mt-1" style="color:var(--text-3)">Solo minúsculas, números y _</p>
+        </div>
+        <div>
+          <label class="label block mb-1">Idioma</label>
+          <select id="tplLanguage" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none">
+            <option value="es">Español (es)</option>
+            <option value="en_US">Inglés (en_US)</option>
+            <option value="pt_BR">Portugués (pt_BR)</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="label block mb-1">Categoría</label>
+          <select id="tplCategory" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none">
+            <option value="MARKETING">MARKETING</option>
+            <option value="UTILITY">UTILITY</option>
+            <option value="AUTHENTICATION">AUTHENTICATION</option>
+          </select>
+        </div>
+        <div>
+          <label class="label block mb-1">Estado</label>
+          <select id="tplStatus" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none">
+            <option value="draft">Borrador</option>
+            <option value="APPROVED">Aprobada ✅</option>
+            <option value="PENDING">Pendiente ⏳</option>
+            <option value="REJECTED">Rechazada ❌</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="label block mb-1">Encabezado (opcional)</label>
+        <input id="tplHeader" type="text" placeholder="Ej: 🏢 Proyecto Mirador" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+      </div>
+      <div>
+        <label class="label block mb-1">Cuerpo del mensaje *</label>
+        <textarea id="tplBody" rows="4" required placeholder="Hola {{1}}, te contactamos de {{2}}. ¿Tenés interés en conocer nuestro proyecto?" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none"></textarea>
+        <p class="text-xs mt-1" style="color:var(--text-3)">Usá <strong>&#123;&#123;1&#125;&#125;</strong>, <strong>&#123;&#123;2&#125;&#125;</strong>, etc. para variables dinámicas</p>
+      </div>
+      <div>
+        <label class="label block mb-1">Pie de página (opcional)</label>
+        <input id="tplFooter" type="text" placeholder="Ej: Responde STOP para no recibir mensajes" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeTemplateModal()" class="flex-1 border rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition" style="border-color:var(--border);color:var(--text-2)">Cancelar</button>
+        <button type="submit" id="templateSaveBtn" class="flex-1 gradient-bg text-white rounded-xl py-2.5 text-sm font-semibold hover:opacity-90 transition">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── WA Sync Modal ── -->
+<div id="syncModal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+  <div class="modal-box bg-white w-full max-w-md p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-lg font-semibold" style="color:var(--text-1)">Sincronizar con Meta</h3>
+      <button onclick="closeSyncModal()" style="color:var(--text-3)"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="rounded-xl p-4 mb-4 text-xs" style="background:var(--accent-light);color:var(--accent-dark)">
+      <p class="font-semibold mb-1">¿Dónde encuentro el WABA ID?</p>
+      <p>Meta for Developers → WhatsApp → <strong>Configuration</strong> → el número junto a "WhatsApp Business Account ID"</p>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="label block mb-1">WhatsApp Business Account ID (WABA ID)</label>
+        <input id="syncWabaId" type="text" placeholder="Ej: 102290129340543" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+      </div>
+      <div id="syncResult" class="hidden rounded-xl p-3 text-sm"></div>
+      <div class="flex gap-3">
+        <button onclick="closeSyncModal()" class="flex-1 border rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition" style="border-color:var(--border);color:var(--text-2)">Cancelar</button>
+        <button onclick="runSync()" id="syncBtn" class="flex-1 gradient-bg text-white rounded-xl py-2.5 text-sm font-semibold hover:opacity-90 transition">Sincronizar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1356,7 +1486,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.6.2'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.6.3'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1481,6 +1611,7 @@ const tabTitles = {
   properties: 'Propiedades', pipeline: 'Pipeline', team: 'Equipo',
   inbox: 'Mensajes', funnels: 'Funnels', campaigns: 'Campañas',
   active: 'Conversaciones Activas',
+  templates: 'Plantillas WhatsApp',
 };
 function showTab(tab) {
   closeSidebar();
@@ -1504,6 +1635,7 @@ function showTab(tab) {
   if (tab === 'funnels') loadFunnels();
   if (tab === 'campaigns') loadCampaigns();
   if (tab === 'active') loadActiveConversations();
+  if (tab === 'templates') loadWaTemplates();
   if (tab === 'team') loadTeam();
 }
 
@@ -3409,6 +3541,126 @@ async function deleteFunnelFromDetail() {
     closeFunnelDetail();
     loadFunnels();
   } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── WA Templates ─────────────────────────────────────────────────────────────
+const STATUS_LABELS = { APPROVED:'Aprobada', PENDING:'Pendiente', REJECTED:'Rechazada', draft:'Borrador' };
+const STATUS_COLORS = { APPROVED:'bg-green-50 text-green-700', PENDING:'bg-amber-50 text-amber-700', REJECTED:'bg-red-50 text-red-500', draft:'bg-gray-100 text-gray-500' };
+const CATEGORY_COLORS = { MARKETING:'bg-purple-50 text-purple-700', UTILITY:'bg-blue-50 text-blue-700', AUTHENTICATION:'bg-orange-50 text-orange-700' };
+
+async function loadWaTemplates() {
+  try {
+    const data = await api('GET', '/api/wa-templates');
+    const grid  = document.getElementById('templatesGrid');
+    const empty = document.getElementById('templatesEmpty');
+    if (!data.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    grid.innerHTML = data.map(t => `
+      <div class="card p-5 flex flex-col gap-3">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-sm truncate" style="color:var(--text-1)">${t.name}</p>
+            <div class="flex items-center gap-2 mt-1 flex-wrap">
+              <span class="text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[t.status] || STATUS_COLORS.draft}">${STATUS_LABELS[t.status] || t.status}</span>
+              <span class="text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_COLORS[t.category] || 'bg-gray-100 text-gray-500'}">${t.category}</span>
+              <span class="text-xs" style="color:var(--text-3)">${t.language}</span>
+            </div>
+          </div>
+          <div class="flex gap-1 flex-shrink-0">
+            <button onclick="editTemplate('${t._id}')" class="p-1.5 rounded-lg hover:bg-gray-100 transition" style="color:var(--text-3)" title="Editar">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button onclick="deleteTemplate('${t._id}','${t.name}')" class="p-1.5 rounded-lg hover:bg-red-50 transition text-red-400" title="Eliminar">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+        ${t.headerText ? `<p class="text-xs font-semibold" style="color:var(--text-2)">📌 ${t.headerText}</p>` : ''}
+        <p class="text-sm leading-relaxed flex-1" style="color:var(--text-2);background:var(--surface-2);border-radius:10px;padding:10px 12px">${(t.bodyText || 'Sin cuerpo definido').replace(/\n/g,'<br>')}</p>
+        ${t.footerText ? `<p class="text-xs italic" style="color:var(--text-3)">${t.footerText}</p>` : ''}
+        ${t.syncedAt ? `<p class="text-xs" style="color:var(--text-3)">🔄 Sincronizado ${timeAgo(t.syncedAt)}</p>` : ''}
+      </div>`).join('');
+  } catch(err) { showToast(err.message, 'error'); }
+}
+
+function openTemplateModal(tpl = null) {
+  document.getElementById('templateId').value = tpl?._id || '';
+  document.getElementById('templateModalTitle').textContent = tpl ? 'Editar Plantilla' : 'Nueva Plantilla';
+  document.getElementById('tplName').value     = tpl?.name || '';
+  document.getElementById('tplLanguage').value = tpl?.language || 'es';
+  document.getElementById('tplCategory').value = tpl?.category || 'MARKETING';
+  document.getElementById('tplStatus').value   = tpl?.status || 'draft';
+  document.getElementById('tplHeader').value   = tpl?.headerText || '';
+  document.getElementById('tplBody').value     = tpl?.bodyText || '';
+  document.getElementById('tplFooter').value   = tpl?.footerText || '';
+  document.getElementById('tplName').disabled  = !!tpl?.metaId;
+  document.getElementById('templateModal').classList.remove('hidden');
+}
+function closeTemplateModal() {
+  document.getElementById('templateModal').classList.add('hidden');
+}
+async function editTemplate(id) {
+  try {
+    const t = await api('GET', `/api/wa-templates/${id}`);
+    openTemplateModal(t);
+  } catch(err) { showToast(err.message, 'error'); }
+}
+async function saveTemplate(e) {
+  e.preventDefault();
+  const btn = document.getElementById('templateSaveBtn');
+  btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
+  const id = document.getElementById('templateId').value;
+  const payload = {
+    name:       document.getElementById('tplName').value.trim().toLowerCase().replace(/\s+/g,'_'),
+    language:   document.getElementById('tplLanguage').value,
+    category:   document.getElementById('tplCategory').value,
+    status:     document.getElementById('tplStatus').value,
+    headerText: document.getElementById('tplHeader').value.trim(),
+    bodyText:   document.getElementById('tplBody').value.trim(),
+    footerText: document.getElementById('tplFooter').value.trim(),
+  };
+  try {
+    if (id) await api('PATCH', `/api/wa-templates/${id}`, payload);
+    else    await api('POST',  '/api/wa-templates', payload);
+    closeTemplateModal();
+    showToast(id ? 'Plantilla actualizada' : 'Plantilla creada');
+    loadWaTemplates();
+  } catch(err) { showToast(err.message, 'error'); }
+  finally { btn.innerHTML = 'Guardar'; btn.disabled = false; }
+}
+async function deleteTemplate(id, name) {
+  if (!confirm(`¿Eliminar la plantilla "${name}"?`)) return;
+  try {
+    await api('DELETE', `/api/wa-templates/${id}`);
+    showToast('Plantilla eliminada');
+    loadWaTemplates();
+  } catch(err) { showToast(err.message, 'error'); }
+}
+
+// Sync modal
+function openSyncModal() {
+  document.getElementById('syncWabaId').value = '';
+  document.getElementById('syncResult').classList.add('hidden');
+  document.getElementById('syncModal').classList.remove('hidden');
+}
+function closeSyncModal() { document.getElementById('syncModal').classList.add('hidden'); }
+async function runSync() {
+  const wabaId = document.getElementById('syncWabaId').value.trim();
+  if (!wabaId) { showToast('Ingresá el WABA ID', 'error'); return; }
+  const btn = document.getElementById('syncBtn');
+  btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
+  const resultEl = document.getElementById('syncResult');
+  try {
+    const r = await api('POST', '/api/wa-templates/sync', { wabaId });
+    resultEl.className = 'rounded-xl p-3 text-sm bg-green-50 text-green-700';
+    resultEl.textContent = `✅ ${r.synced} plantillas sincronizadas desde Meta`;
+    resultEl.classList.remove('hidden');
+    loadWaTemplates();
+  } catch(err) {
+    resultEl.className = 'rounded-xl p-3 text-sm bg-red-50 text-red-600';
+    resultEl.textContent = `❌ ${err.message}`;
+    resultEl.classList.remove('hidden');
+  } finally { btn.innerHTML = 'Sincronizar'; btn.disabled = false; }
 }
 
 // ── Import CSV ────────────────────────────────────────────────────────────────
