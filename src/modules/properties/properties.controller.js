@@ -4,370 +4,480 @@ import { getAnthropic } from '../../config/anthropic.js';
 import { env } from '../../config/env.js';
 import * as service from './properties.service.js';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+const MAX_PHOTOS          = 12;
+const MAX_PHOTOS_HARVEST  = 15;
+const MAX_FEATURES        = 10;
+const MAX_DESC_LENGTH     = 600;
+const MAX_CLAUDE_TEXT     = 12_000;
+const MIN_HTML_LENGTH     = 300;
+const BOT_DETECT_SLICE    = 3_000;
+const FETCH_TIMEOUT_MS    = 25_000;
+
+const SKIP_PHOTO_PATTERN = /logo|icon|avatar|sprite|pixel|banner|ad[_-]|tracking|placeholder|blank|button|flag|star|heart|thumb_up|checkmark|loading|default-user|no-image|empty|favicon|captcha|recaptcha/i;
+
+const BOT_BLOCK_PATTERN = /challenge-platform|cf-browser-verification|just a moment|enable javascript and cookies|checking your browser/i;
+
+const BROWSER_HEADERS = {
+  'User-Agent':          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept':              'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+  'Accept-Language':     'es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Accept-Encoding':     'gzip, deflate, br',
+  'Cache-Control':       'no-cache',
+  'Pragma':              'no-cache',
+  'Upgrade-Insecure-Requests': '1',
+  'Sec-Fetch-Dest':      'document',
+  'Sec-Fetch-Mode':      'navigate',
+  'Sec-Fetch-Site':      'none',
+  'Sec-Fetch-User':      '?1',
+  'Sec-CH-UA':           '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+  'Sec-CH-UA-Mobile':    '?0',
+  'Sec-CH-UA-Platform':  '"Windows"',
+  'DNT':                 '1',
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CRUD
+// ─────────────────────────────────────────────────────────────────────────────
 export const list = asyncHandler(async (req, res) => {
   const filter = req.query.status ? { status: req.query.status } : {};
   res.json(await service.list(req.tenantId, filter));
 });
+
 export const getById = asyncHandler(async (req, res) =>
   res.json(await service.getById(req.tenantId, req.params.id)),
 );
+
 export const create = asyncHandler(async (req, res) =>
   res.status(201).json(await service.create(req.tenantId, req.body)),
 );
+
 export const update = asyncHandler(async (req, res) =>
   res.json(await service.update(req.tenantId, req.params.id, req.body)),
 );
+
 export const remove = asyncHandler(async (req, res) => {
   await service.remove(req.tenantId, req.params.id);
   res.status(204).send();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// Utility helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Base headers that mimic a real Chrome browser */
-const BASE_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-  'Accept-Language': 'es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Cache-Control': 'no-cache',
-  'Pragma': 'no-cache',
-  'Upgrade-Insecure-Requests': '1',
-  'Sec-Fetch-Dest': 'document',
-  'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'none',
-  'Sec-Fetch-User': '?1',
-  'Sec-CH-UA': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-  'Sec-CH-UA-Mobile': '?0',
-  'Sec-CH-UA-Platform': '"Windows"',
-  'DNT': '1',
-};
+/** Safely parse a numeric value from any string/number input */
+function parseNum(value) {
+  if (value == null) return undefined;
+  const num = parseFloat(String(value).replace(/[^\d.]/g, ''));
+  return isNaN(num) ? undefined : num;
+}
 
-const SKIP_PHOTO = /logo|icon|avatar|sprite|pixel|banner|ad[_\-]|tracking|placeholder|blank|button|flag|star|heart|thumb_up|checkmark|loading|default-user|no-image|empty|favicon|captcha|recaptcha/i;
+/** Filter a URL as a valid, non-decorative photo */
+function isValidPhoto(url) {
+  return typeof url === 'string' && url.startsWith('http') && !SKIP_PHOTO_PATTERN.test(url);
+}
 
-const parseNum = v => {
-  if (v == null) return undefined;
-  const n = parseFloat(String(v).replace(/[^\d.]/g, ''));
-  return isNaN(n) ? undefined : n;
-};
+/** Recursively collect image URLs from any nested object */
+function collectImagesFromObject(obj, results = new Set(), depth = 0) {
+  if (depth > 10 || !obj || typeof obj !== 'object') return results;
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string') {
+      const isImageUrl = value.startsWith('http') && /\.(jpg|jpeg|png|webp)/i.test(value);
+      const isNamedUrl = /photo|image|picture|foto|imagen|url/i.test(key) && value.startsWith('http');
+      if (isImageUrl || isNamedUrl) results.add(value);
+    } else if (Array.isArray(value)) {
+      value.forEach(item => collectImagesFromObject(item, results, depth + 1));
+    } else if (typeof value === 'object') {
+      collectImagesFromObject(value, results, depth + 1);
+    }
+  }
+  return results;
+}
 
-function harvestPhotos(html) {
-  const set = new Set();
-  for (const m of html.matchAll(/(?:og:image|twitter:image)[^>]*content=["']([^"']+)["']/gi)) set.add(m[1]);
-  for (const m of html.matchAll(/content=["']([^"']+)["'][^>]*(?:og:image|twitter:image)/gi)) set.add(m[1]);
-  for (const m of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+/** Extract photo URLs from raw HTML using multiple strategies */
+function extractPhotosFromHtml(html) {
+  const photos = new Set();
+
+  // og:image / twitter:image meta tags
+  for (const match of html.matchAll(/(?:og:image|twitter:image)[^>]*content=["']([^"']+)["']/gi)) photos.add(match[1]);
+  for (const match of html.matchAll(/content=["']([^"']+)["'][^>]*(?:og:image|twitter:image)/gi)) photos.add(match[1]);
+
+  // JSON-LD structured data
+  for (const match of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
-      const obj = JSON.parse(m[1]);
-      [obj.image, obj.photo, ...(obj.images||[])].flat().filter(Boolean)
-        .forEach(i => typeof i === 'string' ? set.add(i) : i?.url && set.add(i.url));
-    } catch { /* ignore */ }
+      const obj = JSON.parse(match[1]);
+      [obj.image, obj.photo, ...(obj.images || [])].flat().filter(Boolean).forEach(img => {
+        if (typeof img === 'string') photos.add(img);
+        else if (img?.url) photos.add(img.url);
+      });
+    } catch (err) {
+      console.warn('JSON-LD parse error:', err.message);
+    }
   }
-  for (const m of html.matchAll(/(?:data-src|data-lazy-src|data-original|data-full-src|data-image)=["']([^"']{20,})["']/gi)) {
-    if (m[1].startsWith('http') && /\.(jpg|jpeg|png|webp|avif)(\?|$)/i.test(m[1])) set.add(m[1]);
-  }
-  for (const m of html.matchAll(/\bsrc=["']([^"']{20,})["']/gi)) {
-    if (m[1].startsWith('http') && /\.(jpg|jpeg|png|webp)(\?|$)/i.test(m[1])) set.add(m[1]);
-  }
-  for (const m of html.matchAll(/"(https?:\/\/[^"]{15,}\.(jpg|jpeg|png|webp)(?:\?[^"]{0,120})?)"/gi)) set.add(m[1]);
-  return [...set].filter(u => u.startsWith('http') && !SKIP_PHOTO.test(u)).slice(0, 15);
-}
 
-function deepImages(obj, set = new Set(), depth = 0) {
-  if (depth > 10 || !obj || typeof obj !== 'object') return;
-  for (const [key, val] of Object.entries(obj)) {
-    if (typeof val === 'string') {
-      if (val.startsWith('http') && /\.(jpg|jpeg|png|webp)/i.test(val)) set.add(val);
-      else if (/photo|image|picture|foto|imagen|url/i.test(key) && val.startsWith('http')) set.add(val);
-    } else if (Array.isArray(val)) val.forEach(v => deepImages(v, set, depth + 1));
-    else if (typeof val === 'object') deepImages(val, set, depth + 1);
+  // Lazy-load data attributes
+  for (const match of html.matchAll(/(?:data-src|data-lazy-src|data-original|data-full-src|data-image)=["']([^"']{20,})["']/gi)) {
+    if (match[1].startsWith('http') && /\.(jpg|jpeg|png|webp|avif)(\?|$)/i.test(match[1])) photos.add(match[1]);
   }
+
+  // Standard src attributes
+  for (const match of html.matchAll(/\bsrc=["']([^"']{20,})["']/gi)) {
+    if (match[1].startsWith('http') && /\.(jpg|jpeg|png|webp)(\?|$)/i.test(match[1])) photos.add(match[1]);
+  }
+
+  // JSON string values containing image URLs
+  for (const match of html.matchAll(/"(https?:\/\/[^"]{15,}\.(jpg|jpeg|png|webp)(?:\?[^"]{0,120})?)"/gi)) photos.add(match[1]);
+
+  return [...photos].filter(isValidPhoto).slice(0, MAX_PHOTOS_HARVEST);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MercadoLibre HTML Parser
-// Parses JSON embedded directly in the ML page HTML (no REST API needed)
+// MercadoLibre HTML parser (no REST API — parses page source directly)
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Strategy 1: application/ld+json Product schema */
+function extractMlJsonLd(html, result, photoSet) {
+  for (const match of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const obj = JSON.parse(match[1]);
+      if (obj['@type'] !== 'Product' && obj['@type'] !== 'Offer') continue;
+      if (obj.name && !result.title)       result.title       = obj.name;
+      if (obj.description && !result.description) result.description = String(obj.description).slice(0, MAX_DESC_LENGTH);
+      const offer = obj.offers || obj;
+      if (offer.price && !result.price) {
+        result.price    = parseNum(offer.price);
+        result.currency = offer.priceCurrency || 'USD';
+      }
+      [obj.image, ...(obj.images || [])].flat().filter(Boolean).forEach(img => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url?.startsWith('http')) photoSet.add(url);
+      });
+    } catch (err) {
+      console.warn('ML JSON-LD parse error:', err.message);
+    }
+  }
+}
+
+/** Strategy 2: window.__PRELOADED_STATE__ */
+function extractMlPreloadedState(html, result, photoSet) {
+  const stateMatch = html.match(/window\.__PRELOADED_STATE__\s*=\s*(\{[\s\S]*?\})(?:\s*;|\s*<\/script>)/);
+  if (!stateMatch) return;
+  try {
+    const state = JSON.parse(stateMatch[1]);
+    collectImagesFromObject(state, photoSet);
+
+    const walk = (obj, depth = 0) => {
+      if (depth > 6 || !obj || typeof obj !== 'object') return;
+      if (!result.price && obj.price != null) {
+        const parsed = parseNum(obj.price);
+        if (parsed && parsed > 100) {
+          result.price    = parsed;
+          result.currency = obj.currency_id || obj.currency || 'USD';
+        }
+      }
+      if (!result.title && typeof obj.title === 'string' && obj.title.length > 5) result.title = obj.title;
+      for (const value of Object.values(obj)) {
+        if (value && typeof value === 'object') walk(value, depth + 1);
+      }
+    };
+    walk(state);
+  } catch (err) {
+    console.warn('ML __PRELOADED_STATE__ parse error:', err.message);
+  }
+}
+
+/** Strategy 3: inline script JSON blobs and price patterns */
+function extractMlScriptBlobs(html, result, photoSet) {
+  const scriptPattern = /<script(?:\s[^>]*)?>([^<]{200,})<\/script>/gi;
+  for (const match of html.matchAll(scriptPattern)) {
+    const scriptContent = match[1];
+
+    // Pattern: "price":{"amount":150000,"currency":"USD"}
+    if (!result.price) {
+      const amountMatch = scriptContent.match(/"price"\s*:\s*\{\s*"amount"\s*:\s*(\d+(?:\.\d+)?)\s*,\s*"currency"\s*:\s*"([A-Z]{2,4})"/);
+      if (amountMatch) { result.price = parseNum(amountMatch[1]); result.currency = amountMatch[2]; }
+    }
+
+    // Pattern: "value":150000,"currencyId":"USD"
+    if (!result.price) {
+      const valueMatch = scriptContent.match(/"value"\s*:\s*(\d+(?:\.\d+)?)\s*,\s*"currencyId"\s*:\s*"([A-Z]{2,4})"/);
+      if (valueMatch) { result.price = parseNum(valueMatch[1]); result.currency = valueMatch[2]; }
+    }
+
+    // Try to parse the whole script tag as JSON
+    const trimmed = scriptContent.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const obj = JSON.parse(trimmed);
+        if (obj.title || obj.price || obj.attributes) {
+          if (!result.title && obj.title)      result.title = obj.title;
+          if (!result.price && obj.price)      result.price = parseNum(obj.price);
+          if (!result.currency && obj.currency_id) result.currency = obj.currency_id;
+          if (!result.description && obj.plain_text) result.description = String(obj.plain_text).slice(0, MAX_DESC_LENGTH);
+          if (Array.isArray(obj.attributes) && !result._mlAttributes) result._mlAttributes = obj.attributes;
+          collectImagesFromObject(obj, photoSet);
+        }
+      } catch {
+        // Not valid JSON — skip silently
+      }
+    }
+  }
+}
+
+/** Strategy 4: regex fallback against rendered HTML */
+function extractMlRegexFallback(html, result) {
+  if (!result.title) {
+    const titleMatch = html.match(/<h1[^>]*class="[^"]*ui-pdp-title[^"]*"[^>]*>([^<]+)<\/h1>/i)
+                    || html.match(/<h1[^>]*>([^<]{10,120})<\/h1>/);
+    if (titleMatch) result.title = titleMatch[1].trim();
+  }
+
+  if (!result.price) {
+    const fractionMatch = html.match(/andes-money-amount__fraction[^>]*>([0-9.,]+)</i);
+    if (fractionMatch) result.price = parseNum(fractionMatch[1]);
+    if (!result.currency) {
+      const symbolMatch = html.match(/andes-money-amount__currency-symbol[^>]*>([^<]{1,5})</i);
+      if (symbolMatch) {
+        const symbol = symbolMatch[1].trim();
+        result.currency = symbol === '$' ? 'ARS' : (symbol === 'U$S' || symbol === 'USD') ? 'USD' : symbol;
+      }
+    }
+  }
+
+  if (!result.address) {
+    const locationMatch = html.match(/ui-pdp-header__location[^>]*>([^<]+)/i)
+                       || html.match(/class="[^"]*location[^"]*"[^>]*>\s*<[^>]+>\s*([^<]{5,80})/i);
+    if (locationMatch) result.address = locationMatch[1].trim().replace(/\s+/g, ' ');
+  }
+}
+
+/** Strategy 5: parse ML attributes array collected by strategy 3 */
+function parseMlAttributes(result) {
+  if (!result._mlAttributes) return;
+  const attrMap = {};
+  for (const attr of result._mlAttributes) {
+    if (attr.value_name && attr.value_name !== 'No') {
+      if (attr.id)   attrMap[attr.id.toLowerCase()]   = attr.value_name;
+      if (attr.name) attrMap[attr.name.toLowerCase()] = attr.value_name;
+    }
+  }
+  delete result._mlAttributes;
+
+  result.beds     = parseNum(attrMap['rooms'] || attrMap['bedrooms'] || attrMap['dormitorios'] || attrMap['habitaciones'] || attrMap['ambientes']);
+  result.baths    = parseNum(attrMap['bathrooms'] || attrMap['bathrooms_quantity'] || attrMap['baños'] || attrMap['banos']);
+  result.area     = parseNum(attrMap['covered_area'] || attrMap['superficie_cubierta'] || attrMap['floor_space'] || attrMap['superficie']);
+  result.areaTotal= parseNum(attrMap['total_area'] || attrMap['superficie_total'] || attrMap['land_area']);
+  result.parking  = parseNum(attrMap['parking_lots'] || attrMap['cocheras'] || attrMap['garage']);
+  result.floor    = parseNum(attrMap['floor'] || attrMap['piso'] || attrMap['floor_number']);
+  result.age      = parseNum(attrMap['property_age'] || attrMap['antiguedad'] || attrMap['antigüedad']);
+}
+
+/** Infer operation and property type from text content */
+function inferTypeAndOperation(textContent, result) {
+  const text = textContent.toLowerCase();
+  if (!result.operation) {
+    result.operation = (text.includes('alquiler') || text.includes('arriendo') || text.includes('para alquilar')) ? 'rent' : 'sale';
+  }
+  if (!result.type) {
+    result.type = text.includes('departamento') || text.includes('depto') || text.includes('apartamento') ? 'apartment'
+                : text.includes('terreno') || text.includes('lote')      ? 'land'
+                : text.includes('local comercial')                        ? 'commercial'
+                : text.includes('oficina')                                ? 'office'
+                : text.includes('depósito') || text.includes('galpón')   ? 'warehouse'
+                : 'house';
+  }
+}
+
+/** Main ML HTML parser — orchestrates all strategies */
 function parseMlHtml(html) {
-  const r = {};
+  const result   = {};
   const photoSet = new Set();
 
-  // ── Strategy 1: application/ld+json Product schema ──────────────────────
-  for (const m of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
-    try {
-      const obj = JSON.parse(m[1]);
-      if (obj['@type'] === 'Product' || obj['@type'] === 'Offer') {
-        if (obj.name && !r.title) r.title = obj.name;
-        if (obj.description && !r.description) r.description = String(obj.description).slice(0, 600);
-        const offer = obj.offers || obj;
-        if (offer.price && !r.price) { r.price = parseNum(offer.price); r.currency = offer.priceCurrency || 'USD'; }
-        [obj.image, ...(obj.images || [])].flat().filter(Boolean).forEach(i => {
-          const u = typeof i === 'string' ? i : i?.url;
-          if (u?.startsWith('http')) photoSet.add(u);
-        });
-      }
-    } catch { /* ignore */ }
+  extractMlJsonLd(html, result, photoSet);
+  extractMlPreloadedState(html, result, photoSet);
+  extractMlScriptBlobs(html, result, photoSet);
+  extractMlRegexFallback(html, result);
+  parseMlAttributes(result);
+  inferTypeAndOperation(html.slice(0, 3_000), result);
+
+  // ML CDN photos (convert to original size)
+  for (const match of html.matchAll(/"(https?:\/\/http2\.mlstatic\.com\/[^"]{10,}\.(?:jpg|jpeg|webp))"/gi)) {
+    photoSet.add(match[1].replace(/-[A-Z]\.jpg$/i, '-O.jpg'));
   }
 
-  // ── Strategy 2: window.__PRELOADED_STATE__ ────────────────────────────────
-  const preloadedMatch = html.match(/window\.__PRELOADED_STATE__\s*=\s*(\{[\s\S]*?\})(?:\s*;|\s*<\/script>)/);
-  if (preloadedMatch) {
-    try {
-      const state = JSON.parse(preloadedMatch[1]);
-      deepImages(state, photoSet);
-      // Walk deep to find item data
-      const walk = (obj, depth = 0) => {
-        if (depth > 6 || !obj || typeof obj !== 'object') return;
-        // Look for price data
-        if (!r.price && (obj.price != null)) {
-          const p = parseNum(obj.price);
-          if (p && p > 100) { r.price = p; r.currency = obj.currency_id || obj.currency || 'USD'; }
-        }
-        if (!r.title && obj.title && typeof obj.title === 'string' && obj.title.length > 5) r.title = obj.title;
-        for (const v of Object.values(obj)) {
-          if (v && typeof v === 'object') walk(v, depth + 1);
-        }
-      };
-      walk(state);
-    } catch { /* ignore */ }
-  }
+  extractPhotosFromHtml(html).forEach(url => photoSet.add(url));
+  result.photos = [...photoSet].filter(isValidPhoto).slice(0, MAX_PHOTOS);
 
-  // ── Strategy 3: Nordic (ML's internal data layer) script tags ─────────────
-  // ML embeds property data in <script> tags as JS assignments or JSON blobs
-  const scriptRe = /<script(?:\s[^>]*)?>([^<]{200,})<\/script>/gi;
-  for (const m of html.matchAll(scriptRe)) {
-    const s = m[1];
-    // Look for patterns like: "price":{"amount":150000,"currency":"USD"}
-    if (!r.price) {
-      const pm = s.match(/"price"\s*:\s*\{\s*"amount"\s*:\s*(\d+(?:\.\d+)?)\s*,\s*"currency"\s*:\s*"([A-Z]{2,4})"/);
-      if (pm) { r.price = parseNum(pm[1]); r.currency = pm[2]; }
-    }
-    // "price":{"value":150000,"currencyId":"USD"}
-    if (!r.price) {
-      const pm2 = s.match(/"value"\s*:\s*(\d+(?:\.\d+)?)\s*,\s*"currencyId"\s*:\s*"([A-Z]{2,4})"/);
-      if (pm2) { r.price = parseNum(pm2[1]); r.currency = pm2[2]; }
-    }
-    // Try to parse as JSON if it looks like a complete object
-    if (s.trim().startsWith('{') && s.trim().endsWith('}')) {
-      try {
-        const obj = JSON.parse(s.trim());
-        if (obj.title || obj.price || obj.attributes) {
-          if (!r.title && obj.title) r.title = obj.title;
-          if (!r.price && obj.price) { r.price = parseNum(obj.price); }
-          if (!r.currency && obj.currency_id) r.currency = obj.currency_id;
-          deepImages(obj, photoSet);
-          // Parse attributes array if present
-          if (Array.isArray(obj.attributes) && !r.beds) {
-            r._mlAttributes = obj.attributes;
-          }
-          if (!r.description && obj.plain_text) r.description = String(obj.plain_text).slice(0, 600);
-        }
-      } catch { /* ignore */ }
-    }
-  }
-
-  // ── Strategy 4: Regex extraction from raw HTML ────────────────────────────
-  if (!r.title) {
-    const tm = html.match(/<h1[^>]*class="[^"]*ui-pdp-title[^"]*"[^>]*>([^<]+)<\/h1>/i)
-            || html.match(/<h1[^>]*>([^<]{10,120})<\/h1>/);
-    if (tm) r.title = tm[1].trim();
-  }
-  if (!r.price) {
-    // <span class="andes-money-amount__fraction">150.000</span>
-    const pm = html.match(/andes-money-amount__fraction[^>]*>([0-9.,]+)</i);
-    if (pm) r.price = parseNum(pm[1]);
-    // currency
-    const cm = html.match(/andes-money-amount__currency-symbol[^>]*>([^<]{1,5})</i);
-    if (cm && !r.currency) {
-      const cs = cm[1].trim();
-      r.currency = cs === '$' ? 'ARS' : cs === 'U$S' || cs === 'USD' ? 'USD' : cs;
-    }
-  }
-  // Location from breadcrumbs or meta
-  if (!r.address) {
-    const locM = html.match(/ui-pdp-header__location[^>]*>([^<]+)/i)
-              || html.match(/class="[^"]*location[^"]*"[^>]*>\s*<[^>]+>\s*([^<]{5,80})/i);
-    if (locM) r.address = locM[1].trim().replace(/\s+/g, ' ');
-  }
-
-  // ── Strategy 5: Parse attributes if collected ─────────────────────────────
-  if (r._mlAttributes) {
-    const attr = {};
-    for (const a of r._mlAttributes) {
-      if (a.value_name && a.value_name !== 'No') {
-        if (a.id) attr[a.id.toLowerCase()] = a.value_name;
-        if (a.name) attr[a.name.toLowerCase()] = a.value_name;
-      }
-    }
-    r.beds     = parseNum(attr['rooms'] || attr['bedrooms'] || attr['dormitorios'] || attr['habitaciones'] || attr['ambientes'] || attr['property_rooms']);
-    r.baths    = parseNum(attr['bathrooms'] || attr['bathrooms_quantity'] || attr['baños'] || attr['banos']);
-    r.area     = parseNum(attr['covered_area'] || attr['superficie_cubierta'] || attr['floor_space'] || attr['superficie'] || attr['surface_covered']);
-    r.areaTotal= parseNum(attr['total_area'] || attr['superficie_total'] || attr['land_area'] || attr['total_surface']);
-    r.parking  = parseNum(attr['parking_lots'] || attr['cocheras'] || attr['garage'] || attr['covered_parking_lots']);
-    r.floor    = parseNum(attr['floor'] || attr['piso'] || attr['floor_number']);
-    r.age      = parseNum(attr['property_age'] || attr['antiguedad'] || attr['antigüedad']);
-    delete r._mlAttributes;
-  }
-
-  // ── Strategy 6: Infer type and operation from title/URL ──────────────────
-  const tl = (r.title || '').toLowerCase() + ' ' + html.slice(0, 2000).toLowerCase();
-  if (!r.operation) {
-    r.operation = (tl.includes('alquiler') || tl.includes('arriendo') || tl.includes('en alquiler') || tl.includes('para alquilar')) ? 'rent' : 'sale';
-  }
-  if (!r.type) {
-    r.type = tl.includes('departamento') || tl.includes('depto') || tl.includes('apartamento') ? 'apartment'
-           : tl.includes('terreno') || tl.includes('lote') ? 'land'
-           : tl.includes('local comercial') ? 'commercial'
-           : tl.includes('oficina') ? 'office'
-           : tl.includes('depósito') || tl.includes('deposito') || tl.includes('galpón') ? 'warehouse'
-           : 'house';
-  }
-
-  // ── Photos ─────────────────────────────────────────────────────────────────
-  // ML uses https://http2.mlstatic.com/D_NQ_NP_*-O.jpg for original size
-  for (const m of html.matchAll(/"(https?:\/\/http2\.mlstatic\.com\/[^"]{10,}\.(?:jpg|jpeg|webp))"/gi)) {
-    photoSet.add(m[1].replace(/-[A-Z]\.jpg$/i, '-O.jpg'));
-  }
-  harvestPhotos(html).forEach(u => photoSet.add(u));
-  r.photos = [...photoSet].filter(u => u.startsWith('http') && !SKIP_PHOTO.test(u)).slice(0, 12);
-
-  return r;
+  return result;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// __NEXT_DATA__ parser (ZonaProp, Argenprop, Encuentra24, etc.)
+// __NEXT_DATA__ parser (ZonaProp, Argenprop, Navent, etc.)
 // ─────────────────────────────────────────────────────────────────────────────
-function parseNextData(nd) {
-  const r = {};
-  const tryNode = (obj, depth = 0) => {
-    if (depth > 8 || !obj || typeof obj !== 'object') return;
-    if (obj.operations?.[0]) {
-      const op = obj.operations[0];
-      if (op.operationType?.id === 'Rent' || op.operationType?.name?.toLowerCase().includes('alquiler')) r.operation = 'rent';
-      else if (!r.operation) r.operation = 'sale';
-      if (!r.price && op.prices?.[0]) { r.price = op.prices[0].price; r.currency = op.prices[0].currency || 'USD'; }
-    }
-    if (!r.address && (obj.addressFormatted || obj.address)) r.address = obj.addressFormatted || obj.address;
-    if (!r.address && obj.location?.full) r.address = obj.location.full;
-    if (!r.zone && obj.location?.divisions?.length) r.zone = obj.location.divisions.slice(-1)[0]?.prettyName || '';
-    if (obj.mainFeatures?.length) {
-      for (const f of obj.mainFeatures) {
-        const k = (f.icon || f.key || '').toLowerCase();
-        const v = f.value || f.label || '';
-        if ((k.includes('room') || k.includes('dormit')) && !r.beds) r.beds = parseNum(v);
-        if (k.includes('bath') && !r.baths) r.baths = parseNum(v);
-        if ((k.includes('superf') || k.includes('cubierta')) && !r.area) r.area = parseNum(v);
-        if (k.includes('total') && !r.areaTotal) r.areaTotal = parseNum(v);
-        if ((k.includes('garag') || k.includes('coche')) && !r.parking) r.parking = parseNum(v);
-        if ((k.includes('piso') || k.includes('floor')) && r.floor == null) r.floor = parseNum(v);
-        if ((k.includes('antig') || k.includes('age')) && r.age == null) r.age = parseNum(v);
+function parseNextData(nextData) {
+  const result = {};
+
+  const walkNode = (node, depth = 0) => {
+    if (depth > 8 || !node || typeof node !== 'object') return;
+
+    if (node.operations?.[0]) {
+      const op = node.operations[0];
+      const isRent = op.operationType?.id === 'Rent' || op.operationType?.name?.toLowerCase().includes('alquiler');
+      if (!result.operation) result.operation = isRent ? 'rent' : 'sale';
+      if (!result.price && op.prices?.[0]) {
+        result.price    = op.prices[0].price;
+        result.currency = op.prices[0].currency || 'USD';
       }
     }
-    if (!r.title && typeof obj.title === 'string' && obj.title.length > 5) r.title = obj.title;
-    if (!r.description && typeof obj.description === 'string' && obj.description.length > 20) r.description = obj.description.slice(0, 600);
-    if (!r.features?.length) {
-      const amenArr = obj.amenities || obj.allFeatures || obj.tags || [];
-      if (amenArr.length) r.features = amenArr.map(a => a.name || a.label || a).filter(Boolean).slice(0, 10);
+
+    if (!result.address) result.address = node.addressFormatted || node.address || node.location?.full || null;
+    if (!result.zone && node.location?.divisions?.length) {
+      result.zone = node.location.divisions.at(-1)?.prettyName || '';
     }
-    for (const v of Object.values(obj)) if (v && typeof v === 'object') tryNode(v, depth + 1);
+
+    if (node.mainFeatures?.length) {
+      for (const feature of node.mainFeatures) {
+        const key   = (feature.icon || feature.key || '').toLowerCase();
+        const value = feature.value || feature.label || '';
+        if (!result.beds    && (key.includes('room') || key.includes('dormit'))) result.beds     = parseNum(value);
+        if (!result.baths   && key.includes('bath'))                             result.baths    = parseNum(value);
+        if (!result.area    && (key.includes('superf') || key.includes('cubierta'))) result.area = parseNum(value);
+        if (!result.areaTotal && key.includes('total'))                          result.areaTotal= parseNum(value);
+        if (!result.parking && (key.includes('garag') || key.includes('coche'))) result.parking = parseNum(value);
+        if (result.floor  == null && (key.includes('piso') || key.includes('floor'))) result.floor = parseNum(value);
+        if (result.age    == null && (key.includes('antig') || key.includes('age')))  result.age   = parseNum(value);
+      }
+    }
+
+    if (!result.title       && typeof node.title       === 'string' && node.title.length > 5)  result.title = node.title;
+    if (!result.description && typeof node.description === 'string' && node.description.length > 20) {
+      result.description = node.description.slice(0, MAX_DESC_LENGTH);
+    }
+    if (!result.features?.length) {
+      const amenities = node.amenities || node.allFeatures || node.tags || [];
+      if (amenities.length) result.features = amenities.map(a => a.name || a.label || a).filter(Boolean).slice(0, MAX_FEATURES);
+    }
+
+    for (const value of Object.values(node)) {
+      if (value && typeof value === 'object') walkNode(value, depth + 1);
+    }
   };
-  tryNode(nd);
-  return r;
+
+  walkNode(nextData);
+  return result;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main import endpoint
+// Import from URL — main endpoint
 // ─────────────────────────────────────────────────────────────────────────────
 export const importFromUrl = asyncHandler(async (req, res) => {
   const { url } = req.body;
   if (!url) throw new AppError('url is required', 400);
 
-  // Detect portal
-  const isMl       = /mercadolibre\.|mercadolibre\.com|meli\.com/i.test(url);
-  const isZonaProp  = /zonaprop\.com/i.test(url);
-  const isArgenprop = /argenprop\.com/i.test(url);
-  const isInmuebles = /inmuebles24\.com|properati\.com|navent\.com/i.test(url);
+  const headers = buildFetchHeaders(url);
+  const html    = await fetchHtml(url, headers);
 
-  // Build fetch headers tailored to each portal
-  const headers = { ...BASE_HEADERS };
-  if (isMl) {
-    headers['Referer'] = 'https://www.mercadolibre.com.ar/';
-    headers['Origin']  = 'https://www.mercadolibre.com.ar';
+  validateHtmlContent(html, url);
+
+  const photoSet      = new Set();
+  const structured    = await extractStructuredData(html, url, photoSet);
+  const strippedText  = stripHtmlForClaude(html);
+  const aiData        = await extractWithClaude(strippedText, structured);
+
+  const merged   = mergeExtractions(aiData, structured);
+  const photos   = buildFinalPhotoList(structured.photos || [], photoSet, aiData.photos || []);
+  delete merged.photos;
+
+  const fieldCount = Object.values(merged).filter(v => v != null && v !== '' && !(Array.isArray(v) && !v.length)).length;
+  console.log(`import-url: ${fieldCount} fields, ${photos.length} photos — ${url}`);
+
+  res.json({ ...merged, photos, sourceUrl: url });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Import helpers (private)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildFetchHeaders(url) {
+  const headers = { ...BROWSER_HEADERS };
+  if (/mercadolibre\.|meli\.com/i.test(url)) {
+    headers['Referer']        = 'https://www.mercadolibre.com.ar/';
     headers['Sec-Fetch-Site'] = 'same-origin';
-  } else if (isZonaProp) {
+  } else if (/zonaprop\.com/i.test(url)) {
     headers['Referer'] = 'https://www.zonaprop.com.ar/';
-    headers['Cookie']  = '';   // empty cookie avoids bot-score spikes from missing session
-  } else if (isArgenprop) {
+    headers['Cookie']  = '';
+  } else if (/argenprop\.com/i.test(url)) {
     headers['Referer'] = 'https://www.argenprop.com/';
   }
+  return headers;
+}
 
-  // 1. Fetch HTML
-  let html = '';
-  let fetchStatus = 0;
+async function fetchHtml(url, headers) {
   try {
-    const resp = await fetch(url, {
+    const response = await fetch(url, {
       headers,
-      signal: AbortSignal.timeout(25000),
+      signal:   AbortSignal.timeout(FETCH_TIMEOUT_MS),
       redirect: 'follow',
     });
-    fetchStatus = resp.status;
-    html = await resp.text();
-    if (!resp.ok) console.warn(`import-url: HTTP ${resp.status} for ${url} (trying anyway)`);
+    if (!response.ok) console.warn(`import-url: HTTP ${response.status} for ${url} (proceeding anyway)`);
+    return await response.text();
   } catch (err) {
     throw new AppError(`No se pudo acceder a la URL: ${err.message}`, 422);
   }
+}
 
-  if (html.length < 300) {
-    throw new AppError('El portal bloqueó el acceso automático. Copiá los datos manualmente o intentá en unos minutos.', 422);
+function validateHtmlContent(html, url) {
+  if (html.length < MIN_HTML_LENGTH) {
+    throw new AppError('El portal bloqueó el acceso automático. Copiá los datos manualmente.', 422);
   }
-
-  // Detect Cloudflare / bot block page (has HTML but no real content)
-  const isBotBlock = /challenge-platform|cf-browser-verification|just a moment|enable javascript and cookies|checking your browser/i.test(html.slice(0, 3000));
-  if (isBotBlock && html.length < 5000) {
-    throw new AppError(
-      `${isZonaProp ? 'ZonaProp' : isArgenprop ? 'Argenprop' : 'El portal'} bloqueó el acceso automático (protección anti-bots). ` +
-      'Copiá el título, precio y descripción del aviso y usá el formulario manual.',
-      422,
-    );
+  const isBotBlock = BOT_BLOCK_PATTERN.test(html.slice(0, BOT_DETECT_SLICE));
+  if (isBotBlock && html.length < 5_000) {
+    const portalName = /zonaprop/i.test(url) ? 'ZonaProp' : /argenprop/i.test(url) ? 'Argenprop' : 'El portal';
+    throw new AppError(`${portalName} bloqueó el acceso automático (protección anti-bots). Copiá los datos manualmente.`, 422);
   }
+}
 
-  const photoSet = new Set();
-  let preExtracted = {};
+async function extractStructuredData(html, url, photoSet) {
+  const isMl = /mercadolibre\.|meli\.com/i.test(url);
+  let structured = {};
 
-  // ── 2. MercadoLibre: parse HTML directly (no REST API) ────────────────────
   if (isMl) {
     try {
-      const mlData = parseMlHtml(html);
-      if (mlData.photos?.length) mlData.photos.forEach(p => photoSet.add(p));
-      preExtracted = mlData;
-      console.log('ML HTML parse result:', preExtracted.title || '(no title)', 'price:', preExtracted.price);
+      structured = parseMlHtml(html);
+      (structured.photos || []).forEach(p => photoSet.add(p));
+      console.log('ML HTML parse — title:', structured.title || '(none)', '| price:', structured.price);
     } catch (err) {
       console.warn('ML HTML parse error:', err.message);
     }
   }
 
-  // ── 3. __NEXT_DATA__ (ZonaProp, Argenprop, Navent, etc.) ──────────────────
-  const ndMatch = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
-  if (ndMatch) {
+  // __NEXT_DATA__ (ZonaProp, Argenprop, etc.)
+  const nextDataMatch = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (nextDataMatch) {
     try {
-      const nd = JSON.parse(ndMatch[1]);
-      const fromNext = parseNextData(nd);
-      for (const [k, v] of Object.entries(fromNext)) {
-        if (!preExtracted[k] && v !== undefined && v !== null && !(Array.isArray(v) && !v.length)) {
-          preExtracted[k] = v;
+      const nextData  = JSON.parse(nextDataMatch[1]);
+      const fromNext  = parseNextData(nextData);
+      collectImagesFromObject(nextData, photoSet);
+      // Merge — structured data from API wins
+      for (const [key, value] of Object.entries(fromNext)) {
+        if (!structured[key] && value != null && !(Array.isArray(value) && !value.length)) {
+          structured[key] = value;
         }
       }
-      deepImages(nd, photoSet);
-      console.log('__NEXT_DATA__ parsed, title:', fromNext.title || '(none)');
-    } catch (e) { console.warn('__NEXT_DATA__ parse error:', e.message); }
+      console.log('__NEXT_DATA__ parsed — title:', fromNext.title || '(none)');
+    } catch (err) {
+      console.warn('__NEXT_DATA__ parse error:', err.message);
+    }
   }
 
-  // ── 4. Harvest photos from raw HTML ──────────────────────────────────────
-  harvestPhotos(html).forEach(u => photoSet.add(u));
+  extractPhotosFromHtml(html).forEach(url => photoSet.add(url));
+  return structured;
+}
 
-  // ── 5. Strip HTML for Claude ──────────────────────────────────────────────
-  const text = html
+function stripHtmlForClaude(html) {
+  return html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
@@ -376,24 +486,27 @@ export const importFromUrl = asyncHandler(async (req, res) => {
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 12000);
+    .slice(0, MAX_CLAUDE_TEXT);
+}
 
-  // ── 6. Claude extraction ──────────────────────────────────────────────────
-  let aiExtracted = {};
+async function extractWithClaude(text, alreadyExtracted) {
   try {
     const client = getAnthropic();
-    const alreadyHave = Object.entries(preExtracted)
-      .filter(([k, v]) => k !== 'photos' && v != null && !(Array.isArray(v) && !v.length))
-      .map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ');
+    const existingDataHint = Object.entries(alreadyExtracted)
+      .filter(([key, value]) => key !== 'photos' && value != null && !(Array.isArray(value) && !value.length))
+      .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+      .join(', ');
 
-    const hint = alreadyHave ? `\n\nYa extraído (usá estos valores, no los repitas a menos que el texto los contradiga): ${alreadyHave}\n` : '';
+    const existingHint = existingDataHint
+      ? `\n\nYa extraído (usá estos valores, no los repitas a menos que el texto los contradiga): ${existingDataHint}\n`
+      : '';
 
-    const msg = await client.messages.create({
-      model: env.aiModel,
+    const response = await client.messages.create({
+      model:      env.aiModel,
       max_tokens: 900,
       messages: [{
-        role: 'user',
-        content: `${hint}
+        role:    'user',
+        content: `${existingHint}
 Extraé todos los datos de esta propiedad inmobiliaria del texto y devolvé SOLO un JSON válido.
 Campos (omití los que no puedas determinar con certeza):
 {
@@ -418,34 +531,26 @@ Texto: ${text}`,
       }],
     });
 
-    const jm = msg.content[0].text.match(/\{[\s\S]*\}/);
-    if (jm) aiExtracted = JSON.parse(jm[0]);
+    const jsonMatch = response.content[0].text.match(/\{[\s\S]*\}/);
+    return jsonMatch ? JSON.parse(jsonMatch[0]) : {};
   } catch (err) {
-    console.warn('Claude extraction failed:', err.message);
+    console.warn('Claude extraction error:', err.message);
+    return {};
   }
+}
 
-  // ── 7. Merge: structured parsers win; Claude fills gaps ───────────────────
-  const merged = { ...aiExtracted };
-  for (const [k, v] of Object.entries(preExtracted)) {
-    if (k === 'photos') continue;
-    if (v !== undefined && v !== null && !(Array.isArray(v) && !v.length)) merged[k] = v;
+function mergeExtractions(aiData, structuredData) {
+  const merged = { ...aiData };
+  for (const [key, value] of Object.entries(structuredData)) {
+    if (key === 'photos') continue;
+    if (value != null && !(Array.isArray(value) && !value.length)) merged[key] = value;
   }
+  return merged;
+}
 
-  // ── 8. Final photos ───────────────────────────────────────────────────────
-  const aiPhotos = (aiExtracted.photos || []).filter(u => typeof u === 'string' && u.startsWith('http'));
-  const allPhotos = [...new Set([...(preExtracted.photos || []), ...photoSet, ...aiPhotos])]
-    .filter(u => u.startsWith('http') && !SKIP_PHOTO.test(u))
-    .slice(0, 12);
-
-  delete merged.photos;
-
-  const fieldsFilled = Object.values(merged).filter(v => v != null && v !== '' && !(Array.isArray(v) && !v.length)).length;
-  console.log(`import-url: ${fieldsFilled} fields, ${allPhotos.length} photos for ${url}`);
-
-  // If virtually nothing extracted and we got a block, give useful error
-  if (fieldsFilled < 2 && isBotBlock) {
-    throw new AppError('No se pudieron extraer datos — el portal bloqueó el acceso. Completá el formulario manualmente.', 422);
-  }
-
-  res.json({ ...merged, photos: allPhotos, sourceUrl: url });
-});
+function buildFinalPhotoList(structuredPhotos, photoSet, aiPhotos) {
+  const validAiPhotos = aiPhotos.filter(url => typeof url === 'string' && url.startsWith('http'));
+  return [...new Set([...structuredPhotos, ...photoSet, ...validAiPhotos])]
+    .filter(isValidPhoto)
+    .slice(0, MAX_PHOTOS);
+}

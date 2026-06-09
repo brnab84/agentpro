@@ -254,6 +254,8 @@
       .hide-desktop { display: none !important; }
     }
   </style>
+  <!-- Google Sign-In SDK (loaded async — only used on login screen) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="min-h-screen" style="background:var(--bg)">
 
@@ -280,7 +282,16 @@
       </div>
       <button type="submit" id="loginBtn" class="w-full gradient-bg text-white font-semibold py-2.5 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2">Ingresar</button>
     </form>
-    <div class="mt-6 pt-6 border-t border-gray-100 text-center">
+    <div class="mt-5 flex items-center gap-3">
+      <div class="flex-1 h-px bg-gray-200"></div>
+      <span class="text-xs text-gray-400 whitespace-nowrap">o continuá con</span>
+      <div class="flex-1 h-px bg-gray-200"></div>
+    </div>
+    <button id="googleLoginBtn" onclick="loginWithGoogle()" class="mt-4 w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition text-sm font-medium text-gray-700">
+      <svg viewBox="0 0 24 24" class="w-5 h-5 flex-shrink-0"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continuar con Google
+    </button>
+    <div class="mt-5 pt-5 border-t border-gray-100 text-center">
       <p class="text-sm text-gray-500 mb-3">¿No tenés cuenta?</p>
       <button onclick="showRegister()" class="text-blue-600 text-sm font-medium hover:underline">Crear cuenta gratis</button>
     </div>
@@ -1365,6 +1376,39 @@
         <div id="teamGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
         <div id="teamEmpty" class="hidden text-center py-8 text-gray-400">No hay agentes aún. Invitá al primero.</div>
 
+        <!-- Google Calendar integration card -->
+        <div class="card p-6 max-w-xl mb-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#EEF2FF">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="#4F46E5" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="16" r="1.2" fill="#4F46E5"/><circle cx="12" cy="16" r="1.2" fill="#4F46E5"/><circle cx="16" cy="16" r="1.2" fill="#4F46E5"/></svg>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">Google Calendar</p>
+              <p class="text-xs text-gray-400">Sincronizá tus citas con Google Calendar</p>
+            </div>
+          </div>
+          <div id="gcalStatus" class="text-sm text-gray-400 mb-4">Verificando conexión…</div>
+          <div id="gcalConnected" class="hidden">
+            <div class="flex items-center gap-2 text-sm text-green-600 font-medium mb-3">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Conectado como <span id="gcalEmail" class="ml-1 font-semibold"></span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="syncGoogleCalendar()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Sincronizar citas
+              </button>
+              <button onclick="disconnectGoogleCalendar()" class="text-sm text-red-400 hover:text-red-600 px-3 py-2 rounded-lg border border-red-100 hover:bg-red-50 transition">Desconectar</button>
+            </div>
+          </div>
+          <div id="gcalDisconnected" class="hidden">
+            <button onclick="connectGoogleCalendar()" class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition text-sm font-medium text-gray-700">
+              <svg viewBox="0 0 24 24" class="w-5 h-5"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              Conectar con Google Calendar
+            </button>
+          </div>
+        </div>
+
         <!-- Channel config (owner only) -->
         <div id="channelConfigSection" class="hidden">
           <h3 class="font-semibold text-gray-900 mb-4">Configuración de canales</h3>
@@ -2049,8 +2093,19 @@ window.onerror = function(msg, src, line) {
 };
 
 // ── Global constants ──────────────────────────────────────────────────────────
-const API = window.location.origin;
-const APP_VERSION = '1.9.4'; // fallback; authoritative value fetched from /api/version
+const API         = window.location.origin;
+const APP_VERSION = '2.0.0'; // fallback; authoritative value fetched from /api/version
+
+// Status color/label maps — single source of truth, used across campaigns/funnels/channels
+const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
+const CAMPAIGN_STATUS_LABELS = { draft:'Borrador', sending:'Enviando', sent:'Enviada', failed:'Error' };
+const FUNNEL_STATUS_COLORS   = { active:'bg-green-100 text-green-700', draft:'bg-yellow-100 text-yellow-700', inactive:'bg-gray-100 text-gray-500' };
+const FUNNEL_STATUS_LABELS   = { active:'Activo', draft:'Borrador', inactive:'Inactivo' };
+const CHANNEL_STATUS_COLORS  = { active:'bg-green-100 text-green-700', inactive:'bg-gray-100 text-gray-500', error:'bg-red-100 text-red-600' };
+const CHANNEL_STATUS_LABELS  = { active:'ACTIVO', inactive:'INACTIVO', error:'ERROR' };
+
+// Shared limits
+const MAX_SEARCH_RESULTS = 5;
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -2265,7 +2320,7 @@ function showTab(tab) {
   if (tab === 'email-accounts') loadEmailAccounts();
   if (tab === 'email-signatures') loadEmailSignatures();
   if (tab === 'templates') loadWaTemplates();
-  if (tab === 'team') loadTeam();
+  if (tab === 'team') { loadTeam(); loadGoogleCalendarStatus(); }
   if (tab === 'domains') loadDomains();
   if (tab === 'reports') document.getElementById('reportPreview')?.classList.add('hidden');
 }
@@ -3412,11 +3467,9 @@ function renderCampaigns() {
   if (q) list = list.filter(c => c.name.toLowerCase().includes(q));
   if (!list.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
-  const statusColors = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
-  const statusLabels = { draft:'Borrador', sending:'Enviando', sent:'Enviada', failed:'Error' };
   grid.innerHTML = list.map(c => {
-    const sc = statusColors[c.status] || statusColors.draft;
-    const sl = statusLabels[c.status] || 'Borrador';
+    const sc = CAMPAIGN_STATUS_COLORS[c.status] || CAMPAIGN_STATUS_COLORS.draft;
+    const sl = CAMPAIGN_STATUS_LABELS[c.status] || 'Borrador';
     const icon = c.channel === 'whatsapp' ? '📱' : '📸';
     const isActive = c._id === currentCampaignId;
     return `<div class="px-4 py-3.5 cursor-pointer transition hover:bg-gray-50 ${isActive ? 'border-l-[3px] border-blue-500 bg-blue-50' : 'border-l-[3px] border-transparent'}" onclick="openCampaignDetail('${c._id}')">
@@ -3434,13 +3487,11 @@ function openCampaignDetail(id) {
   renderCampaigns();
   const c = allCampaigns.find(x => x._id === id);
   if (!c) return;
-  const statusColors = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
-  const statusLabels = { draft:'Borrador', sending:'Enviando', sent:'Enviada', failed:'Error' };
   document.getElementById('cdTitle').textContent = c.name;
   document.getElementById('cdSubtitle').textContent = `${c.channel} · ${new Date(c.createdAt).toLocaleDateString('es',{day:'2-digit',month:'long',year:'numeric'})}`;
   document.getElementById('cdSendBtn').classList.toggle('hidden', c.status !== 'draft');
-  const sc = statusColors[c.status] || statusColors.draft;
-  const sl = statusLabels[c.status] || 'Borrador';
+  const sc = CAMPAIGN_STATUS_COLORS[c.status] || CAMPAIGN_STATUS_COLORS.draft;
+  const sl = CAMPAIGN_STATUS_LABELS[c.status] || 'Borrador';
   document.getElementById('cdBody').innerHTML = `
     <div class="rounded-xl p-4" style="background:var(--surface);border:1px solid var(--border)">
       <p class="text-xs font-semibold mb-2" style="color:var(--text-3);text-transform:uppercase;letter-spacing:.05em">Estado</p>
@@ -3909,11 +3960,9 @@ function renderFunnels() {
     return;
   }
   empty.classList.add('hidden');
-  const statusColors = { active: 'bg-green-100 text-green-700', draft: 'bg-yellow-100 text-yellow-700', inactive: 'bg-gray-100 text-gray-500' };
-  const statusLabels = { active: 'Activo', draft: 'Borrador', inactive: 'Inactivo' };
   list.innerHTML = funnels.map(f => {
-    const statusColor = statusColors[f.status] || 'bg-gray-100 text-gray-500';
-    const statusLabel = statusLabels[f.status] || 'Pausado';
+    const statusColor = FUNNEL_STATUS_COLORS[f.status] || 'bg-gray-100 text-gray-500';
+    const statusLabel = FUNNEL_STATUS_LABELS[f.status] || 'Pausado';
     const channelIcon = f.channel === 'whatsapp'
       ? `<svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>`
       : `<svg class="w-4 h-4 text-pink-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
@@ -4980,15 +5029,15 @@ function runGlobalSearch(q) {
   const results = [];
 
   // Leads
-  (allLeads || []).filter(l => l.name?.toLowerCase().includes(ql) || l.contact?.toLowerCase().includes(ql)).slice(0,5).forEach(l =>
+  (allLeads || []).filter(l => l.name?.toLowerCase().includes(ql) || l.contact?.toLowerCase().includes(ql)).slice(0, MAX_SEARCH_RESULTS).forEach(l =>
     results.push({ type:'lead', icon:'👤', title: l.name, sub: l.contact || l.stage || '', action: () => { closeGlobalSearch(); openLeadModal(l._id); } })
   );
   // Funnels
-  (allFunnels || []).filter(f => f.name?.toLowerCase().includes(ql)).slice(0,5).forEach(f =>
+  (allFunnels || []).filter(f => f.name?.toLowerCase().includes(ql)).slice(0, MAX_SEARCH_RESULTS).forEach(f =>
     results.push({ type:'funnel', icon:'🔽', title: f.name, sub: `${f.channel} · ${f.status}`, action: () => { closeGlobalSearch(); showTab('funnels'); setTimeout(() => openFunnelDetail(f._id), 200); } })
   );
   // Campaigns
-  (allCampaigns || []).filter(c => c.name?.toLowerCase().includes(ql)).slice(0,5).forEach(c =>
+  (allCampaigns || []).filter(c => c.name?.toLowerCase().includes(ql)).slice(0, MAX_SEARCH_RESULTS).forEach(c =>
     results.push({ type:'campaign', icon:'📣', title: c.name, sub: `${c.channel} · ${c.status}`, action: () => { closeGlobalSearch(); showTab('campaigns'); setTimeout(() => openCampaignDetail(c._id), 200); } })
   );
 
@@ -5029,8 +5078,6 @@ function renderEmailAccounts() {
   const empty = document.getElementById('emailAccountsEmpty');
   if (!allEmailAccounts.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
-  const statusColors = { active:'bg-green-100 text-green-700', inactive:'bg-gray-100 text-gray-500', error:'bg-red-100 text-red-600' };
-  const statusLabels = { active:'ACTIVO', inactive:'INACTIVO', error:'ERROR' };
   list.innerHTML = allEmailAccounts.map(a => `
     <div class="card p-5">
       <div class="flex items-start justify-between mb-3">
@@ -5043,7 +5090,7 @@ function renderEmailAccounts() {
             <p class="text-xs" style="color:var(--text-3)">${a.fromEmail}</p>
           </div>
         </div>
-        <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${statusColors[a.status] || 'bg-gray-100 text-gray-500'}">${statusLabels[a.status] || a.status}</span>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${CHANNEL_STATUS_COLORS[a.status] || 'bg-gray-100 text-gray-500'}">${CHANNEL_STATUS_LABELS[a.status] || a.status}</span>
       </div>
       ${a.smtpHost ? `<p class="text-xs mb-1" style="color:var(--text-3)">SMTP: <span style="color:var(--text-2);font-family:var(--font-mono)">${a.smtpHost}:${a.smtpPort}</span></p>` : ''}
       ${a.lastError ? `<p class="text-xs mb-3 text-red-500 truncate">${a.lastError}</p>` : '<div class="mb-3"></div>'}
@@ -5581,6 +5628,101 @@ function printReport() {
   w.document.close();
   w.print();
 }
+
+// ── Google Sign-In ────────────────────────────────────────────────────────────
+
+/** Called by the Google Identity Services SDK after the user picks an account */
+async function handleGoogleCredentialResponse(response) {
+  const btn = document.getElementById('googleLoginBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Conectando…'; }
+  try {
+    const data = await api('POST', '/api/auth/google', { idToken: response.credential });
+    if (!data?.token) throw new Error('Sin respuesta del servidor');
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('agentpro_token', token);
+    localStorage.setItem('agentpro_user', JSON.stringify(currentUser));
+    showApp();
+  } catch (err) {
+    showToast('Error al iniciar sesión con Google: ' + err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Continuar con Google'; }
+  }
+}
+
+/** Triggered by clicking "Continuar con Google" — initialises the One-Tap / popup flow */
+function loginWithGoogle() {
+  if (typeof google === 'undefined' || !google?.accounts?.id) {
+    showToast('Google Sign-In no está disponible. Verificá la configuración.', 'error');
+    return;
+  }
+  const clientId = window._GOOGLE_CLIENT_ID; // injected at runtime if configured
+  if (!clientId) {
+    showToast('GOOGLE_CLIENT_ID no configurado en el servidor.', 'error');
+    return;
+  }
+  google.accounts.id.initialize({ client_id: clientId, callback: handleGoogleCredentialResponse });
+  google.accounts.id.prompt();
+}
+
+// ── Google Calendar ───────────────────────────────────────────────────────────
+
+async function loadGoogleCalendarStatus() {
+  try {
+    const status = await api('GET', '/api/google/status');
+    document.getElementById('gcalStatus').classList.add('hidden');
+    if (status.connected) {
+      document.getElementById('gcalEmail').textContent = status.email || '';
+      document.getElementById('gcalConnected').classList.remove('hidden');
+      document.getElementById('gcalDisconnected').classList.add('hidden');
+    } else {
+      document.getElementById('gcalConnected').classList.add('hidden');
+      document.getElementById('gcalDisconnected').classList.remove('hidden');
+    }
+  } catch {
+    document.getElementById('gcalStatus').textContent = 'No disponible';
+  }
+}
+
+async function connectGoogleCalendar() {
+  try {
+    const { url } = await api('GET', '/api/google/auth-url');
+    if (!url) throw new Error('No se recibió URL de autorización');
+    window.location.href = url;
+  } catch (err) {
+    showToast('Error al conectar Google Calendar: ' + err.message, 'error');
+  }
+}
+
+async function disconnectGoogleCalendar() {
+  if (!confirm('¿Desconectar Google Calendar?')) return;
+  try {
+    await api('DELETE', '/api/google/disconnect');
+    showToast('Google Calendar desconectado');
+    loadGoogleCalendarStatus();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function syncGoogleCalendar() {
+  try {
+    showToast('Sincronizando citas…');
+    const result = await api('POST', '/api/google/sync');
+    showToast(`✅ ${result.synced} cita(s) sincronizada(s) con Google Calendar`);
+  } catch (err) {
+    showToast('Error al sincronizar: ' + err.message, 'error');
+  }
+}
+
+// Handle redirect back from Google OAuth
+(function checkGCalRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('gcal') === 'ok') {
+    const email = params.get('email') || '';
+    showToast(`Google Calendar conectado${email ? ` como ${email}` : ''} ✅`);
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+})();
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 initVersion();

@@ -29,3 +29,12 @@ export const remove = async (tenantId, id) => {
   if (!item) throw new AppError('Appointment not found', 404);
   return item;
 };
+
+/** Upcoming appointments (from now, next 30 days) — used for Google Calendar sync */
+export const listUpcoming = (tenantId) => {
+  const now   = new Date();
+  const limit = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  return Appointment.find({ tenantId, datetime: { $gte: now, $lte: limit } })
+    .populate('leadId', 'name')
+    .sort({ datetime: 1 });
+};
