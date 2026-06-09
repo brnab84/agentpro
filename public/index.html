@@ -1156,7 +1156,7 @@
 <script>
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.5.6'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.5.7'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1170,7 +1170,7 @@ function showToast(msg, type = 'success') {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let token = localStorage.getItem('agentpro_token') || '';
-let currentUser = JSON.parse(localStorage.getItem('agentpro_user') || 'null');
+let currentUser = (() => { try { return JSON.parse(localStorage.getItem('agentpro_user') || 'null'); } catch { localStorage.removeItem('agentpro_user'); return null; } })();
 let allLeads = [], allProps = [], allAppts = [];
 let currentAiLeadId = null;
 let calYear, calMonth, selectedDay = null;
@@ -1183,6 +1183,7 @@ async function api(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && path !== '/api/auth/login') { logout(); return {}; }
   if (!res.ok) throw new Error(data.message || data.error || 'Error');
   return data;
 }
