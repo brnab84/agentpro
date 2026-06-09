@@ -389,7 +389,7 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         Cerrar sesión
       </button>
-      <p style="color:rgba(255,255,255,0.3);font-size:10px;text-align:center;margin-top:10px;letter-spacing:0.02em" id="sidebarVersion"></p>
+      <p style="color:rgba(255,255,255,0.55);font-size:11px;font-weight:600;text-align:center;margin-top:10px;letter-spacing:0.04em;background:rgba(255,255,255,0.08);border-radius:99px;padding:3px 10px;display:inline-block;width:100%" id="sidebarVersion"></p>
     </div>
   </div>
 
@@ -1808,7 +1808,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.8.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.8.1'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1870,11 +1870,20 @@ function logout() {
 }
 
 async function initVersion() {
-  let v = APP_VERSION;
-  try { const d = await api('GET', '/api/version'); v = d.version || v; } catch {}
-  const label = `v${v}`;
-  document.getElementById('loginVersion').textContent = label;
-  document.getElementById('sidebarVersion').textContent = label;
+  // Show local constant immediately (no flicker)
+  const setVersion = (v) => {
+    const label = `v${v}`;
+    const el1 = document.getElementById('loginVersion');
+    const el2 = document.getElementById('sidebarVersion');
+    if (el1) el1.textContent = label;
+    if (el2) el2.textContent = label;
+  };
+  setVersion(APP_VERSION);
+  // Then try to confirm from server
+  try {
+    const d = await fetch(API + '/api/version').then(r => r.json());
+    if (d?.version) setVersion(d.version);
+  } catch {}
 }
 
 document.getElementById('loginForm').onsubmit = async (e) => {
