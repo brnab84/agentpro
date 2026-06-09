@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { auth } from '../../middleware/auth.js';
-import { tenantScope } from '../../middleware/tenantScope.js';
+import { tenantScope } from '../../middleware/tenant.js';
 import * as controller from './google.controller.js';
 
 const router = Router();
