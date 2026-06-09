@@ -386,13 +386,21 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         Equipo
       </a>
+      <!-- Separator + logout inside scrollable nav so it's never hidden by taskbar -->
+      <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px">
+        <div style="padding:6px 12px 4px;display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0" id="sidebarAvatar">U</div>
+          <div style="flex:1;min-width:0">
+            <p style="color:#fff;font-size:12px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="sidebarUserName">Usuario</p>
+            <p style="color:rgba(255,255,255,0.5);font-size:10px;margin:0" id="sidebarUserRole">—</p>
+          </div>
+        </div>
+        <button onclick="logout()" class="nav-item" style="width:100%;border:none;background:none;text-align:left;margin-top:2px;color:rgba(255,100,100,0.85)">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Cerrar sesión
+        </button>
+      </div>
     </nav>
-    <div style="padding:12px 10px;border-top:1px solid rgba(255,255,255,0.1)">
-      <button onclick="logout()" class="nav-item" style="width:100%;border:none;background:none;text-align:left">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-        Cerrar sesión
-      </button>
-    </div>
   </div>
 
   <!-- Mobile bottom navigation -->
@@ -1810,7 +1818,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API = window.location.origin;
-const APP_VERSION = '1.8.2'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '1.8.3'; // fallback; authoritative value fetched from /api/version
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -1858,6 +1866,14 @@ function showApp() {
   document.getElementById('appPage').classList.remove('hidden');
   document.getElementById('userLabel').textContent = currentUser?.name || '';
   document.getElementById('userAvatar').textContent = (currentUser?.name || 'U')[0].toUpperCase();
+  // Sidebar user info
+  const initials = (currentUser?.name || 'U')[0].toUpperCase();
+  const el = document.getElementById('sidebarAvatar');
+  if (el) el.textContent = initials;
+  const nameEl = document.getElementById('sidebarUserName');
+  if (nameEl) nameEl.textContent = currentUser?.name || 'Usuario';
+  const roleEl = document.getElementById('sidebarUserRole');
+  if (roleEl) roleEl.textContent = currentUser?.role === 'owner' ? 'Propietario' : currentUser?.role === 'agent' ? 'Agente' : currentUser?.role || '';
   // agents can't manage team
   if (currentUser?.role !== 'owner') {
     document.getElementById('teamNavItem')?.classList.add('hidden');
