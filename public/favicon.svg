@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <!-- House shape -->
+  <path d="M32 14 L50 30 L46 30 L46 50 L18 50 L18 30 L14 30 Z" fill="white" opacity="0.95"/>
+  <!-- Door -->
+  <rect x="27" y="37" width="10" height="13" rx="2" fill="url(#g)"/>
+  <!-- AI spark -->
+  <circle cx="46" cy="18" r="7" fill="#F59E0B"/>
+  <path d="M46 13 L47.2 16.8 L51 18 L47.2 19.2 L46 23 L44.8 19.2 L41 18 L44.8 16.8 Z" fill="white"/>
+</svg>

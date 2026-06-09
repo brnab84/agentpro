@@ -24,10 +24,13 @@ import domainRoutes from './modules/domains/domains.routes.js';
 import googleRoutes from './modules/google/google.routes.js';
 
 let indexHtml;
+let landingHtml;
 try {
-  indexHtml = readFileSync(join(process.cwd(), 'public', 'index.html'), 'utf-8');
+  indexHtml  = readFileSync(join(process.cwd(), 'public', 'index.html'),  'utf-8');
+  landingHtml = readFileSync(join(process.cwd(), 'public', 'landing.html'), 'utf-8');
 } catch {
-  indexHtml = '<h1>AgentPro API</h1>';
+  indexHtml   = '<h1>AgentPro API</h1>';
+  landingHtml = indexHtml;
 }
 
 export function createApp() {
@@ -38,8 +41,16 @@ export function createApp() {
   app.use(express.json({ limit: '25mb' }));
   if (env.nodeEnv === 'development') app.use(morgan('dev'));
 
+  // Static assets (favicon, etc.)
+  app.use(express.static(join(process.cwd(), 'public'), { index: false }));
+
   app.get('/health', (_req, res) => res.json({ status: 'ok', version: APP_VERSION }));
   app.get('/api/version', (_req, res) => res.json({ version: APP_VERSION }));
+
+  // Landing page
+  app.get('/landing', (_req, res) => res.type('html').send(landingHtml));
+
+  // App (SPA — no-cache so version polling works)
   app.get('/', (_req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
