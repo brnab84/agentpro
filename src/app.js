@@ -24,6 +24,7 @@ import domainRoutes from './modules/domains/domains.routes.js';
 import googleRoutes from './modules/google/google.routes.js';
 import portalRoutes from './modules/portal/portal.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
+import assistantRoutes from './modules/assistant/assistant.routes.js';
 import billingRoutes from './modules/billing/billing.routes.js';
 import { webhook as billingWebhook } from './modules/billing/billing.controller.js';
 import { Settings } from './models/Settings.js';
@@ -119,6 +120,7 @@ export function createApp() {
   app.use('/api/google', googleRoutes);
   app.use('/api/portal', portalRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/assistant', assistantRoutes);
   app.use('/api/billing', billingRoutes);
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));

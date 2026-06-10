@@ -2512,6 +2512,39 @@
   </div>
 </div>
 
+<!-- ── HELP ASSISTANT (Claude) ─────────────────────────────────────────────── -->
+<div id="helpBot" class="hidden" style="position:fixed;bottom:20px;right:20px;z-index:300">
+  <!-- Launcher button -->
+  <button id="helpBotBtn" onclick="toggleHelpBot()" title="Asistente de ayuda"
+    style="width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(99,102,241,.45);transition:transform .15s"
+    class="gradient-bg" onmouseenter="this.style.transform='scale(1.07)'" onmouseleave="this.style.transform='scale(1)'">
+    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.7 9.7 0 01-4-.85L3 20l1.1-3.3A7.7 7.7 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+  </button>
+  <!-- Chat panel -->
+  <div id="helpBotPanel" class="hidden" style="position:absolute;bottom:68px;right:0;width:360px;max-width:calc(100vw - 40px);height:480px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 16px 48px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border)">
+    <div class="gradient-bg" style="padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div style="flex:1;min-width:0">
+        <p style="color:#fff;font-weight:700;font-size:14px;margin:0">Asistente AgentPro</p>
+        <p style="color:rgba(255,255,255,.8);font-size:11px;margin:0">Te ayudo a usar la app</p>
+      </div>
+      <button onclick="toggleHelpBot()" style="background:none;border:none;cursor:pointer;color:#fff;opacity:.85" title="Cerrar">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="helpBotMsgs" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#F7F7FA"></div>
+    <div style="padding:10px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;background:#fff">
+      <input id="helpBotInput" type="text" placeholder="Escribí tu pregunta…" onkeydown="if(event.key==='Enter')sendHelpBot()"
+        style="flex:1;border:1px solid var(--border-strong);border-radius:10px;padding:9px 12px;font-size:13px;outline:none"/>
+      <button onclick="sendHelpBot()" class="gradient-bg" style="border:none;border-radius:10px;padding:0 14px;cursor:pointer;color:#fff" title="Enviar">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Global error handler (catch silent crashes) ───────────────────────────────
 window.onerror = function(msg, src, line) {
@@ -2523,7 +2556,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.9.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.10.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -2571,6 +2604,7 @@ function showLogin() {
   document.getElementById('loginPage').classList.remove('hidden');
   document.getElementById('registerPage').classList.add('hidden');
   document.getElementById('appPage').classList.add('hidden');
+  document.getElementById('helpBot')?.classList.add('hidden');
 }
 function showRegister() {
   document.getElementById('loginPage').classList.add('hidden');
@@ -2604,6 +2638,7 @@ function showApp() {
   document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('registerPage').classList.add('hidden');
   document.getElementById('appPage').classList.remove('hidden');
+  document.getElementById('helpBot')?.classList.remove('hidden');
   document.getElementById('userLabel').textContent = currentUser?.name || '';
   document.getElementById('userAvatar').textContent = (currentUser?.name || 'U')[0].toUpperCase();
   const roleDisplay = currentUser?.role === 'owner' ? 'Propietario' : currentUser?.role === 'agent' ? 'Agente' : currentUser?.role || '';
@@ -6849,6 +6884,52 @@ async function adminToggleStatus(id, isSuspended) {
     renderAdminTenants();
     showToast(status === 'suspended' ? 'Cuenta suspendida' : 'Cuenta reactivada');
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
+}
+
+// ── Help assistant (Claude) ───────────────────────────────────────────────────
+let _helpHistory = [];
+
+function toggleHelpBot() {
+  const panel = document.getElementById('helpBotPanel');
+  const open = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !open);
+  if (open) {
+    if (!_helpHistory.length) {
+      addHelpMsg('assistant', '¡Hola! 👋 Soy tu asistente. Preguntame cómo hacer cualquier cosa en AgentPro: publicar una propiedad, configurar tu portal, cobrar con un plan, etc.');
+    }
+    setTimeout(() => document.getElementById('helpBotInput')?.focus(), 100);
+  }
+}
+
+function addHelpMsg(role, text) {
+  const wrap = document.getElementById('helpBotMsgs');
+  const me = role === 'user';
+  const bubble = document.createElement('div');
+  bubble.style.cssText = `max-width:85%;padding:9px 12px;border-radius:14px;font-size:13px;line-height:1.45;white-space:pre-wrap;${me
+    ? 'align-self:flex-end;background:var(--accent,#6366F1);color:#fff;border-bottom-right-radius:4px'
+    : 'align-self:flex-start;background:#fff;color:#1f2937;border:1px solid var(--border);border-bottom-left-radius:4px'}`;
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+  wrap.scrollTop = wrap.scrollHeight;
+  return bubble;
+}
+
+async function sendHelpBot() {
+  const input = document.getElementById('helpBotInput');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  addHelpMsg('user', q);
+  _helpHistory.push({ role: 'user', content: q });
+
+  const typing = addHelpMsg('assistant', '…');
+  try {
+    const r = await api('POST', '/api/assistant/ask', { messages: _helpHistory });
+    typing.textContent = r.reply;
+    _helpHistory.push({ role: 'assistant', content: r.reply });
+  } catch (err) {
+    typing.textContent = 'Disculpá, no pude responder ahora. ' + (err.message || '');
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
