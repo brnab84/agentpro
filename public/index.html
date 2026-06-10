@@ -2535,13 +2535,14 @@
       </button>
     </div>
     <div id="helpBotMsgs" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#F7F7FA"></div>
-    <div style="padding:10px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;background:#fff">
+    <div style="padding:10px 10px 4px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;background:#fff">
       <input id="helpBotInput" type="text" placeholder="Escribí tu pregunta…" onkeydown="if(event.key==='Enter')sendHelpBot()"
         style="flex:1;border:1px solid var(--border-strong);border-radius:10px;padding:9px 12px;font-size:13px;outline:none"/>
       <button onclick="sendHelpBot()" class="gradient-bg" style="border:none;border-radius:10px;padding:0 14px;cursor:pointer;color:#fff" title="Enviar">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
       </button>
     </div>
+    <p style="text-align:center;font-size:10px;color:var(--text-3);padding:0 0 8px;background:#fff;margin:0;flex-shrink:0">Powered by <span style="font-weight:600">Anthropic</span> · Claude</p>
   </div>
 </div>
 
@@ -2556,7 +2557,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.10.2'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.10.3'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
