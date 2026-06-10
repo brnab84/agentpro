@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.3.0'; // feat: MercadoPago subscriptions (API + webhook auto-activation)
+export const APP_VERSION = '3.3.1'; // fix: clearer MercadoPago currency error message
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

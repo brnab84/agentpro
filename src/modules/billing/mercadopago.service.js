@@ -21,7 +21,14 @@ async function mpFetch(path, options = {}) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new AppError(`MercadoPago: ${data.message || res.statusText}`, 502);
+    const msg = data.message || res.statusText;
+    if (/currency_id/i.test(msg)) {
+      throw new AppError(
+        'MercadoPago rechazó la moneda del plan. Debe coincidir con el país de tu cuenta MercadoPago (ej: ARS para Argentina, MXN para México). Cambiala en Admin → Precios.',
+        400,
+      );
+    }
+    throw new AppError(`MercadoPago: ${msg}`, 502);
   }
   return data;
 }
