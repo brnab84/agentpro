@@ -9,7 +9,13 @@ export function auth(req, res, next) {
 
   try {
     const payload = jwt.verify(token, env.jwtSecret);
-    req.user = { id: payload.sub, tenantId: payload.tenantId, role: payload.role };
+    req.user = {
+      id: payload.sub,
+      tenantId: payload.tenantId,
+      role: payload.role,
+      email: payload.email,
+      isAdmin: payload.isAdmin === true,
+    };
     next();
   } catch {
     next(new AppError('Invalid or expired token', 401));

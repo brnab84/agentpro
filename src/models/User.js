@@ -8,6 +8,8 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     role:     { type: String, enum: ['owner', 'agent'], default: 'owner' },
     googleId: { type: String, trim: true }, // populated on Google OAuth sign-in
+    lastLoginAt: { type: Date },
+    loginCount:  { type: Number, default: 0 },
   },
   { timestamps: true },
 );

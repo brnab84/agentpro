@@ -23,6 +23,7 @@ import emailSignatureRoutes from './modules/email-signatures/email-signatures.ro
 import domainRoutes from './modules/domains/domains.routes.js';
 import googleRoutes from './modules/google/google.routes.js';
 import portalRoutes from './modules/portal/portal.routes.js';
+import adminRoutes from './modules/admin/admin.routes.js';
 import { renderListingHtml, renderPropertyHtml, buildRobotsTxt, buildSitemap } from './modules/portal/portal.seo.js';
 
 /** Public base URL for canonical/OG tags. Prefers APP_BASE_URL, else the request host. */
@@ -101,6 +102,7 @@ export function createApp() {
   app.use('/api/domains', domainRoutes);
   app.use('/api/google', googleRoutes);
   app.use('/api/portal', portalRoutes);
+  app.use('/api/admin', adminRoutes);
 
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
   app.use(errorHandler);

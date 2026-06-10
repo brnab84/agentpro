@@ -68,14 +68,18 @@ export const googleLogin = asyncHandler(async (req, res) => {
     });
   } else if (!user.googleId) {
     user.googleId = profile.googleId;
-    await user.save();
   }
 
+  user.lastLoginAt = new Date();
+  user.loginCount = (user.loginCount || 0) + 1;
+  await user.save();
+
+  const isAdmin = env.adminEmails.includes((user.email || '').toLowerCase());
   const token = jwt.default.sign(
-    { sub: user._id.toString(), tenantId: user.tenantId.toString(), role: user.role },
+    { sub: user._id.toString(), tenantId: user.tenantId.toString(), role: user.role, email: user.email, isAdmin },
     env.jwtSecret,
     { expiresIn: env.jwtExpires },
   );
 
-  res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+  res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, isAdmin } });
 });

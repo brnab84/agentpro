@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '2.8.1'; // fix: portal "Activo" toggle now actually gates public visibility
+export const APP_VERSION = '2.9.0'; // minor: super-admin panel (accounts, KPIs, logins, plan mgmt, estimated MRR)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
@@ -35,4 +35,8 @@ export const env = {
   // Email — Resend (https://resend.com · free 3000/month)
   resendApiKey:         process.env.RESEND_API_KEY || '',
   resendFromEmail:      process.env.RESEND_FROM_EMAIL || '',
+
+  // Super-admin panel — comma-separated list of authorized emails
+  adminEmails:          (process.env.ADMIN_EMAILS || '')
+                          .split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
 };

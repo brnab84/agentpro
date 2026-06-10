@@ -5,9 +5,19 @@ import { AppError } from '../../utils/AppError.js';
 import { Tenant } from '../../models/Tenant.js';
 import { User } from '../../models/User.js';
 
+function isAdminEmail(email) {
+  return env.adminEmails.includes((email || '').toLowerCase());
+}
+
 function signToken(user) {
   return jwt.sign(
-    { sub: user._id.toString(), tenantId: user.tenantId.toString(), role: user.role },
+    {
+      sub: user._id.toString(),
+      tenantId: user.tenantId.toString(),
+      role: user.role,
+      email: user.email,
+      isAdmin: isAdminEmail(user.email),
+    },
     env.jwtSecret,
     { expiresIn: env.jwtExpires },
   );
@@ -27,7 +37,10 @@ export async function register({ tenantName, name, email, password }) {
     role: 'owner',
   });
 
-  return { token: signToken(user), user: { id: user._id, name, email, role: user.role } };
+  return {
+    token: signToken(user),
+    user: { id: user._id, name, email, role: user.role, isAdmin: isAdminEmail(email) },
+  };
 }
 
 export async function login({ email, password }) {
@@ -37,8 +50,12 @@ export async function login({ email, password }) {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) throw new AppError('Invalid credentials', 401);
 
+  user.lastLoginAt = new Date();
+  user.loginCount = (user.loginCount || 0) + 1;
+  await user.save();
+
   return {
     token: signToken(user),
-    user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, isAdmin: isAdminEmail(user.email) },
   };
 }
