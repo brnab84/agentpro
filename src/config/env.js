@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.4.0'; // feat: loading shimmer (skeleton) on billing + admin while data loads
+export const APP_VERSION = '3.5.0'; // feat: site-wide loading shimmer — all CRM tabs + landing prices (portal already had skeletons)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

@@ -22,7 +22,7 @@
     .htip:hover { background: #C7D2FE; }
     /* Loading shimmer — overlay a div while its data loads */
     @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
-    .is-loading { position: relative; pointer-events: none; min-height: 80px; }
+    .is-loading { position: relative; pointer-events: none; min-height: 160px; }
     .is-loading > * { opacity: 0 !important; }
     .is-loading::after {
       content: ''; position: absolute; inset: 0; border-radius: 12px;
@@ -2480,7 +2480,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.4.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.5.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -2743,23 +2743,41 @@ function showTab(tab) {
     el.classList.toggle('active', el.dataset.bottom === tab);
   });
   document.getElementById('pageTitle').textContent = tabTitles[tab] || tab;
-  if (tab === 'dashboard') loadDashboard();
-  if (tab === 'leads') loadLeads();
-  if (tab === 'agenda') initAgenda();
-  if (tab === 'properties') loadProperties();
-  if (tab === 'pipeline') loadPipeline();
-  if (tab === 'inbox') loadInbox();
-  if (tab === 'funnels') loadFunnels();
-  if (tab === 'campaigns') loadCampaigns();
-  if (tab === 'active') loadActiveConversations();
-  if (tab === 'phones') loadPhoneNumbers();
-  if (tab === 'email-accounts') loadEmailAccounts();
-  if (tab === 'email-signatures') loadEmailSignatures();
-  if (tab === 'templates') loadWaTemplates();
-  if (tab === 'team') { loadTeam(); loadGoogleCalendarStatus(); loadPortalConfig(); }
-  if (tab === 'admin') { loadAdmin(); }
-  if (tab === 'domains') loadDomains();
-  if (tab === 'reports') document.getElementById('reportPreview')?.classList.add('hidden');
+
+  // Map each tab to the async loader(s) that fetch its data.
+  const TAB_LOADERS = {
+    dashboard: loadDashboard,
+    leads: loadLeads,
+    agenda: initAgenda,
+    properties: loadProperties,
+    pipeline: loadPipeline,
+    inbox: loadInbox,
+    funnels: loadFunnels,
+    campaigns: loadCampaigns,
+    active: loadActiveConversations,
+    phones: loadPhoneNumbers,
+    'email-accounts': loadEmailAccounts,
+    'email-signatures': loadEmailSignatures,
+    templates: loadWaTemplates,
+    team: () => Promise.all([loadTeam(), loadGoogleCalendarStatus(), loadPortalConfig()]),
+    admin: loadAdmin,
+    domains: loadDomains,
+  };
+
+  if (tab === 'reports') { document.getElementById('reportPreview')?.classList.add('hidden'); return; }
+
+  const loader = TAB_LOADERS[tab];
+  if (loader) loadWithShimmer('tab-' + tab, loader);
+}
+
+/** Show the shimmer over a tab's content while its loader runs, then reveal it. */
+function loadWithShimmer(containerId, loader) {
+  const el = document.getElementById(containerId);
+  if (el) el.classList.add('is-loading');
+  Promise.resolve()
+    .then(loader)
+    .catch(() => {})
+    .finally(() => { if (el) el.classList.remove('is-loading'); });
 }
 
 // ── Dashboard ────────────────────────────────────────────────────────────────

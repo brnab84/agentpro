@@ -578,12 +578,24 @@
   </div>
 </footer>
 
+<style>
+  @keyframes lpsh { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
+  .lp-shimmer { color: transparent !important; border-radius: 8px;
+    background: linear-gradient(90deg, rgba(255,255,255,.25) 25%, rgba(255,255,255,.5) 37%, rgba(255,255,255,.25) 63%);
+    background-size: 600px 100%; animation: lpsh 1.3s infinite linear; }
+  .lp-shimmer-dark { background: linear-gradient(90deg,#e5e7eb 25%,#f3f4f6 37%,#e5e7eb 63%) !important;
+    background-size: 600px 100% !important; }
+</style>
 <script>
 // Fill pricing from the platform's configurable plans
 (async () => {
+  const SHIMMER = [['lpProPrice','lp-shimmer'],['lpProName','lp-shimmer'],['lpBizPrice','lp-shimmer-dark lp-shimmer'],['lpBizName','lp-shimmer-dark lp-shimmer']];
+  SHIMMER.forEach(([id, cls]) => { const el = document.getElementById(id); if (el) el.classList.add(...cls.split(' ')); });
+  const clearShimmer = () => SHIMMER.forEach(([id, cls]) => { const el = document.getElementById(id); if (el) el.classList.remove(...cls.split(' ')); });
+  setTimeout(clearShimmer, 4000); // safety
   try {
     const r = await fetch('/api/plans', { cache: 'no-store' });
-    if (!r.ok) return;
+    if (!r.ok) { clearShimmer(); return; }
     const { plans } = await r.json();
     const fmt = (p) => `${(p.currency && p.currency !== 'USD') ? p.currency + ' ' : '$'}${p.price}`;
     const intv = (p) => p.interval === 'year' ? '/año' : '/mes';
@@ -598,6 +610,7 @@
     if (pro) { set('lpProName', pro.label); set('lpProPrice', fmt(pro)); set('lpProInterval', intv(pro)); set('lpProLeads', leadsTxt(pro.maxLeads ?? -1)); set('lpProProps', propsTxt(pro.maxProperties ?? -1)); }
     if (biz) { set('lpBizName', biz.label); set('lpBizPrice', fmt(biz)); set('lpBizInterval', intv(biz)); set('lpBizAgents', agentsTxt(biz.maxAgents ?? -1)); }
   } catch {}
+  finally { clearShimmer(); }
 })();
 </script>
 
