@@ -2469,7 +2469,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.2.2'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.3.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6435,6 +6435,8 @@ function renderBilling(s, plans, methods = []) {
     for (const m of methods) {
       if (m === 'stripe' && s.enabled && p.stripePriceId)
         btns.push(`<button onclick="startCheckout('${p.key}')" class="${METHOD_CLASS.stripe} text-sm font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition">${METHOD_LABEL.stripe}</button>`);
+      else if (m === 'mercadopago' && s.mpEnabled)
+        btns.push(`<button onclick="startMpCheckout('${p.key}')" class="${METHOD_CLASS.mercadopago} text-sm font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition">${METHOD_LABEL.mercadopago}</button>`);
       else if (m !== 'stripe' && p[m + 'Url'])
         btns.push(`<a href="${p[m+'Url']}" target="_blank" rel="noopener" class="${METHOD_CLASS[m]} text-sm font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition inline-block">${METHOD_LABEL[m]}</a>`);
     }
@@ -6454,6 +6456,15 @@ async function startCheckout(plan) {
   try {
     const { url } = await api('POST', '/api/billing/checkout', { plan });
     if (url) window.location.href = url;
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+}
+
+async function startMpCheckout(plan) {
+  try {
+    showToast('Redirigiendo a MercadoPago…');
+    const { url } = await api('POST', '/api/billing/mercadopago/checkout', { plan });
+    if (url) window.location.href = url;
+    else showToast('No se pudo iniciar el pago', 'error');
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
 }
 

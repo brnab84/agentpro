@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.2.2'; // feat: register screen shows chosen plan + create-then-pay flow
+export const APP_VERSION = '3.3.0'; // feat: MercadoPago subscriptions (API + webhook auto-activation)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
@@ -43,4 +43,7 @@ export const env = {
   // Billing — Stripe
   stripeSecretKey:      process.env.STRIPE_SECRET_KEY || '',
   stripeWebhookSecret:  process.env.STRIPE_WEBHOOK_SECRET || '',
+
+  // Billing — MercadoPago (suscripciones / preapproval)
+  mpAccessToken:        process.env.MP_ACCESS_TOKEN || '',
 };
