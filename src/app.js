@@ -66,7 +66,7 @@ export function createApp() {
     try {
       const s = await Settings.getSingleton();
       res.setHeader('Cache-Control', 'no-store');
-      res.json({ plans: s.plans });
+      res.json({ plans: s.plans, payments: s.payments || { methods: ['stripe'] } });
     } catch (err) { next(err); }
   });
 

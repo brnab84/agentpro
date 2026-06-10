@@ -16,16 +16,23 @@ async function getPlanPrices() {
 
 // ── Plan pricing settings (parametrizable) ───────────────────────────────────
 
-/** Get the configurable plan pricing. */
+const VALID_METHODS = ['stripe', 'paypal', 'mercadopago', 'yappy'];
+
+/** Get the configurable plan pricing + payment methods. */
 export async function getSettings() {
   const settings = await Settings.getSingleton();
-  return { plans: settings.plans };
+  return { plans: settings.plans, payments: settings.payments || { methods: ['stripe'] } };
 }
 
-/** Update plan pricing (label, price, currency, interval per plan). */
-export async function updateSettings({ plans }) {
-  if (!Array.isArray(plans)) throw new AppError('plans debe ser un arreglo', 400);
+/** Update plan pricing (label, price, currency, interval, links, limits) + payment methods. */
+export async function updateSettings({ plans, payments }) {
   const settings = await Settings.getSingleton();
+
+  if (payments && Array.isArray(payments.methods)) {
+    settings.payments = { methods: payments.methods.filter(m => VALID_METHODS.includes(m)) };
+  }
+
+  if (!Array.isArray(plans)) { await settings.save(); return { plans: settings.plans, payments: settings.payments }; }
 
   const byKey = Object.fromEntries(settings.plans.map(p => [p.key, p]));
   for (const incoming of plans) {
@@ -39,13 +46,16 @@ export async function updateSettings({ plans }) {
       target.interval = incoming.interval;
     }
     if (incoming.stripePriceId !== undefined) target.stripePriceId = String(incoming.stripePriceId).trim();
+    if (incoming.paypalUrl      !== undefined) target.paypalUrl      = String(incoming.paypalUrl).trim();
+    if (incoming.mercadopagoUrl !== undefined) target.mercadopagoUrl = String(incoming.mercadopagoUrl).trim();
+    if (incoming.yappyUrl       !== undefined) target.yappyUrl       = String(incoming.yappyUrl).trim();
     if (incoming.maxProperties !== undefined) target.maxProperties = Number(incoming.maxProperties);
     if (incoming.maxAgents     !== undefined) target.maxAgents     = Number(incoming.maxAgents);
     if (incoming.maxLeads      !== undefined) target.maxLeads      = Number(incoming.maxLeads);
   }
   settings.plans = VALID_PLANS.map(k => byKey[k]).filter(Boolean);
   await settings.save();
-  return { plans: settings.plans };
+  return { plans: settings.plans, payments: settings.payments };
 }
 
 function monthKey(d) {

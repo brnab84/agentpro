@@ -1466,6 +1466,10 @@
               <div class="h-2 rounded-full bg-gray-100 overflow-hidden"><div id="usePropsBar" class="h-full bg-indigo-500" style="width:0%"></div></div>
             </div>
             <div>
+              <div class="flex justify-between text-xs mb-1"><span class="text-gray-500 font-medium">Leads</span><span id="useLeadsTxt" class="text-gray-400"></span></div>
+              <div class="h-2 rounded-full bg-gray-100 overflow-hidden"><div id="useLeadsBar" class="h-full bg-indigo-500" style="width:0%"></div></div>
+            </div>
+            <div>
               <div class="flex justify-between text-xs mb-1"><span class="text-gray-500 font-medium">Usuarios</span><span id="useAgentsTxt" class="text-gray-400"></span></div>
               <div class="h-2 rounded-full bg-gray-100 overflow-hidden"><div id="useAgentsBar" class="h-full bg-indigo-500" style="width:0%"></div></div>
             </div>
@@ -1697,8 +1701,19 @@
             </div>
             <button onclick="saveAdminPricing()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition">Guardar precios</button>
           </div>
+          <!-- Métodos de pago aceptados -->
+          <div class="rounded-xl border border-gray-200 p-4 mb-4 bg-gray-50/60">
+            <p class="text-sm font-semibold text-gray-700 mb-1">Métodos de pago que aceptás</p>
+            <p class="text-xs text-gray-400 mb-3">Elegí cuáles ofrecer. Para PayPal, MercadoPago y Yappy pegás el <b>link de pago/suscripción</b> de cada plan más abajo (no requiere claves de API).</p>
+            <div class="flex flex-wrap gap-4">
+              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" id="pmStripe" class="rounded"> Stripe <span class="htip" title="Tarjetas internacionales. Requiere STRIPE_SECRET_KEY y Stripe Price ID por plan. Cobro y activación automáticos.">?</span></label>
+              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" id="pmPaypal" class="rounded"> PayPal <span class="htip" title="Creá un botón/plan de suscripción en PayPal y pegá su link en cada plan. El cobro lo gestiona PayPal.">?</span></label>
+              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" id="pmMercadopago" class="rounded"> MercadoPago <span class="htip" title="Creá una suscripción (preapproval) o link de pago en MercadoPago y pegá la URL en cada plan.">?</span></label>
+              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" id="pmYappy" class="rounded"> Yappy <span class="htip" title="Panamá. Pegá tu link de Botón de Pago Yappy (o link de cobro) por plan. Yappy suele ser pago único, no recurrente.">?</span></label>
+            </div>
+          </div>
           <div id="admPricingRows" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
-          <div id="admPricingMsg" class="hidden text-sm text-green-600 font-medium mt-3">✓ Precios actualizados</div>
+          <div id="admPricingMsg" class="hidden text-sm text-green-600 font-medium mt-3">✓ Configuración actualizada</div>
         </div>
 
         <!-- Accounts table -->
@@ -2449,7 +2464,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.1.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.2.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -2629,6 +2644,12 @@ document.getElementById('registerForm').onsubmit = async (e) => {
     localStorage.setItem('agentpro_token', token);
     localStorage.setItem('agentpro_user', JSON.stringify(currentUser));
     showApp();
+    // If they came from a paid-plan CTA, jump to billing/checkout after signup
+    let intended = '';
+    try { intended = sessionStorage.getItem('agentpro_intended_plan') || ''; sessionStorage.removeItem('agentpro_intended_plan'); } catch {}
+    if (intended && intended !== 'free') {
+      setTimeout(() => { showTab('team'); setTimeout(() => startCheckout(intended).catch(() => {}), 800); }, 400);
+    }
   } catch (err) {
     const el = document.getElementById('registerError');
     el.textContent = err.message; el.classList.remove('hidden');
@@ -6325,11 +6346,11 @@ const SUB_STATUS_LABEL = { active:'Suscripción activa', trialing:'Período de p
 
 async function loadBilling() {
   try {
-    const [status, plans] = await Promise.all([
+    const [status, plansResp] = await Promise.all([
       api('GET', '/api/billing/status'),
-      api('GET', '/api/plans').then(r => r.plans).catch(() => []),
+      api('GET', '/api/plans').catch(() => ({ plans: [], payments: { methods: [] } })),
     ]);
-    renderBilling(status, plans);
+    renderBilling(status, plansResp.plans || [], plansResp.payments?.methods || []);
   } catch (err) { /* non-critical */ }
 }
 
@@ -6337,7 +6358,7 @@ function fmtMoney(amount, currency) {
   return `${currency && currency !== 'USD' ? currency + ' ' : '$'}${Number(amount||0).toLocaleString('es')}`;
 }
 
-function renderBilling(s, plans) {
+function renderBilling(s, plans, methods = []) {
   document.getElementById('billingPlanBadge').textContent = s.plan;
   document.getElementById('billingPlanBadge').className = `ml-auto text-xs font-bold uppercase px-3 py-1 rounded-full ${BILLING_PLAN_BADGE[s.plan]||BILLING_PLAN_BADGE.free}`;
   document.getElementById('billingPlanName').textContent = 'Plan ' + (s.planLabel || s.plan);
@@ -6355,21 +6376,37 @@ function renderBilling(s, plans) {
     bar.style.width = pct + '%';
     bar.className = `h-full ${pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-400' : 'bg-indigo-500'}`;
   };
-  if (s.usage) { meter(s.usage.properties, 'usePropsBar', 'usePropsTxt'); meter(s.usage.agents, 'useAgentsBar', 'useAgentsTxt'); }
+  if (s.usage) {
+    meter(s.usage.properties, 'usePropsBar', 'usePropsTxt');
+    if (s.usage.leads) meter(s.usage.leads, 'useLeadsBar', 'useLeadsTxt');
+    meter(s.usage.agents, 'useAgentsBar', 'useAgentsTxt');
+  }
 
-  // Upgrade buttons (paid plans different from current)
+  // Upgrade options per enabled payment method
   const wrap = document.getElementById('billingUpgrade');
   const paid = (plans || []).filter(p => p.key !== 'free' && p.key !== s.plan);
-  if (s.enabled && paid.length) {
-    wrap.innerHTML = paid.map(p =>
-      `<button onclick="startCheckout('${p.key}')" class="gradient-bg text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 transition">
-        ${s.plan === 'business' && p.key === 'pro' ? 'Cambiar a' : 'Mejorar a'} ${p.label} · ${fmtMoney(p.price, p.currency)}${p.interval==='year'?'/año':'/mes'}
-      </button>`).join('');
-  } else {
-    wrap.innerHTML = '';
+  const METHOD_LABEL = { stripe:'Tarjeta (Stripe)', paypal:'PayPal', mercadopago:'MercadoPago', yappy:'Yappy' };
+  const METHOD_CLASS = { stripe:'gradient-bg text-white', paypal:'bg-[#003087] text-white', mercadopago:'bg-[#009ee3] text-white', yappy:'bg-[#00C2A8] text-white' };
+  let html = '';
+  for (const p of paid) {
+    const priceTxt = `${fmtMoney(p.price, p.currency)}${p.interval==='year'?'/año':'/mes'}`;
+    const btns = [];
+    for (const m of methods) {
+      if (m === 'stripe' && s.enabled && p.stripePriceId)
+        btns.push(`<button onclick="startCheckout('${p.key}')" class="${METHOD_CLASS.stripe} text-sm font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition">${METHOD_LABEL.stripe}</button>`);
+      else if (m !== 'stripe' && p[m + 'Url'])
+        btns.push(`<a href="${p[m+'Url']}" target="_blank" rel="noopener" class="${METHOD_CLASS[m]} text-sm font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition inline-block">${METHOD_LABEL[m]}</a>`);
+    }
+    if (btns.length) {
+      html += `<div class="w-full rounded-xl border border-gray-100 p-3 mb-2">
+        <p class="text-sm font-semibold text-gray-800 mb-2">${s.plan === 'business' && p.key === 'pro' ? 'Cambiar a' : 'Mejorar a'} ${p.label} · ${priceTxt}</p>
+        <div class="flex flex-wrap gap-2">${btns.join('')}</div>
+      </div>`;
+    }
   }
+  wrap.innerHTML = html || (paid.length ? '<p class="text-xs text-gray-400">Aún no hay métodos de pago configurados. Pedile al administrador que los active.</p>' : '');
   document.getElementById('billingManageBtn').classList.toggle('hidden', !(s.enabled && s.hasCustomer));
-  document.getElementById('billingDisabledNote').classList.toggle('hidden', s.enabled);
+  document.getElementById('billingDisabledNote').classList.add('hidden');
 }
 
 async function startCheckout(plan) {
@@ -6402,6 +6439,7 @@ const PLAN_BADGE = {
 };
 
 let _adminPlans = [];
+let _adminPayments = ['stripe'];
 
 async function loadAdmin() {
   try {
@@ -6412,6 +6450,7 @@ async function loadAdmin() {
     ]);
     _adminTenants = tenants;
     _adminPlans = settings.plans || [];
+    _adminPayments = settings.payments?.methods || ['stripe'];
     renderAdminOverview(overview);
     renderAdminTenants();
     renderAdminPricing();
@@ -6423,6 +6462,14 @@ async function loadAdmin() {
 function renderAdminPricing() {
   const wrap = document.getElementById('admPricingRows');
   if (!wrap) return;
+  // Reflect enabled payment methods
+  document.getElementById('pmStripe').checked      = _adminPayments.includes('stripe');
+  document.getElementById('pmPaypal').checked      = _adminPayments.includes('paypal');
+  document.getElementById('pmMercadopago').checked = _adminPayments.includes('mercadopago');
+  document.getElementById('pmYappy').checked       = _adminPayments.includes('yappy');
+  const linkField = (p, method, label, ph) => !_adminPayments.includes(method) ? '' : `
+      <label class="text-xs text-gray-500 font-medium mt-2 block">${label}</label>
+      <input data-plan="${p.key}" data-field="${method}Url" type="url" value="${(p[method+'Url']||'').replace(/"/g,'&quot;')}" placeholder="${ph}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />`;
   wrap.innerHTML = _adminPlans.map(p => `
     <div class="border border-gray-200 rounded-xl p-4">
       <div class="flex items-center justify-between mb-3">
@@ -6454,8 +6501,12 @@ function renderAdminPricing() {
         </div>
       </div>
       ${p.key !== 'free' ? `
+      ${_adminPayments.includes('stripe') ? `
       <label class="text-xs text-gray-500 font-medium mt-3 block">Stripe Price ID <span class="htip" title="El ID del precio creado en Stripe (Productos → tu plan → API ID), empieza con price_. Necesario para cobrar este plan.">?</span></label>
       <input data-plan="${p.key}" data-field="stripePriceId" type="text" value="${(p.stripePriceId||'').replace(/"/g,'&quot;')}" placeholder="price_..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />` : ''}
+      ${linkField(p, 'paypal', 'Link PayPal', 'https://www.paypal.com/...')}
+      ${linkField(p, 'mercadopago', 'Link MercadoPago', 'https://mpago.la/...')}
+      ${linkField(p, 'yappy', 'Link Yappy', 'https://...')}` : ''}
     </div>`).join('');
 }
 
@@ -6472,11 +6523,21 @@ async function saveAdminPricing() {
       maxLeads: get('maxLeads') ? Number(get('maxLeads').value) : (p.maxLeads ?? -1),
       maxAgents: get('maxAgents') ? Number(get('maxAgents').value) : (p.maxAgents ?? -1),
       stripePriceId: get('stripePriceId') ? get('stripePriceId').value.trim() : (p.stripePriceId || ''),
+      paypalUrl: get('paypalUrl') ? get('paypalUrl').value.trim() : (p.paypalUrl || ''),
+      mercadopagoUrl: get('mercadopagoUrl') ? get('mercadopagoUrl').value.trim() : (p.mercadopagoUrl || ''),
+      yappyUrl: get('yappyUrl') ? get('yappyUrl').value.trim() : (p.yappyUrl || ''),
     };
   });
+  const methods = [];
+  if (document.getElementById('pmStripe').checked) methods.push('stripe');
+  if (document.getElementById('pmPaypal').checked) methods.push('paypal');
+  if (document.getElementById('pmMercadopago').checked) methods.push('mercadopago');
+  if (document.getElementById('pmYappy').checked) methods.push('yappy');
   try {
-    const res = await api('PUT', '/api/admin/settings', { plans });
+    const res = await api('PUT', '/api/admin/settings', { plans, payments: { methods } });
     _adminPlans = res.plans || plans;
+    _adminPayments = res.payments?.methods || methods;
+    renderAdminPricing();
     const msg = document.getElementById('admPricingMsg');
     msg.classList.remove('hidden');
     setTimeout(() => msg.classList.add('hidden'), 3000);
@@ -6586,7 +6647,14 @@ async function adminToggleStatus(id, isSuspended) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 initVersion();
-if (token && currentUser) showApp(); else showLogin();
+(function boot() {
+  const params = new URLSearchParams(window.location.search);
+  const wantsSignup = params.get('registro') === '1' || params.get('signup') === '1';
+  const plan = params.get('plan');
+  if (plan) { try { sessionStorage.setItem('agentpro_intended_plan', plan); } catch {} }
+  if (token && currentUser) { showApp(); return; }
+  if (wantsSignup) showRegister(); else showLogin();
+})();
 </script>
 </body>
 </html>

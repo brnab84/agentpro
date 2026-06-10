@@ -1,5 +1,6 @@
 import { AppError } from '../../utils/AppError.js';
 import { Lead } from '../../models/Lead.js';
+import { assertCanAddLead } from '../billing/limits.service.js';
 
 export const list = (tenantId, filter = {}) =>
   Lead.find({ tenantId, ...filter })
@@ -12,7 +13,10 @@ export const getById = async (tenantId, id) => {
   return lead;
 };
 
-export const create = (tenantId, data) => Lead.create({ ...data, tenantId });
+export const create = async (tenantId, data) => {
+  await assertCanAddLead(tenantId);
+  return Lead.create({ ...data, tenantId });
+};
 
 export const update = async (tenantId, id, data) => {
   const lead = await Lead.findOneAndUpdate({ _id: id, tenantId }, data, {

@@ -9,6 +9,10 @@ const planSchema = new mongoose.Schema(
     currency: { type: String, trim: true, default: 'USD' },
     interval: { type: String, enum: ['month', 'year'], default: 'month' },
     stripePriceId: { type: String, trim: true, default: '' }, // Stripe Price id (price_...)
+    // Payment links per method (subscription/checkout URLs the owner pastes)
+    paypalUrl:      { type: String, trim: true, default: '' },
+    mercadopagoUrl: { type: String, trim: true, default: '' },
+    yappyUrl:       { type: String, trim: true, default: '' },
     // Limits — use -1 for unlimited
     maxProperties: { type: Number, default: -1 },
     maxAgents:     { type: Number, default: -1 },
@@ -20,6 +24,10 @@ const planSchema = new mongoose.Schema(
 const settingsSchema = new mongoose.Schema(
   {
     singleton: { type: String, default: 'global', unique: true }, // ensures one doc
+    // Which payment methods the business accepts
+    payments: {
+      methods: { type: [String], default: ['stripe'] }, // any of: stripe, paypal, mercadopago, yappy
+    },
     plans: {
       type: [planSchema],
       default: () => ([

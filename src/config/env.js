@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.1.0'; // minor: configurable maxLeads + landing feature bullets synced to plan limits
+export const APP_VERSION = '3.2.0'; // minor: multi payment method (PayPal/MercadoPago/Yappy/Stripe) + leads limit + signup CTA flow
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

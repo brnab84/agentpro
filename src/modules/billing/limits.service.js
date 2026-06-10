@@ -2,6 +2,7 @@ import { Tenant }   from '../../models/Tenant.js';
 import { Settings } from '../../models/Settings.js';
 import { Property } from '../../models/Property.js';
 import { User }     from '../../models/User.js';
+import { Lead }     from '../../models/Lead.js';
 import { AppError } from '../../utils/AppError.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,16 +49,31 @@ export async function assertCanAddAgent(tenantId) {
   }
 }
 
+/** Throw a 402 when a tenant is at/over the lead limit (manual creation only). */
+export async function assertCanAddLead(tenantId) {
+  const { plan } = await getPlanFor(tenantId);
+  if (isUnlimited(plan.maxLeads)) return;
+  const count = await Lead.countDocuments({ tenantId });
+  if (count >= plan.maxLeads) {
+    throw new AppError(
+      `Alcanzaste el límite de ${plan.maxLeads} leads de tu plan ${plan.label || plan.key}. Actualizá tu plan para registrar más.`,
+      402,
+    );
+  }
+}
+
 /** Current usage vs limits — for showing meters in the UI. */
 export async function getUsage(tenantId) {
   const { planKey, plan } = await getPlanFor(tenantId);
-  const [properties, users] = await Promise.all([
+  const [properties, users, leads] = await Promise.all([
     Property.countDocuments({ tenantId }),
     User.countDocuments({ tenantId }),
+    Lead.countDocuments({ tenantId }),
   ]);
   return {
     plan: planKey,
     properties: { used: properties, limit: plan.maxProperties ?? -1 },
     agents:     { used: users,      limit: plan.maxAgents ?? -1 },
+    leads:      { used: leads,      limit: plan.maxLeads ?? -1 },
   };
 }
