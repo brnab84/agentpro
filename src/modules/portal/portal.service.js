@@ -34,6 +34,7 @@ export function buildSlug(text) {
 async function findActiveTenant(slug) {
   const tenant = await Tenant.findOne({ slug });
   if (!tenant) throw new AppError('Portal no encontrado', 404);
+  if (!tenant.portal?.active) throw new AppError('Este portal no está disponible', 404);
   return tenant;
 }
 

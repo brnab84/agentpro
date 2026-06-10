@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '2.8.0'; // minor: in-CRM portal guide modal + per-field help tooltips
+export const APP_VERSION = '2.8.1'; // fix: portal "Activo" toggle now actually gates public visibility
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

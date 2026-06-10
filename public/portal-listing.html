@@ -207,7 +207,11 @@ async function fetchListing() {
   if (filters.zone)      params.set('zone',       filters.zone);
   params.set('page', filters.page);
   const resp = await fetch(`${API}/api/portal/${slug}?${params}`);
-  if (!resp.ok) throw new Error('Error al cargar propiedades');
+  if (!resp.ok) {
+    let msg = 'Error al cargar propiedades';
+    try { msg = (await resp.json()).error || msg; } catch {}
+    const e = new Error(msg); e.status = resp.status; throw e;
+  }
   return resp.json();
 }
 
@@ -219,8 +223,17 @@ async function loadListing() {
     applyBranding(portal);
     renderProperties(data.properties, data.pagination);
   } catch (err) {
+    const unavailable = err.status === 404;
     document.getElementById('propGrid').innerHTML =
-      `<p class="col-span-4 text-center py-20 text-gray-400">No se pudo cargar el portal: ${err.message}</p>`;
+      `<div class="col-span-4 text-center py-24">
+        <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg>
+        <p class="text-gray-500 font-semibold text-lg">${unavailable ? 'Este portal no está disponible' : 'No se pudo cargar el portal'}</p>
+        <p class="text-gray-400 text-sm mt-1">${unavailable ? 'Es posible que esté temporalmente fuera de línea. Volvé a intentar más tarde.' : err.message}</p>
+      </div>`;
+    // Hide filters/contact when unavailable
+    if (unavailable) {
+      document.querySelectorAll('section, footer').forEach(el => { if (el.id !== 'hero') el.style.display = 'none'; });
+    }
   }
 }
 
