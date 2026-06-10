@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '2.9.0'; // minor: super-admin panel (accounts, KPIs, logins, plan mgmt, estimated MRR)
+export const APP_VERSION = '2.10.0'; // minor: configurable plan pricing (admin) + public /api/plans + landing sync
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

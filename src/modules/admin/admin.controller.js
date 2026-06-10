@@ -16,3 +16,13 @@ export const updateTenant = asyncHandler(async (req, res) => {
   const { plan, status } = req.body;
   res.json(await service.updateTenant(req.params.id, { plan, status }));
 });
+
+/** GET /api/admin/settings — configurable plan pricing */
+export const getSettings = asyncHandler(async (_req, res) => {
+  res.json(await service.getSettings());
+});
+
+/** PUT /api/admin/settings — update plan pricing */
+export const updateSettings = asyncHandler(async (req, res) => {
+  res.json(await service.updateSettings(req.body));
+});

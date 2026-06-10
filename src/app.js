@@ -24,6 +24,7 @@ import domainRoutes from './modules/domains/domains.routes.js';
 import googleRoutes from './modules/google/google.routes.js';
 import portalRoutes from './modules/portal/portal.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
+import { Settings } from './models/Settings.js';
 import { renderListingHtml, renderPropertyHtml, buildRobotsTxt, buildSitemap } from './modules/portal/portal.seo.js';
 
 /** Public base URL for canonical/OG tags. Prefers APP_BASE_URL, else the request host. */
@@ -53,6 +54,12 @@ export function createApp() {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok', version: APP_VERSION }));
   app.get('/api/version', (_req, res) => res.json({ version: APP_VERSION }));
+
+  // Public plan pricing (for landing + future checkout)
+  app.get('/api/plans', async (_req, res, next) => {
+    try { const s = await Settings.getSingleton(); res.json({ plans: s.plans }); }
+    catch (err) { next(err); }
+  });
 
   // Landing page
   app.get('/landing', (_req, res) => res.type('html').send(landingHtml));

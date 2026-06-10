@@ -1646,6 +1646,22 @@
           </div>
         </div>
 
+        <!-- Plan pricing (parametrizable) -->
+        <div class="card p-5 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p class="font-semibold text-gray-900 text-sm flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+                Precios de los planes
+              </p>
+              <p class="text-xs text-gray-400 mt-0.5">Estos montos se usan para el MRR estimado y para el cobro (Fase 2).</p>
+            </div>
+            <button onclick="saveAdminPricing()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition">Guardar precios</button>
+          </div>
+          <div id="admPricingRows" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+          <div id="admPricingMsg" class="hidden text-sm text-green-600 font-medium mt-3">✓ Precios actualizados</div>
+        </div>
+
         <!-- Accounts table -->
         <div class="card overflow-hidden">
           <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -2394,7 +2410,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '2.9.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '2.10.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6264,17 +6280,68 @@ const PLAN_BADGE = {
   business: 'bg-amber-100 text-amber-700',
 };
 
+let _adminPlans = [];
+
 async function loadAdmin() {
   try {
-    const [overview, tenants] = await Promise.all([
+    const [overview, tenants, settings] = await Promise.all([
       api('GET', '/api/admin/overview'),
       api('GET', '/api/admin/tenants'),
+      api('GET', '/api/admin/settings'),
     ]);
     _adminTenants = tenants;
+    _adminPlans = settings.plans || [];
     renderAdminOverview(overview);
     renderAdminTenants();
+    renderAdminPricing();
   } catch (err) {
     showToast('Error al cargar admin: ' + err.message, 'error');
+  }
+}
+
+function renderAdminPricing() {
+  const wrap = document.getElementById('admPricingRows');
+  if (!wrap) return;
+  wrap.innerHTML = _adminPlans.map(p => `
+    <div class="border border-gray-200 rounded-xl p-4">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${PLAN_BADGE[p.key]||PLAN_BADGE.free}">${p.key}</span>
+      </div>
+      <label class="text-xs text-gray-500 font-medium">Nombre visible</label>
+      <input data-plan="${p.key}" data-field="label" type="text" value="${(p.label||'').replace(/"/g,'&quot;')}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      <label class="text-xs text-gray-500 font-medium">Precio</label>
+      <div class="flex items-center gap-2 mt-1">
+        <input data-plan="${p.key}" data-field="currency" type="text" value="${p.currency||'USD'}" maxlength="4" class="w-16 border border-gray-300 rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        <input data-plan="${p.key}" data-field="price" type="number" min="0" step="1" value="${p.price||0}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        <select data-plan="${p.key}" data-field="interval" class="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+          <option value="month" ${p.interval!=='year'?'selected':''}>/mes</option>
+          <option value="year" ${p.interval==='year'?'selected':''}>/año</option>
+        </select>
+      </div>
+    </div>`).join('');
+}
+
+async function saveAdminPricing() {
+  const plans = _adminPlans.map(p => {
+    const get = (field) => document.querySelector(`[data-plan="${p.key}"][data-field="${field}"]`);
+    return {
+      key: p.key,
+      label: get('label')?.value.trim() || p.label,
+      currency: get('currency')?.value.trim() || 'USD',
+      price: Number(get('price')?.value) || 0,
+      interval: get('interval')?.value || 'month',
+    };
+  });
+  try {
+    const res = await api('PUT', '/api/admin/settings', { plans });
+    _adminPlans = res.plans || plans;
+    const msg = document.getElementById('admPricingMsg');
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 3000);
+    // Refresh MRR with new prices
+    api('GET', '/api/admin/overview').then(renderAdminOverview).catch(() => {});
+  } catch (err) {
+    showToast('Error al guardar precios: ' + err.message, 'error');
   }
 }
 

@@ -2,12 +2,47 @@ import { Tenant }   from '../../models/Tenant.js';
 import { User }     from '../../models/User.js';
 import { Property } from '../../models/Property.js';
 import { Lead }     from '../../models/Lead.js';
+import { Settings } from '../../models/Settings.js';
 import { AppError } from '../../utils/AppError.js';
 
-// Reference pricing (USD/month) — used to estimate MRR before real billing exists.
-export const PLAN_PRICES = { free: 0, pro: 29, business: 79 };
-const VALID_PLANS  = Object.keys(PLAN_PRICES);
+const VALID_PLANS  = ['free', 'pro', 'business'];
 const VALID_STATUS = ['active', 'suspended'];
+
+/** Returns a { planKey: price } map from the configurable settings. */
+async function getPlanPrices() {
+  const settings = await Settings.getSingleton();
+  return Object.fromEntries((settings.plans || []).map(p => [p.key, p.price || 0]));
+}
+
+// ── Plan pricing settings (parametrizable) ───────────────────────────────────
+
+/** Get the configurable plan pricing. */
+export async function getSettings() {
+  const settings = await Settings.getSingleton();
+  return { plans: settings.plans };
+}
+
+/** Update plan pricing (label, price, currency, interval per plan). */
+export async function updateSettings({ plans }) {
+  if (!Array.isArray(plans)) throw new AppError('plans debe ser un arreglo', 400);
+  const settings = await Settings.getSingleton();
+
+  const byKey = Object.fromEntries(settings.plans.map(p => [p.key, p]));
+  for (const incoming of plans) {
+    if (!VALID_PLANS.includes(incoming.key)) continue;
+    const target = byKey[incoming.key];
+    if (!target) continue;
+    if (incoming.label    !== undefined) target.label    = String(incoming.label).trim();
+    if (incoming.price    !== undefined) target.price    = Math.max(0, Number(incoming.price) || 0);
+    if (incoming.currency !== undefined) target.currency = String(incoming.currency).trim() || 'USD';
+    if (incoming.interval !== undefined && ['month', 'year'].includes(incoming.interval)) {
+      target.interval = incoming.interval;
+    }
+  }
+  settings.plans = VALID_PLANS.map(k => byKey[k]).filter(Boolean);
+  await settings.save();
+  return { plans: settings.plans };
+}
 
 function monthKey(d) {
   const dt = new Date(d);
@@ -19,7 +54,7 @@ export async function getOverview() {
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const [
-    tenants, totalUsers, totalProperties, totalLeads, activeUsers30d, planAgg,
+    tenants, totalUsers, totalProperties, totalLeads, activeUsers30d, planAgg, prices,
   ] = await Promise.all([
     Tenant.find().select('plan status createdAt').lean(),
     User.countDocuments(),
@@ -27,13 +62,14 @@ export async function getOverview() {
     Lead.countDocuments(),
     User.countDocuments({ lastLoginAt: { $gte: since30 } }),
     Tenant.aggregate([{ $group: { _id: '$plan', count: { $sum: 1 } } }]),
+    getPlanPrices(),
   ]);
 
-  // Plan distribution + estimated MRR
+  // Plan distribution + estimated MRR (using configurable prices)
   const planDistribution = { free: 0, pro: 0, business: 0 };
   for (const row of planAgg) if (row._id in planDistribution) planDistribution[row._id] = row.count;
   const estimatedMrr =
-    planDistribution.pro * PLAN_PRICES.pro + planDistribution.business * PLAN_PRICES.business;
+    planDistribution.pro * (prices.pro || 0) + planDistribution.business * (prices.business || 0);
 
   // Signups by month (last 6 months)
   const months = [];
@@ -66,12 +102,13 @@ export async function getOverview() {
 
 /** Per-account table with usage counts and owner/login info. */
 export async function listTenants() {
-  const [tenants, userAgg, propAgg, leadAgg, owners] = await Promise.all([
+  const [tenants, userAgg, propAgg, leadAgg, owners, prices] = await Promise.all([
     Tenant.find().sort({ createdAt: -1 }).lean(),
     User.aggregate([{ $group: { _id: '$tenantId', count: { $sum: 1 }, lastLogin: { $max: '$lastLoginAt' }, logins: { $sum: '$loginCount' } } }]),
     Property.aggregate([{ $group: { _id: '$tenantId', count: { $sum: 1 } } }]),
     Lead.aggregate([{ $group: { _id: '$tenantId', count: { $sum: 1 } } }]),
     User.find({ role: 'owner' }).select('tenantId email name').lean(),
+    getPlanPrices(),
   ]);
 
   const byTenant = (agg) => Object.fromEntries(agg.map(r => [String(r._id), r]));
@@ -96,7 +133,7 @@ export async function listTenants() {
       lastLogin: u[id]?.lastLogin || null,
       portalActive: !!t.portal?.active,
       portalSlug: t.slug || '',
-      mrr: PLAN_PRICES[t.plan || 'free'] || 0,
+      mrr: prices[t.plan || 'free'] || 0,
     };
   });
 }
