@@ -50,6 +50,11 @@ export async function login({ email, password }) {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) throw new AppError('Invalid credentials', 401);
 
+  const tenant = await Tenant.findById(user.tenantId);
+  if (tenant?.status === 'suspended') {
+    throw new AppError('Esta cuenta está suspendida. Contactá al administrador.', 403);
+  }
+
   user.lastLoginAt = new Date();
   user.loginCount = (user.loginCount || 0) + 1;
   await user.save();

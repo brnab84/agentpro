@@ -70,6 +70,11 @@ export const googleLogin = asyncHandler(async (req, res) => {
     user.googleId = profile.googleId;
   }
 
+  const existingTenant = await Tenant.findById(user.tenantId);
+  if (existingTenant?.status === 'suspended') {
+    throw new AppError('Esta cuenta está suspendida. Contactá al administrador.', 403);
+  }
+
   user.lastLoginAt = new Date();
   user.loginCount = (user.loginCount || 0) + 1;
   await user.save();

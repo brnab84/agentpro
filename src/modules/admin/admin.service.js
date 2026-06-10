@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import { Tenant }   from '../../models/Tenant.js';
 import { User }     from '../../models/User.js';
 import { Property } from '../../models/Property.js';
@@ -181,6 +182,28 @@ export async function updateTenant(tenantId, { plan, status }) {
   }
   await tenant.save();
   return { id: String(tenant._id), plan: tenant.plan, status: tenant.status };
+}
+
+/** Permanently delete a tenant and ALL its tenant-scoped data. */
+export async function deleteTenant(tenantId, currentTenantId) {
+  if (String(tenantId) === String(currentTenantId)) {
+    throw new AppError('No podés borrar tu propia cuenta', 400);
+  }
+  const tenant = await Tenant.findById(tenantId);
+  if (!tenant) throw new AppError('Cuenta no encontrada', 404);
+
+  // Cascade: delete from every registered collection that is tenant-scoped.
+  let removed = 0;
+  for (const model of Object.values(mongoose.models)) {
+    try {
+      if (model.modelName !== 'Tenant' && model.schema?.path('tenantId')) {
+        const r = await model.deleteMany({ tenantId });
+        removed += r.deletedCount || 0;
+      }
+    } catch { /* skip a collection that errors, continue the rest */ }
+  }
+  await Tenant.deleteOne({ _id: tenantId });
+  return { deleted: true, name: tenant.name, recordsRemoved: removed };
 }
 
 /** Generate a readable temporary password. */

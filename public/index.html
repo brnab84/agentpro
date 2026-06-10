@@ -1750,7 +1750,7 @@
                   <th class="px-3 py-3 font-medium text-center">Leads</th>
                   <th class="px-3 py-3 font-medium">Alta</th>
                   <th class="px-3 py-3 font-medium">Último login</th>
-                  <th class="px-3 py-3 font-medium">Estado</th>
+                  <th class="px-3 py-3 font-medium">Estado <span class="htip" title="Activa: la cuenta funciona normal. Suspendida: el dueño y sus agentes NO pueden iniciar sesión (no borra datos). Hacé clic para alternar.">?</span></th>
                   <th class="px-3 py-3 font-medium">Acciones</th>
                 </tr>
               </thead>
@@ -2481,7 +2481,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.6.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.7.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6716,9 +6716,10 @@ function renderAdminTenants() {
         </button>
       </td>
       <td class="px-3 py-3">
-        <button onclick="adminResetPassword('${t.id}', '${(t.ownerEmail||'').replace(/'/g,'')}')" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline whitespace-nowrap" title="Resetear contraseña del dueño">
-          🔑 Reset pass
-        </button>
+        <div class="flex items-center gap-3">
+          <button onclick="adminResetPassword('${t.id}', '${(t.ownerEmail||'').replace(/'/g,'')}')" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline whitespace-nowrap" title="Resetear contraseña del dueño">🔑 Reset</button>
+          <button onclick="adminDeleteTenant('${t.id}', '${(t.name||'').replace(/'/g,'')}')" class="text-xs font-medium text-red-500 hover:text-red-700 hover:underline whitespace-nowrap" title="Borrar cuenta y todos sus datos">🗑 Borrar</button>
+        </div>
       </td>
     </tr>`;
   }).join('');
@@ -6739,6 +6740,17 @@ async function adminResetPassword(id, email) {
     const r = await api('POST', `/api/admin/tenants/${id}/reset-password`, {});
     // Show in a prompt so the admin can copy it
     window.prompt(`Contraseña temporal para ${r.email}\n\nCopiala y compartila con el cliente (pedile que la cambie luego):`, r.tempPassword);
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+}
+
+async function adminDeleteTenant(id, name) {
+  const typed = window.prompt(`⚠️ Vas a BORRAR la cuenta "${name}" y TODOS sus datos (usuarios, propiedades, leads, etc.). Esta acción no se puede deshacer.\n\nPara confirmar, escribí el nombre de la agencia:`);
+  if (typed === null) return;
+  if (typed.trim() !== name.trim()) { showToast('El nombre no coincide. Cancelado.', 'error'); return; }
+  try {
+    const r = await api('DELETE', `/api/admin/tenants/${id}`);
+    showToast(`Cuenta "${r.name}" borrada (${r.recordsRemoved} registros)`);
+    loadAdmin();
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
 }
 

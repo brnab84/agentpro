@@ -22,6 +22,11 @@ export const resetPassword = asyncHandler(async (req, res) => {
   res.json(await service.resetTenantPassword(req.params.id));
 });
 
+/** DELETE /api/admin/tenants/:id — permanently delete an account + its data */
+export const deleteTenant = asyncHandler(async (req, res) => {
+  res.json(await service.deleteTenant(req.params.id, req.user?.tenantId));
+});
+
 /** GET /api/admin/settings — configurable plan pricing */
 export const getSettings = asyncHandler(async (_req, res) => {
   res.json(await service.getSettings());
