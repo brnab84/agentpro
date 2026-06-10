@@ -1515,6 +1515,12 @@
             <span id="billingPlanBadge" class="ml-auto text-xs font-bold uppercase px-3 py-1 rounded-full bg-gray-100 text-gray-600">—</span>
           </div>
 
+          <div id="help-billing" data-help class="rounded-xl px-3.5 py-2.5 mb-4 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+            <span style="font-size:15px">💡</span>
+            <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Acá ves tu plan y cuánto usaste (propiedades, leads, usuarios). Para mejorar de plan, tocá un <b>botón de pago</b> (aparecen según los métodos que el administrador activó). <b>Ejemplo:</b> "Mejorar a Pro · $10/mes → MercadoPago". Si no aparecen botones, todavía no hay métodos de pago configurados.</p>
+            <button onclick="dismissHelp('help-billing')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+          </div>
+
           <div id="billingBody">
           <div id="billingCurrent" class="rounded-xl border border-gray-100 p-4 mb-4 bg-gray-50/60">
             <div class="flex items-end justify-between mb-1">
@@ -1569,6 +1575,11 @@
                 </button>
               </div>
             </div>
+          </div>
+          <div id="help-portal" data-help class="rounded-xl px-3.5 py-2.5 mb-4 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+            <span style="font-size:15px">💡</span>
+            <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Tu página pública de propiedades. Poné el <b>nombre</b>, un <b>slug</b> (ej: <code style="background:#fff;padding:0 3px;border-radius:3px">canaima</code> → tu link queda <code style="background:#fff;padding:0 3px;border-radius:3px">/portal/canaima</code>), color y WhatsApp. Activá <b>"Activo"</b> y tocá <b>"Guardar portal"</b>. Después activá "Portal público" en las propiedades que quieras mostrar. ¿Más dudas? Tocá el botón <b>"Guía"</b> arriba.</p>
+            <button onclick="dismissHelp('help-portal')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
           </div>
           <form id="portalConfigForm" class="space-y-4" onsubmit="savePortalConfig(event)">
             <div class="grid grid-cols-2 gap-3">
@@ -1733,6 +1744,11 @@
                 <p class="font-semibold text-gray-900">Captación de leads (Meta Ads)</p>
                 <p class="text-xs text-gray-400">Los formularios de Facebook/Instagram entran como leads automáticamente</p>
               </div>
+            </div>
+            <div id="help-leadads" data-help class="rounded-xl px-3.5 py-2.5 mb-4 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+              <span style="font-size:15px">💡</span>
+              <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Cuando alguien completa el formulario de tu anuncio en Instagram/Facebook, <b>entra solo como lead</b> acá. Pegá tu <b>Page ID</b> y un <b>Page Access Token</b>, y configurá el webhook (de abajo) en tu app de Meta. <b>Probalo gratis</b> con el "Lead Ads Testing Tool" de Meta, sin gastar en anuncios. <b>Importante:</b> no se obtienen datos de desconocidos; la gente deja sus datos voluntariamente.</p>
+              <button onclick="dismissHelp('help-leadads')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
             </div>
             <div class="rounded-lg p-3 mb-4 text-xs" style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1d4ed8">
               <p class="font-semibold mb-1">Configurá esto en tu app de Meta → Webhooks → Page → campo <code>leadgen</code>:</p>
@@ -2607,7 +2623,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.11.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.11.1'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
