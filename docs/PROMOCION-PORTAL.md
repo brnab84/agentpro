@@ -79,7 +79,11 @@ Un dominio como `tuinmobiliaria.com` da más confianza y mejor SEO que una URL l
 ## 6. Medir resultados
 
 - **Google Search Console**: qué búsquedas te muestran, clics, posición promedio.
-- **Google Analytics** (opcional): si querés ver visitas en tiempo real, se puede agregar el script de GA4 a las páginas del portal.
+- **Google Analytics (GA4)**: ya está integrado. Para activarlo:
+  1. Creá una propiedad GA4 en [analytics.google.com](https://analytics.google.com).
+  2. Andá a **Admin → Flujos de datos → Web** y copiá el **ID de medición** (`G-XXXXXXXXXX`).
+  3. Pegalo en **Configuración → Mi equipo → Mi Portal → SEO y visibilidad → ID de Google Analytics (GA4)** y guardá.
+  4. Listo: el portal y cada ficha de propiedad empiezan a reportar visitas, ubicación de los visitantes, dispositivos y páginas más vistas en tiempo real.
 - **Leads en el CRM**: cada consulta del formulario del portal entra como lead con origen "portal" — medí cuántos llegan por ahí.
 
 ---

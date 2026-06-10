@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '2.6.0'; // minor: full SEO — server-side meta/OG, JSON-LD, robots, sitemap, SEO panel
+export const APP_VERSION = '2.7.0'; // minor: GA4 analytics per portal + noindex on private app
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

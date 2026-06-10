@@ -25,6 +25,7 @@ const tenantSchema = new mongoose.Schema(
         metaDescription: { type: String, trim: true },
         keywords:        { type: String, trim: true },
         allowIndexing:   { type: Boolean, default: true },
+        analyticsId:     { type: String, trim: true }, // Google Analytics GA4 (G-XXXX)
       },
     },
   },

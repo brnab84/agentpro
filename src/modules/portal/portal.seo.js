@@ -29,19 +29,36 @@ function publicImage(url) {
   return url && /^https?:\/\//i.test(url) ? url : '';
 }
 
+/** Validate a GA4 measurement id (G-XXXXXXX). Prevents injecting arbitrary text. */
+function gaId(id) {
+  return /^G-[A-Z0-9]{4,}$/i.test(id || '') ? id : '';
+}
+
+/** Build the Google Analytics (GA4) snippet, or '' when no valid id. */
+function gaSnippet(id) {
+  const g = gaId(id);
+  if (!g) return '';
+  return `<script async src="https://www.googletagmanager.com/gtag/js?id=${g}"></script>\n  ` +
+    `<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}` +
+    `gtag('js',new Date());gtag('config','${g}');</script>`;
+}
+
 /** Build the block of SEO tags injected into <head>. */
-function buildHeadTags({ url, image, robots, jsonLd }) {
+function buildHeadTags({ url, image, robots, jsonLd, keywords, analyticsId }) {
   const img = publicImage(image) || DEFAULT_OG_IMAGE;
   const tags = [
     `<meta name="robots" content="${robots}"/>`,
     `<link rel="canonical" href="${esc(url)}"/>`,
+    keywords ? `<meta name="keywords" content="${esc(keywords)}"/>` : '',
     `<meta property="og:type" content="website"/>`,
     `<meta property="og:url" content="${esc(url)}"/>`,
     `<meta property="og:image" content="${esc(img)}"/>`,
     `<meta name="twitter:card" content="summary_large_image"/>`,
     `<meta name="twitter:image" content="${esc(img)}"/>`,
-  ];
+  ].filter(Boolean);
   if (jsonLd) tags.push(`<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`);
+  const ga = gaSnippet(analyticsId);
+  if (ga) tags.push(ga);
   return tags.join('\n  ');
 }
 
@@ -98,6 +115,8 @@ export async function renderListingHtml(slug, baseUrl, template) {
   const headTags = buildHeadTags({
     url, image,
     robots: indexable ? 'index, follow' : 'noindex, nofollow',
+    keywords: p.seo?.keywords,
+    analyticsId: p.seo?.analyticsId,
     jsonLd,
   });
 
@@ -160,6 +179,8 @@ export async function renderPropertyHtml(slug, propertyId, baseUrl, template) {
   const headTags = buildHeadTags({
     url, image,
     robots: indexable ? 'index, follow' : 'noindex, nofollow',
+    keywords: p.seo?.keywords,
+    analyticsId: p.seo?.analyticsId,
     jsonLd,
   });
 
