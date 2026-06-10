@@ -71,13 +71,25 @@
     <!-- Left: photos + details -->
     <div class="lg:col-span-2">
       <!-- Photo gallery -->
-      <div class="rounded-2xl overflow-hidden mb-3 relative bg-gray-100">
-        <img id="mainPhoto" src="" alt="" class="w-full object-cover" style="max-height:420px" onerror="this.closest('.rounded-2xl').classList.add('photo-placeholder');this.style.display='none'"/>
-        <div id="noPhoto" class="hidden photo-placeholder h-72 flex items-center justify-center">
+      <div class="rounded-2xl overflow-hidden mb-3 relative bg-gray-100 group">
+        <img id="mainPhoto" src="" alt="" class="w-full object-cover" style="height:clamp(300px,52vh,560px)" onclick="openLightbox()" onerror="this.closest('.rounded-2xl').classList.add('photo-placeholder');this.style.display='none'"/>
+        <div id="noPhoto" class="hidden photo-placeholder flex items-center justify-center" style="height:clamp(300px,52vh,560px)">
           <svg class="w-16 h-16 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg>
         </div>
+        <!-- Nav arrows -->
+        <button id="navPrev" onclick="event.stopPropagation();stepPhoto(-1)" class="hidden absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white text-gray-800 shadow-lg items-center justify-center transition opacity-0 group-hover:opacity-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <button id="navNext" onclick="event.stopPropagation();stepPhoto(1)" class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white text-gray-800 shadow-lg items-center justify-center transition opacity-0 group-hover:opacity-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <!-- Expand hint -->
+        <span class="hidden sm:flex absolute top-3 right-3 bg-black/50 text-white text-xs font-semibold px-2.5 py-1 rounded-full items-center gap-1 opacity-0 group-hover:opacity-100 transition pointer-events-none">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+          Ampliar
+        </span>
         <!-- Photo counter -->
-        <span id="photoCounter" class="hidden absolute bottom-3 right-3 bg-black/50 text-white text-xs font-semibold px-2.5 py-1 rounded-full"></span>
+        <span id="photoCounter" class="hidden absolute bottom-3 right-3 bg-black/55 text-white text-xs font-semibold px-2.5 py-1 rounded-full"></span>
       </div>
       <!-- Thumbnails -->
       <div id="thumbs" class="flex gap-2 overflow-x-auto pb-1"></div>
@@ -122,6 +134,21 @@
         <h2 class="font-bold text-gray-900 mb-3">Amenidades</h2>
         <div id="featList" class="flex flex-wrap gap-2"></div>
       </div>
+
+      <!-- Location / map -->
+      <div id="mapSection" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-gray-900 flex items-center gap-2">
+            <svg class="w-5 h-5 brand-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Ubicación
+          </h2>
+          <a id="mapOpen" href="#" target="_blank" rel="noopener" class="text-xs brand-text font-semibold hover:underline">Ver en Google Maps ↗</a>
+        </div>
+        <p id="mapAddr" class="text-sm text-gray-500 mb-3"></p>
+        <div class="rounded-xl overflow-hidden border border-gray-100">
+          <iframe id="mapFrame" width="100%" height="300" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        </div>
+      </div>
     </div>
 
     <!-- Right: contact card (sticky) -->
@@ -163,6 +190,21 @@
   <p id="footerAgency" class="font-bold text-white mb-1"></p>
   <p class="text-xs text-gray-500">Powered by <a href="/landing" class="text-indigo-400 hover:underline font-medium">AgentPro</a></p>
 </footer>
+
+<!-- ── LIGHTBOX ───────────────────────────────────────────────────────────────── -->
+<div id="lightbox" class="hidden fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm items-center justify-center" onclick="closeLightbox()">
+  <button onclick="event.stopPropagation();closeLightbox()" class="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition" aria-label="Cerrar">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+  </button>
+  <button onclick="event.stopPropagation();stepPhoto(-1)" class="absolute left-3 sm:left-6 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition" aria-label="Anterior">
+    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+  </button>
+  <img id="lightboxImg" src="" alt="" class="max-w-[92vw] max-h-[86vh] object-contain rounded-lg shadow-2xl" onclick="event.stopPropagation()"/>
+  <button onclick="event.stopPropagation();stepPhoto(1)" class="absolute right-3 sm:right-6 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition" aria-label="Siguiente">
+    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+  </button>
+  <span id="lightboxCounter" class="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/80 text-sm font-medium bg-white/10 px-3 py-1 rounded-full"></span>
+</div>
 
 <!-- ── FLOATING WHATSAPP ──────────────────────────────────────────────────────── -->
 <a id="waFloat" href="#" target="_blank" rel="noopener"
@@ -304,16 +346,28 @@ function renderProperty(p, portal) {
   photos = p.photos || [];
   if (photos.length) {
     setPhoto(0);
-    document.getElementById('photoCounter').textContent = `${photos.length} fotos`;
+    document.getElementById('photoCounter').textContent = `1 / ${photos.length}`;
     document.getElementById('photoCounter').classList.remove('hidden');
     if (photos.length > 1) {
+      document.getElementById('navPrev').classList.add('flex');
+      document.getElementById('navNext').classList.add('flex');
       document.getElementById('thumbs').innerHTML = photos.map((url, i) =>
-        `<img src="${url}" class="thumb ${i===0?'active':''} w-16 h-16 rounded-xl object-cover flex-shrink-0" onclick="setPhoto(${i})" loading="lazy"/>`
+        `<img src="${url}" class="thumb ${i===0?'active':''} w-20 h-20 rounded-xl object-cover flex-shrink-0" onclick="setPhoto(${i})" loading="lazy"/>`
       ).join('');
     }
   } else {
     document.getElementById('mainPhoto').classList.add('hidden');
     document.getElementById('noPhoto').classList.remove('hidden');
+  }
+
+  // Location map (uses address/zone — no API key needed)
+  const place = [p.address, p.zone].filter(Boolean).join(', ');
+  if (place) {
+    const q = encodeURIComponent(place);
+    document.getElementById('mapAddr').textContent  = place;
+    document.getElementById('mapFrame').src         = `https://maps.google.com/maps?q=${q}&z=15&output=embed`;
+    document.getElementById('mapOpen').href         = `https://www.google.com/maps/search/?api=1&query=${q}`;
+    document.getElementById('mapSection').classList.remove('hidden');
   }
 
   // WhatsApp CTA + floating button + nav (all with property-specific message)
@@ -331,10 +385,46 @@ function renderProperty(p, portal) {
 }
 
 function setPhoto(idx) {
-  currentPhotoIdx = idx;
-  document.getElementById('mainPhoto').src = photos[idx];
-  document.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('active', i === idx));
+  if (!photos.length) return;
+  currentPhotoIdx = (idx + photos.length) % photos.length;
+  document.getElementById('mainPhoto').src = photos[currentPhotoIdx];
+  document.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('active', i === currentPhotoIdx));
+  const counter = document.getElementById('photoCounter');
+  if (counter) counter.textContent = `${currentPhotoIdx + 1} / ${photos.length}`;
+  const lb = document.getElementById('lightboxImg');
+  if (lb && !document.getElementById('lightbox').classList.contains('hidden')) lb.src = photos[currentPhotoIdx];
+  const lc = document.getElementById('lightboxCounter');
+  if (lc) lc.textContent = `${currentPhotoIdx + 1} / ${photos.length}`;
+  // Active thumb into view
+  const activeThumb = document.querySelectorAll('.thumb')[currentPhotoIdx];
+  if (activeThumb) activeThumb.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
 }
+
+function stepPhoto(dir) { setPhoto(currentPhotoIdx + dir); }
+
+function openLightbox() {
+  if (!photos.length) return;
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightboxImg').src = photos[currentPhotoIdx];
+  document.getElementById('lightboxCounter').textContent = `${currentPhotoIdx + 1} / ${photos.length}`;
+  lb.classList.remove('hidden'); lb.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  lb.classList.add('hidden'); lb.classList.remove('flex');
+  document.body.style.overflow = '';
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  const lbOpen = !document.getElementById('lightbox').classList.contains('hidden');
+  if (e.key === 'Escape' && lbOpen) closeLightbox();
+  if (!photos.length) return;
+  if (e.key === 'ArrowRight') stepPhoto(1);
+  if (e.key === 'ArrowLeft')  stepPhoto(-1);
+});
 
 function showError(msg) {
   document.getElementById('loading').innerHTML = `<p class="col-span-3 text-center py-20 text-gray-400">${msg}</p>`;
