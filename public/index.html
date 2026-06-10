@@ -2481,7 +2481,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.7.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.8.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6475,6 +6475,8 @@ function renderBilling(s, plans, methods = []) {
         btns.push(`<button onclick="startCheckout('${p.key}')" class="${METHOD_CLASS.stripe} text-sm font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition">${METHOD_LABEL.stripe}</button>`);
       else if (m === 'mercadopago' && s.mpEnabled)
         btns.push(`<button onclick="startMpCheckout('${p.key}')" class="${METHOD_CLASS.mercadopago} text-sm font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition">${METHOD_LABEL.mercadopago}</button>`);
+      else if (m === 'paypal' && s.paypalEnabled)
+        btns.push(`<button onclick="startPaypalCheckout('${p.key}')" class="${METHOD_CLASS.paypal} text-sm font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition">${METHOD_LABEL.paypal}</button>`);
       else if (m !== 'stripe' && p[m + 'Url'])
         btns.push(`<a href="${p[m+'Url']}" target="_blank" rel="noopener" class="${METHOD_CLASS[m]} text-sm font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition inline-block">${METHOD_LABEL[m]}</a>`);
     }
@@ -6501,6 +6503,15 @@ async function startMpCheckout(plan) {
   try {
     showToast('Redirigiendo a MercadoPago…');
     const { url } = await api('POST', '/api/billing/mercadopago/checkout', { plan });
+    if (url) window.location.href = url;
+    else showToast('No se pudo iniciar el pago', 'error');
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+}
+
+async function startPaypalCheckout(plan) {
+  try {
+    showToast('Redirigiendo a PayPal…');
+    const { url } = await api('POST', '/api/billing/paypal/checkout', { plan });
     if (url) window.location.href = url;
     else showToast('No se pudo iniciar el pago', 'error');
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
@@ -6597,7 +6608,10 @@ function renderAdminPricing() {
       ${_adminPayments.includes('stripe') ? `
       <label class="text-xs text-gray-500 font-medium mt-3 block">Stripe Price ID <span class="htip" title="El ID del precio creado en Stripe (Productos → tu plan → API ID), empieza con price_. Necesario para cobrar este plan.">?</span></label>
       <input data-plan="${p.key}" data-field="stripePriceId" type="text" value="${(p.stripePriceId||'').replace(/"/g,'&quot;')}" placeholder="price_..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />` : ''}
-      ${linkField(p, 'paypal', 'Link PayPal', 'https://www.paypal.com/...')}
+      ${_adminPayments.includes('paypal') ? `
+      <label class="text-xs text-gray-500 font-medium mt-2 block">PayPal Plan ID <span class="htip" title="ID del plan de suscripción creado en PayPal (empieza con P-). Si lo cargás, el cobro y la activación son automáticos. Si lo dejás vacío, se usa el link de abajo (activación manual).">?</span></label>
+      <input data-plan="${p.key}" data-field="paypalPlanId" type="text" value="${(p.paypalPlanId||'').replace(/"/g,'&quot;')}" placeholder="P-XXXXXXXXXXXX" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />` : ''}
+      ${linkField(p, 'paypal', 'Link PayPal (alternativa manual)', 'https://www.paypal.com/...')}
       ${linkField(p, 'mercadopago', 'Link MercadoPago', 'https://mpago.la/...')}
       ${linkField(p, 'yappy', 'Link Yappy', 'https://...')}` : ''}
     </div>`).join('');
@@ -6616,6 +6630,7 @@ async function saveAdminPricing() {
       maxLeads: get('maxLeads') ? Number(get('maxLeads').value) : (p.maxLeads ?? -1),
       maxAgents: get('maxAgents') ? Number(get('maxAgents').value) : (p.maxAgents ?? -1),
       stripePriceId: get('stripePriceId') ? get('stripePriceId').value.trim() : (p.stripePriceId || ''),
+      paypalPlanId: get('paypalPlanId') ? get('paypalPlanId').value.trim() : (p.paypalPlanId || ''),
       paypalUrl: get('paypalUrl') ? get('paypalUrl').value.trim() : (p.paypalUrl || ''),
       mercadopagoUrl: get('mercadopagoUrl') ? get('mercadopagoUrl').value.trim() : (p.mercadopagoUrl || ''),
       yappyUrl: get('yappyUrl') ? get('yappyUrl').value.trim() : (p.yappyUrl || ''),

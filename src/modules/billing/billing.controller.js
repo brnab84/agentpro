@@ -2,6 +2,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { env } from '../../config/env.js';
 import * as service from './billing.service.js';
 import * as mp from './mercadopago.service.js';
+import * as paypal from './paypal.service.js';
 import { getUsage } from './limits.service.js';
 
 const baseUrlOf = (req) =>
@@ -13,7 +14,7 @@ export const getStatus = asyncHandler(async (req, res) => {
     service.getStatus(req.tenantId),
     getUsage(req.tenantId),
   ]);
-  res.json({ ...status, usage, mpEnabled: mp.isEnabled() });
+  res.json({ ...status, usage, mpEnabled: mp.isEnabled(), paypalEnabled: paypal.isEnabled() });
 });
 
 /** POST /api/billing/checkout — start a subscription checkout */
@@ -45,6 +46,18 @@ export const mercadopagoWebhook = asyncHandler(async (req, res) => {
       dataId: q['data.id'] || b?.data?.id,
     });
   } catch { /* always 200 so MP doesn't retry forever */ }
+  res.sendStatus(200);
+});
+
+/** POST /api/billing/paypal/checkout — start a PayPal subscription */
+export const paypalCheckout = asyncHandler(async (req, res) => {
+  const { plan } = req.body;
+  res.json(await paypal.createSubscription(req.tenantId, plan, baseUrlOf(req)));
+});
+
+/** POST /api/billing/paypal/webhook — PayPal events (no auth) */
+export const paypalWebhook = asyncHandler(async (req, res) => {
+  try { await paypal.handleWebhook(req.body); } catch { /* always 200 */ }
   res.sendStatus(200);
 });
 

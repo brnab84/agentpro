@@ -11,8 +11,9 @@ const tenantSchema = new mongoose.Schema(
       stripeSubscriptionId: { type: String, trim: true },
       subscriptionStatus:   { type: String, trim: true, default: '' }, // active, past_due, canceled, trialing…
       currentPeriodEnd:     { type: Date },
-      provider:             { type: String, trim: true, default: '' }, // stripe | mercadopago
+      provider:             { type: String, trim: true, default: '' }, // stripe | mercadopago | paypal | comp
       mpPreapprovalId:      { type: String, trim: true }, // MercadoPago subscription id
+      paypalSubscriptionId: { type: String, trim: true }, // PayPal subscription id (I-...)
     },
     channels: {
       whatsappPhoneNumberId: { type: String, trim: true },

@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.7.0'; // feat: admin delete account (cascade) + suspension now blocks login
+export const APP_VERSION = '3.8.0'; // feat: PayPal subscriptions (API + webhook auto-activation)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
@@ -46,4 +46,9 @@ export const env = {
 
   // Billing — MercadoPago (suscripciones / preapproval)
   mpAccessToken:        process.env.MP_ACCESS_TOKEN || '',
+
+  // Billing — PayPal (subscriptions)
+  paypalClientId:       process.env.PAYPAL_CLIENT_ID || '',
+  paypalSecret:         process.env.PAYPAL_SECRET || '',
+  paypalEnv:            process.env.PAYPAL_ENV || 'live', // 'live' | 'sandbox'
 };

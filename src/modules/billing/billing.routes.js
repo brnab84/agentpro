@@ -11,9 +11,11 @@ router.get ('/status',   auth, tenantScope, controller.getStatus);
 router.post('/checkout', auth, tenantScope, controller.checkout);
 router.post('/portal',   auth, tenantScope, controller.portal);
 router.post('/mercadopago/checkout', auth, tenantScope, controller.mercadopagoCheckout);
+router.post('/paypal/checkout',      auth, tenantScope, controller.paypalCheckout);
 
-// MercadoPago webhook/IPN — public (no auth). MP may call via GET or POST.
+// Public webhooks (no auth)
 router.post('/mercadopago/webhook', controller.mercadopagoWebhook);
 router.get ('/mercadopago/webhook', controller.mercadopagoWebhook);
+router.post('/paypal/webhook',      controller.paypalWebhook);
 
 export default router;

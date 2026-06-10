@@ -48,6 +48,7 @@ export async function updateSettings({ plans, payments }) {
       target.interval = incoming.interval;
     }
     if (incoming.stripePriceId !== undefined) target.stripePriceId = String(incoming.stripePriceId).trim();
+    if (incoming.paypalPlanId   !== undefined) target.paypalPlanId   = String(incoming.paypalPlanId).trim();
     if (incoming.paypalUrl      !== undefined) target.paypalUrl      = String(incoming.paypalUrl).trim();
     if (incoming.mercadopagoUrl !== undefined) target.mercadopagoUrl = String(incoming.mercadopagoUrl).trim();
     if (incoming.yappyUrl       !== undefined) target.yappyUrl       = String(incoming.yappyUrl).trim();

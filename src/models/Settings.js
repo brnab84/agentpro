@@ -9,6 +9,7 @@ const planSchema = new mongoose.Schema(
     currency: { type: String, trim: true, default: 'USD' },
     interval: { type: String, enum: ['month', 'year'], default: 'month' },
     stripePriceId: { type: String, trim: true, default: '' }, // Stripe Price id (price_...)
+    paypalPlanId:  { type: String, trim: true, default: '' }, // PayPal billing plan id (P-...)
     // Payment links per method (subscription/checkout URLs the owner pastes)
     paypalUrl:      { type: String, trim: true, default: '' },
     mercadopagoUrl: { type: String, trim: true, default: '' },
