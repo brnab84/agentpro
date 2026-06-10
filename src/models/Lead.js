@@ -5,7 +5,7 @@ const leadSchema = new mongoose.Schema(
     tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
     name: { type: String, required: true, trim: true },
     contact: { type: String, trim: true },
-    source: { type: String, enum: ['whatsapp', 'instagram', 'email', 'manual', 'portal'], default: 'manual' },
+    source: { type: String, enum: ['whatsapp', 'instagram', 'email', 'manual', 'portal', 'meta_ads'], default: 'manual' },
     portalPropertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', default: null },
     budget: { type: Number, min: 0 },
     intent: { type: String, trim: true },

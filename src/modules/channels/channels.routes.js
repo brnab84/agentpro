@@ -6,6 +6,8 @@ import {
   receiveWhatsApp,
   verifyInstagram,
   receiveInstagram,
+  verifyMetaLeads,
+  receiveMetaLeads,
   receiveEmail,
   getConversations,
   getConversation,
@@ -21,6 +23,9 @@ router.post('/whatsapp', receiveWhatsApp);
 
 router.get('/instagram', verifyInstagram);
 router.post('/instagram', receiveInstagram);
+
+router.get('/meta-leads', verifyMetaLeads);
+router.post('/meta-leads', receiveMetaLeads);
 
 router.post('/email', receiveEmail);
 

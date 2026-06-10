@@ -170,6 +170,7 @@ export async function savePortalConfig(tenantId, data) {
       keywords:        seo.keywords?.trim()        || '',
       allowIndexing:   seo.allowIndexing !== false,
       analyticsId:     seo.analyticsId?.trim()     || '',
+      metaPixelId:     seo.metaPixelId?.trim()     || '',
     },
   };
 

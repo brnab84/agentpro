@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.8.0'; // feat: PayPal subscriptions (API + webhook auto-activation)
+export const APP_VERSION = '3.9.0'; // feat: Meta Pixel on portal + Meta Lead Ads → CRM auto-import
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
@@ -51,4 +51,7 @@ export const env = {
   paypalClientId:       process.env.PAYPAL_CLIENT_ID || '',
   paypalSecret:         process.env.PAYPAL_SECRET || '',
   paypalEnv:            process.env.PAYPAL_ENV || 'live', // 'live' | 'sandbox'
+
+  // Lead capture — Meta Lead Ads webhook verify token
+  metaVerifyToken:      process.env.META_VERIFY_TOKEN || 'agentpro_leads',
 };

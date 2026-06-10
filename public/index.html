@@ -1617,6 +1617,14 @@
                   <input id="portalAnalyticsId" type="text" placeholder="G-XXXXXXXXXX" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono" />
                   <p class="text-xs text-gray-400 mt-1">Pegá tu ID de medición de <a href="https://analytics.google.com" target="_blank" class="text-indigo-500 hover:underline">analytics.google.com</a> (Admin → Flujos de datos). Empieza con <code class="bg-gray-100 px-1 rounded">G-</code>. Mide las visitas de tu portal.</p>
                 </div>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07"/></svg>
+                    Meta Pixel ID (Facebook/Instagram)
+                  </label>
+                  <input id="portalMetaPixel" type="text" placeholder="1234567890123456" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono" />
+                  <p class="text-xs text-gray-400 mt-1">Tu ID de píxel de <a href="https://business.facebook.com/events_manager" target="_blank" class="text-indigo-500 hover:underline">Meta Events Manager</a> (solo números). Permite retargeting: mostrarle anuncios a quien visitó tu portal.</p>
+                </div>
                 <p class="text-xs text-gray-400">Si dejás vacíos los campos de título/descripción, los generamos automáticamente a partir del nombre de tu agencia y tus propiedades.</p>
               </div>
             </details>
@@ -1661,6 +1669,40 @@
                 <input id="cfgInstaId" type="text" placeholder="Ej: 123456789" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div id="channelSaveMsg" class="hidden text-sm text-green-600 font-medium">✓ Configuración guardada</div>
+              <button type="submit" class="gradient-bg text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition">Guardar</button>
+            </form>
+          </div>
+
+          <!-- Meta Lead Ads → CRM -->
+          <div class="card p-6 max-w-xl mt-6">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#E7F0FF">
+                <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900">Captación de leads (Meta Ads)</p>
+                <p class="text-xs text-gray-400">Los formularios de Facebook/Instagram entran como leads automáticamente</p>
+              </div>
+            </div>
+            <div class="rounded-lg p-3 mb-4 text-xs" style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1d4ed8">
+              <p class="font-semibold mb-1">Configurá esto en tu app de Meta → Webhooks → Page → campo <code>leadgen</code>:</p>
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="font-mono break-all" id="leadWebhookUrl">—</span>
+                <button type="button" onclick="copyLeadWebhook()" class="text-blue-600 font-semibold flex-shrink-0">Copiar</button>
+              </div>
+              <p>Verify token: <code class="bg-white px-1 rounded" id="leadVerifyToken">agentpro_leads</code></p>
+            </div>
+            <form id="leadAdsForm" class="space-y-4">
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Facebook Page ID</label>
+                <input id="cfgLeadPageId" type="text" placeholder="Ej: 102938475610293" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Page Access Token <span class="text-gray-300">(permiso leads_retrieval)</span></label>
+                <input id="cfgLeadToken" type="password" placeholder="EAAB..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+                <p class="text-xs text-gray-400 mt-1">Token de página de larga duración. Lo generás en <a href="https://developers.facebook.com/tools/explorer" target="_blank" class="text-blue-600 hover:underline">Graph API Explorer</a> o tu app de Meta.</p>
+              </div>
+              <div id="leadAdsSaveMsg" class="hidden text-sm text-green-600 font-medium">✓ Captación configurada</div>
               <button type="submit" class="gradient-bg text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition">Guardar</button>
             </form>
           </div>
@@ -2481,7 +2523,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.8.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.9.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -4249,7 +4291,12 @@ async function loadTeam() {
       const tenant = await api('GET', '/api/users/channels');
       document.getElementById('cfgPhoneId').value = tenant.channels?.whatsappPhoneNumberId || '';
       document.getElementById('cfgInstaId').value = tenant.channels?.instagramPageId || '';
+      document.getElementById('cfgLeadPageId').value = tenant.leadAds?.pageId || '';
+      document.getElementById('cfgLeadToken').value  = tenant.leadAds?.pageToken || '';
     } catch {}
+    // Lead Ads webhook URL for Meta config
+    const wh = document.getElementById('leadWebhookUrl');
+    if (wh) wh.textContent = `${window.location.origin}/api/webhooks/meta-leads`;
   } else {
     cfgSection.classList.add('hidden');
   }
@@ -4323,6 +4370,28 @@ document.getElementById('channelForm').onsubmit = async (e) => {
     setTimeout(() => msg.classList.add('hidden'), 3000);
   } catch(err) { showToast(err.message, 'error'); }
 };
+
+document.getElementById('leadAdsForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('leadAdsSaveMsg');
+  msg.classList.add('hidden');
+  try {
+    await api('PATCH', '/api/users/channels', {
+      whatsappPhoneNumberId: document.getElementById('cfgPhoneId').value.trim(),
+      instagramPageId: document.getElementById('cfgInstaId').value.trim(),
+      leadAdsPageId: document.getElementById('cfgLeadPageId').value.trim(),
+      leadAdsPageToken: document.getElementById('cfgLeadToken').value.trim(),
+    });
+    showToast('Captación de leads configurada');
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 3000);
+  } catch(err) { showToast(err.message, 'error'); }
+};
+
+function copyLeadWebhook() {
+  const url = document.getElementById('leadWebhookUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => showToast('¡URL copiada!')).catch(() => {});
+}
 
 async function removeAgent(id, name) {
   if (!confirm(`¿Eliminar a ${name} del equipo?`)) return;
@@ -6324,6 +6393,7 @@ async function loadPortalConfig() {
     document.getElementById('portalMetaDesc').value  = seo.metaDescription || '';
     document.getElementById('portalKeywords').value  = seo.keywords || '';
     document.getElementById('portalAnalyticsId').value = seo.analyticsId || '';
+    document.getElementById('portalMetaPixel').value   = seo.metaPixelId || '';
     _updateIndexToggleUI();
     _updatePortalToggleUI(_portalActive);
     _updatePortalLink(_portalSlug);
@@ -6376,6 +6446,7 @@ async function savePortalConfig(e) {
         keywords:        document.getElementById('portalKeywords').value.trim(),
         allowIndexing:   _portalAllowIndexing,
         analyticsId:     document.getElementById('portalAnalyticsId').value.trim(),
+        metaPixelId:     document.getElementById('portalMetaPixel').value.trim(),
       },
     }
   };

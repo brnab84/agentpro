@@ -17,17 +17,21 @@ export async function inviteAgent(tenantId, { name, email, password }) {
 }
 
 export async function getChannelConfig(tenantId) {
-  const tenant = await Tenant.findById(tenantId).select('name channels');
+  const tenant = await Tenant.findById(tenantId).select('name channels leadAds');
   if (!tenant) throw new AppError('Tenant not found', 404);
   return tenant;
 }
 
-export async function updateChannelConfig(tenantId, { whatsappPhoneNumberId, instagramPageId }) {
-  const tenant = await Tenant.findByIdAndUpdate(
-    tenantId,
-    { 'channels.whatsappPhoneNumberId': whatsappPhoneNumberId || '', 'channels.instagramPageId': instagramPageId || '' },
-    { new: true },
-  );
+export async function updateChannelConfig(tenantId, { whatsappPhoneNumberId, instagramPageId, leadAdsPageId, leadAdsPageToken }) {
+  const update = {
+    'channels.whatsappPhoneNumberId': whatsappPhoneNumberId || '',
+    'channels.instagramPageId': instagramPageId || '',
+  };
+  // Only update Lead Ads fields when provided (avoid wiping the token on partial saves)
+  if (leadAdsPageId !== undefined)    update['leadAds.pageId'] = leadAdsPageId || '';
+  if (leadAdsPageToken !== undefined) update['leadAds.pageToken'] = leadAdsPageToken || '';
+
+  const tenant = await Tenant.findByIdAndUpdate(tenantId, update, { new: true });
   if (!tenant) throw new AppError('Tenant not found', 404);
   return tenant;
 }

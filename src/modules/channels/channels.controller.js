@@ -99,6 +99,34 @@ export const receiveInstagram = asyncHandler(async (req, res) => {
   }
 });
 
+// ── Meta Lead Ads (Facebook/Instagram lead forms) ────────────────────────────
+
+import { parseLeadgenWebhook, processLeadgen } from './leadads.service.js';
+
+export const verifyMetaLeads = (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+  if (mode === 'subscribe' && token === env.metaVerifyToken) {
+    return res.status(200).send(challenge);
+  }
+  res.status(403).json({ error: 'Forbidden' });
+};
+
+export const receiveMetaLeads = asyncHandler(async (req, res) => {
+  res.status(200).json({ status: 'ok' }); // ack fast
+
+  const events = parseLeadgenWebhook(req.body);
+  for (const ev of events) {
+    try {
+      const lead = await processLeadgen(ev);
+      if (lead) console.log('[MetaLeads] new lead', String(lead._id));
+    } catch (err) {
+      console.error('[MetaLeads] error:', err.message);
+    }
+  }
+});
+
 // ── Email (inbound via webhook, e.g. SendGrid Inbound Parse) ─────────────────
 
 export const receiveEmail = asyncHandler(async (req, res) => {

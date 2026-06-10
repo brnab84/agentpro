@@ -43,8 +43,20 @@ function gaSnippet(id) {
     `gtag('js',new Date());gtag('config','${g}');</script>`;
 }
 
+/** Build the Meta (Facebook) Pixel snippet, or '' when no valid id. */
+function pixelSnippet(id) {
+  const pid = /^\d{6,}$/.test(id || '') ? id : '';
+  if (!pid) return '';
+  return `<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?` +
+    `n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;` +
+    `n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;` +
+    `s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',` +
+    `'https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pid}');fbq('track','PageView');</script>` +
+    `<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${pid}&ev=PageView&noscript=1"/></noscript>`;
+}
+
 /** Build the block of SEO tags injected into <head>. */
-function buildHeadTags({ url, image, robots, jsonLd, keywords, analyticsId }) {
+function buildHeadTags({ url, image, robots, jsonLd, keywords, analyticsId, metaPixelId }) {
   const img = publicImage(image) || DEFAULT_OG_IMAGE;
   const tags = [
     `<meta name="robots" content="${robots}"/>`,
@@ -59,6 +71,8 @@ function buildHeadTags({ url, image, robots, jsonLd, keywords, analyticsId }) {
   if (jsonLd) tags.push(`<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`);
   const ga = gaSnippet(analyticsId);
   if (ga) tags.push(ga);
+  const px = pixelSnippet(metaPixelId);
+  if (px) tags.push(px);
   return tags.join('\n  ');
 }
 
@@ -117,6 +131,7 @@ export async function renderListingHtml(slug, baseUrl, template) {
     robots: indexable ? 'index, follow' : 'noindex, nofollow',
     keywords: p.seo?.keywords,
     analyticsId: p.seo?.analyticsId,
+    metaPixelId: p.seo?.metaPixelId,
     jsonLd,
   });
 
@@ -181,6 +196,7 @@ export async function renderPropertyHtml(slug, propertyId, baseUrl, template) {
     robots: indexable ? 'index, follow' : 'noindex, nofollow',
     keywords: p.seo?.keywords,
     analyticsId: p.seo?.analyticsId,
+    metaPixelId: p.seo?.metaPixelId,
     jsonLd,
   });
 

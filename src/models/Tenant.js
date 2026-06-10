@@ -36,7 +36,13 @@ const tenantSchema = new mongoose.Schema(
         keywords:        { type: String, trim: true },
         allowIndexing:   { type: Boolean, default: true },
         analyticsId:     { type: String, trim: true }, // Google Analytics GA4 (G-XXXX)
+        metaPixelId:     { type: String, trim: true }, // Meta (Facebook) Pixel id
       },
+    },
+    // ── Lead capture (Meta Lead Ads) ──────────────────────────────────────────
+    leadAds: {
+      pageId:    { type: String, trim: true }, // Facebook Page id
+      pageToken: { type: String, trim: true }, // Page access token (leads_retrieval)
     },
   },
   { timestamps: true },
