@@ -12,6 +12,7 @@ const planSchema = new mongoose.Schema(
     // Limits — use -1 for unlimited
     maxProperties: { type: Number, default: -1 },
     maxAgents:     { type: Number, default: -1 },
+    maxLeads:      { type: Number, default: -1 },
   },
   { _id: false },
 );
@@ -22,9 +23,9 @@ const settingsSchema = new mongoose.Schema(
     plans: {
       type: [planSchema],
       default: () => ([
-        { key: 'free',     label: 'Free',     price: 0,  currency: 'USD', interval: 'month', maxProperties: 15,  maxAgents: 1 },
-        { key: 'pro',      label: 'Pro',      price: 29, currency: 'USD', interval: 'month', maxProperties: 150, maxAgents: 5 },
-        { key: 'business', label: 'Business', price: 79, currency: 'USD', interval: 'month', maxProperties: -1,  maxAgents: -1 },
+        { key: 'free',     label: 'Free',     price: 0,  currency: 'USD', interval: 'month', maxProperties: 15,  maxAgents: 1,  maxLeads: 50 },
+        { key: 'pro',      label: 'Pro',      price: 29, currency: 'USD', interval: 'month', maxProperties: 150, maxAgents: 5,  maxLeads: -1 },
+        { key: 'business', label: 'Business', price: 79, currency: 'USD', interval: 'month', maxProperties: -1,  maxAgents: -1, maxLeads: -1 },
       ]),
     },
   },

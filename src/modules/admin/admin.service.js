@@ -41,6 +41,7 @@ export async function updateSettings({ plans }) {
     if (incoming.stripePriceId !== undefined) target.stripePriceId = String(incoming.stripePriceId).trim();
     if (incoming.maxProperties !== undefined) target.maxProperties = Number(incoming.maxProperties);
     if (incoming.maxAgents     !== undefined) target.maxAgents     = Number(incoming.maxAgents);
+    if (incoming.maxLeads      !== undefined) target.maxLeads      = Number(incoming.maxLeads);
   }
   settings.plans = VALID_PLANS.map(k => byKey[k]).filter(Boolean);
   await settings.save();

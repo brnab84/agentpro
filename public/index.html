@@ -2449,7 +2449,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.0.2'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.1.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6439,13 +6439,17 @@ function renderAdminPricing() {
           <option value="year" ${p.interval==='year'?'selected':''}>/año</option>
         </select>
       </div>
-      <div class="grid grid-cols-2 gap-2 mt-3">
+      <div class="grid grid-cols-3 gap-2 mt-3">
         <div>
-          <label class="text-xs text-gray-500 font-medium">Máx. propiedades <span class="htip" title="Límite de propiedades para este plan. Usá -1 para ilimitado.">?</span></label>
+          <label class="text-xs text-gray-500 font-medium">Máx. props <span class="htip" title="Límite de propiedades. Usá -1 para ilimitado.">?</span></label>
           <input data-plan="${p.key}" data-field="maxProperties" type="number" step="1" value="${p.maxProperties ?? -1}" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
         </div>
         <div>
-          <label class="text-xs text-gray-500 font-medium">Máx. usuarios <span class="htip" title="Límite de usuarios/agentes. Usá -1 para ilimitado.">?</span></label>
+          <label class="text-xs text-gray-500 font-medium">Máx. leads <span class="htip" title="Límite de leads. Usá -1 para ilimitado. Se muestra en el landing.">?</span></label>
+          <input data-plan="${p.key}" data-field="maxLeads" type="number" step="1" value="${p.maxLeads ?? -1}" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Máx. users <span class="htip" title="Límite de usuarios/agentes. Usá -1 para ilimitado.">?</span></label>
           <input data-plan="${p.key}" data-field="maxAgents" type="number" step="1" value="${p.maxAgents ?? -1}" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
         </div>
       </div>
@@ -6465,6 +6469,7 @@ async function saveAdminPricing() {
       price: Number(get('price')?.value) || 0,
       interval: get('interval')?.value || 'month',
       maxProperties: get('maxProperties') ? Number(get('maxProperties').value) : (p.maxProperties ?? -1),
+      maxLeads: get('maxLeads') ? Number(get('maxLeads').value) : (p.maxLeads ?? -1),
       maxAgents: get('maxAgents') ? Number(get('maxAgents').value) : (p.maxAgents ?? -1),
       stripePriceId: get('stripePriceId') ? get('stripePriceId').value.trim() : (p.stripePriceId || ''),
     };
