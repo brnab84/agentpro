@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.2.0'; // minor: multi payment method (PayPal/MercadoPago/Yappy/Stripe) + leads limit + signup CTA flow
+export const APP_VERSION = '3.2.1'; // fix: logged-in plan CTA routes to billing section instead of dashboard
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

@@ -2464,7 +2464,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.2.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.2.1'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6652,7 +6652,31 @@ initVersion();
   const wantsSignup = params.get('registro') === '1' || params.get('signup') === '1';
   const plan = params.get('plan');
   if (plan) { try { sessionStorage.setItem('agentpro_intended_plan', plan); } catch {} }
-  if (token && currentUser) { showApp(); return; }
+
+  if (token && currentUser) {
+    showApp();
+    // Already logged in: if they picked a paid plan on the landing, take them
+    // straight to their billing section (where the payment buttons live).
+    if (plan && plan !== 'free') {
+      try { sessionStorage.removeItem('agentpro_intended_plan'); } catch {}
+      setTimeout(() => {
+        showTab('team');
+        setTimeout(() => {
+          const el = document.getElementById('billingSection');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.transition = 'box-shadow .3s';
+            el.style.boxShadow = '0 0 0 3px var(--accent, #6366F1)';
+            setTimeout(() => { el.style.boxShadow = ''; }, 2500);
+          }
+          showToast('Elegí tu método de pago para activar el plan ' + plan.toUpperCase());
+        }, 700);
+      }, 300);
+    }
+    // Clean the URL so a refresh doesn't repeat the redirect
+    if (plan || wantsSignup) window.history.replaceState({}, '', window.location.pathname);
+    return;
+  }
   if (wantsSignup) showRegister(); else showLogin();
 })();
 </script>
