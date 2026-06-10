@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.10.1'; // docs: full per-menu help in AYUDA-CRM.md so the bot has real context
+export const APP_VERSION = '3.10.2'; // fix: help bot panel now closes (toggle display, inline style was overriding hidden)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
