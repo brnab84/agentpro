@@ -20,6 +20,15 @@
       cursor: help; vertical-align: middle; user-select: none;
     }
     .htip:hover { background: #C7D2FE; }
+    /* Loading shimmer — overlay a div while its data loads */
+    @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
+    .is-loading { position: relative; pointer-events: none; min-height: 80px; }
+    .is-loading > * { opacity: 0 !important; }
+    .is-loading::after {
+      content: ''; position: absolute; inset: 0; border-radius: 12px;
+      background: linear-gradient(90deg, #ececed 25%, #f5f5f7 37%, #ececed 63%);
+      background-size: 600px 100%; animation: shimmer 1.4s infinite linear;
+    }
     /* ── Design system ──────────────────────────────────────────────────────── */
     :root {
       --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif;
@@ -1456,6 +1465,7 @@
             <span id="billingPlanBadge" class="ml-auto text-xs font-bold uppercase px-3 py-1 rounded-full bg-gray-100 text-gray-600">—</span>
           </div>
 
+          <div id="billingBody">
           <div id="billingCurrent" class="rounded-xl border border-gray-100 p-4 mb-4 bg-gray-50/60">
             <div class="flex items-end justify-between mb-1">
               <p id="billingPlanName" class="font-bold text-gray-900">Plan —</p>
@@ -1484,6 +1494,7 @@
           <div id="billingUpgrade" class="flex flex-wrap gap-2"></div>
           <button id="billingManageBtn" onclick="openBillingPortal()" class="hidden mt-2 text-sm font-medium text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition">Gestionar suscripción</button>
           <p id="billingDisabledNote" class="hidden text-xs text-amber-600 mt-2">⚠️ La facturación todavía no está configurada (falta la clave de Stripe). Mostramos tus límites de uso igualmente.</p>
+          </div>
         </div>
 
         <!-- Mi Portal card -->
@@ -1673,7 +1684,7 @@
         </div>
 
         <!-- KPI cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        <div id="admKpiGrid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
           <div class="card p-5"><p class="text-xs text-gray-400 font-medium mb-1">Cuentas</p><p id="admKpiTenants" class="text-2xl font-bold text-gray-900">—</p></div>
           <div class="card p-5"><p class="text-xs text-gray-400 font-medium mb-1">Usuarios</p><p id="admKpiUsers" class="text-2xl font-bold text-gray-900">—</p></div>
           <div class="card p-5"><p class="text-xs text-gray-400 font-medium mb-1">Activos (30d)</p><p id="admKpiActive" class="text-2xl font-bold text-green-600">—</p></div>
@@ -2469,7 +2480,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.3.1'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.4.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6385,7 +6396,14 @@ async function togglePortalPublish(id, published) {
 const BILLING_PLAN_BADGE = { free:'bg-gray-100 text-gray-600', pro:'bg-indigo-100 text-indigo-700', business:'bg-amber-100 text-amber-700' };
 const SUB_STATUS_LABEL = { active:'Suscripción activa', trialing:'Período de prueba', past_due:'Pago pendiente', canceled:'Cancelada', '':'' };
 
+/** Toggle a shimmer overlay on a container while its data loads. */
+function setLoading(id, isLoading) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('is-loading', !!isLoading);
+}
+
 async function loadBilling() {
+  setLoading('billingBody', true);
   try {
     const [status, plansResp] = await Promise.all([
       api('GET', '/api/billing/status'),
@@ -6393,6 +6411,7 @@ async function loadBilling() {
     ]);
     renderBilling(status, plansResp.plans || [], plansResp.payments?.methods || []);
   } catch (err) { /* non-critical */ }
+  finally { setLoading('billingBody', false); }
 }
 
 function fmtMoney(amount, currency) {
@@ -6494,6 +6513,7 @@ let _adminPlans = [];
 let _adminPayments = ['stripe'];
 
 async function loadAdmin() {
+  setLoading('admKpiGrid', true);
   try {
     const [overview, tenants, settings] = await Promise.all([
       api('GET', '/api/admin/overview'),
@@ -6508,6 +6528,8 @@ async function loadAdmin() {
     renderAdminPricing();
   } catch (err) {
     showToast('Error al cargar admin: ' + err.message, 'error');
+  } finally {
+    setLoading('admKpiGrid', false);
   }
 }
 
