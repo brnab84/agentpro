@@ -20,6 +20,12 @@ const tenantSchema = new mongoose.Schema(
       email:        { type: String, trim: true },
       logoUrl:      { type: String, trim: true },
       heroImages:   { type: [String], default: [] },
+      seo: {
+        metaTitle:       { type: String, trim: true },
+        metaDescription: { type: String, trim: true },
+        keywords:        { type: String, trim: true },
+        allowIndexing:   { type: Boolean, default: true },
+      },
     },
   },
   { timestamps: true },

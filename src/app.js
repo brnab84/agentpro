@@ -23,6 +23,11 @@ import emailSignatureRoutes from './modules/email-signatures/email-signatures.ro
 import domainRoutes from './modules/domains/domains.routes.js';
 import googleRoutes from './modules/google/google.routes.js';
 import portalRoutes from './modules/portal/portal.routes.js';
+import { renderListingHtml, renderPropertyHtml, buildRobotsTxt, buildSitemap } from './modules/portal/portal.seo.js';
+
+/** Public base URL for canonical/OG tags. Prefers APP_BASE_URL, else the request host. */
+const baseUrlOf = (req) =>
+  (env.appBaseUrl && env.appBaseUrl.replace(/\/$/, '')) || `${req.protocol}://${req.get('host')}`;
 
 const readHtml = (filename, fallback = '<h1>AgentPro</h1>') => {
   try { return readFileSync(join(process.cwd(), 'public', filename), 'utf-8'); }
@@ -51,9 +56,26 @@ export function createApp() {
   // Landing page
   app.get('/landing', (_req, res) => res.type('html').send(landingHtml));
 
-  // Public portal pages (SPA-style, JS fetches data from /api/portal/:slug)
-  app.get('/portal/:slug/propiedad/:id', (_req, res) => res.type('html').send(portalPropertyHtml));
-  app.get('/portal/:slug', (_req, res) => res.type('html').send(portalListingHtml));
+  // SEO: robots + sitemap
+  app.get('/robots.txt', (req, res) => res.type('text/plain').send(buildRobotsTxt(baseUrlOf(req))));
+  app.get('/sitemap.xml', async (req, res, next) => {
+    try { res.type('application/xml').send(await buildSitemap(baseUrlOf(req))); }
+    catch (err) { next(err); }
+  });
+
+  // Public portal pages — SEO meta injected server-side, then JS hydrates the data
+  app.get('/portal/:slug/propiedad/:id', async (req, res, next) => {
+    try {
+      const html = await renderPropertyHtml(req.params.slug, req.params.id, baseUrlOf(req), portalPropertyHtml);
+      res.type('html').send(html);
+    } catch (err) { next(err); }
+  });
+  app.get('/portal/:slug', async (req, res, next) => {
+    try {
+      const html = await renderListingHtml(req.params.slug, baseUrlOf(req), portalListingHtml);
+      res.type('html').send(html);
+    } catch (err) { next(err); }
+  });
 
   // App (SPA — no-cache so version polling works)
   app.get('/', (_req, res) => {

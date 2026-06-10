@@ -1505,6 +1505,36 @@
               </div>
             </div>
 
+            <!-- SEO / visibilidad en Google -->
+            <details class="rounded-lg border border-gray-200 bg-gray-50/50">
+              <summary class="cursor-pointer select-none px-3 py-2.5 text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                SEO y visibilidad en Google
+                <span class="ml-auto text-xs font-normal text-gray-400">opcional</span>
+              </summary>
+              <div class="px-3 pb-3 pt-1 space-y-3">
+                <label class="flex items-center justify-between gap-3 cursor-pointer">
+                  <span class="text-xs text-gray-600">Permitir que Google indexe el portal</span>
+                  <button type="button" id="portalIndexToggle" onclick="togglePortalIndexing()" class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-indigo-500">
+                    <span id="portalIndexKnob" class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform translate-x-4"></span>
+                  </button>
+                </label>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Meta título <span class="text-gray-300">(máx ~60 car.)</span></label>
+                  <input id="portalMetaTitle" type="text" maxlength="70" placeholder="Inmobiliaria ABC — Propiedades en Panamá" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Meta descripción <span class="text-gray-300">(máx ~160 car.)</span></label>
+                  <textarea id="portalMetaDesc" rows="2" maxlength="170" placeholder="Casas, departamentos y terrenos en venta y alquiler. Encontrá tu próxima propiedad con nosotros." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"></textarea>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Palabras clave <span class="text-gray-300">(separadas por coma)</span></label>
+                  <input id="portalKeywords" type="text" placeholder="inmobiliaria panamá, casas en venta, alquiler" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                </div>
+                <p class="text-xs text-gray-400">Si dejás vacíos estos campos, generamos automáticamente el título y la descripción a partir del nombre de tu agencia y tus propiedades.</p>
+              </div>
+            </details>
+
             <!-- Link preview -->
             <div id="portalLinkPreview" class="hidden rounded-lg p-3 flex items-center justify-between gap-2" style="background:#F0F4FF;border:1px solid #C7D2FE">
               <div class="flex items-center gap-2 min-w-0">
@@ -2206,7 +2236,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '2.5.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '2.6.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -5852,6 +5882,20 @@ async function syncGoogleCalendar() {
 let _portalActive = false;
 let _portalSlug   = '';
 let _portalHeroImages = [];
+let _portalAllowIndexing = true;
+
+function _updateIndexToggleUI() {
+  const btn = document.getElementById('portalIndexToggle');
+  const knob = document.getElementById('portalIndexKnob');
+  if (!btn) return;
+  btn.className  = `relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${_portalAllowIndexing ? 'bg-indigo-500' : 'bg-gray-200'}`;
+  knob.className = `inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${_portalAllowIndexing ? 'translate-x-4' : 'translate-x-0.5'}`;
+}
+
+function togglePortalIndexing() {
+  _portalAllowIndexing = !_portalAllowIndexing;
+  _updateIndexToggleUI();
+}
 
 function renderHeroThumbs() {
   const wrap = document.getElementById('portalHeroThumbs');
@@ -5948,6 +5992,13 @@ async function loadPortalConfig() {
     document.getElementById('portalLogo').value        = cfg.portal?.logoUrl || '';
     _portalHeroImages = Array.isArray(cfg.portal?.heroImages) ? [...cfg.portal.heroImages] : [];
     renderHeroThumbs();
+    // SEO
+    const seo = cfg.portal?.seo || {};
+    _portalAllowIndexing = seo.allowIndexing !== false;
+    document.getElementById('portalMetaTitle').value = seo.metaTitle || '';
+    document.getElementById('portalMetaDesc').value  = seo.metaDescription || '';
+    document.getElementById('portalKeywords').value  = seo.keywords || '';
+    _updateIndexToggleUI();
     _updatePortalToggleUI(_portalActive);
     _updatePortalLink(_portalSlug);
     // Show "Ver portal" button in properties tab if slug exists
@@ -5993,6 +6044,12 @@ async function savePortalConfig(e) {
       email:        document.getElementById('portalEmail').value.trim(),
       logoUrl:      document.getElementById('portalLogo').value.trim(),
       heroImages:   _portalHeroImages,
+      seo: {
+        metaTitle:       document.getElementById('portalMetaTitle').value.trim(),
+        metaDescription: document.getElementById('portalMetaDesc').value.trim(),
+        keywords:        document.getElementById('portalKeywords').value.trim(),
+        allowIndexing:   _portalAllowIndexing,
+      },
     }
   };
   try {

@@ -151,6 +151,8 @@ export async function savePortalConfig(tenantId, data) {
     ? p.heroImages.map(u => (u || '').trim()).filter(Boolean).slice(0, 8)
     : [];
 
+  const seo = p.seo || {};
+
   tenant.slug = rawSlug;
   tenant.portal = {
     active:       Boolean(p.active),
@@ -161,6 +163,12 @@ export async function savePortalConfig(tenantId, data) {
     email:        p.email?.trim()         || '',
     logoUrl:      p.logoUrl?.trim()       || '',
     heroImages,
+    seo: {
+      metaTitle:       seo.metaTitle?.trim()       || '',
+      metaDescription: seo.metaDescription?.trim() || '',
+      keywords:        seo.keywords?.trim()        || '',
+      allowIndexing:   seo.allowIndexing !== false,
+    },
   };
 
   await tenant.save();
@@ -191,6 +199,7 @@ function buildPortalPublicConfig(tenant) {
     email:        tenant.portal?.email         || '',
     logoUrl:      tenant.portal?.logoUrl       || '',
     heroImages:   tenant.portal?.heroImages    || [],
+    seo:          tenant.portal?.seo           || {},
     slug:         tenant.slug,
   };
 }

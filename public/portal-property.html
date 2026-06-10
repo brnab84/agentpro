@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title id="pageTitle">Propiedad</title>
-  <meta id="ogTitle"   property="og:title"       content="Propiedad"/>
-  <meta id="ogDesc"    property="og:description" content=""/>
-  <meta id="ogImage"   property="og:image"        content=""/>
+  <title id="pageTitle">__SEO_TITLE__</title>
+  <meta name="description" content="__SEO_DESC__"/>
+  <meta property="og:title" content="__SEO_OG_TITLE__"/>
+  <meta property="og:description" content="__SEO_OG_DESC__"/>
+  <meta name="twitter:title" content="__SEO_OG_TITLE__"/>
+  <meta name="twitter:description" content="__SEO_OG_DESC__"/>
+  <!--SEO_HEAD-->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236366F1'/%3E%3Cpath d='M32 14 L50 30 L46 30 L46 50 L18 50 L18 30 L14 30 Z' fill='white'/%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -285,11 +288,8 @@ function renderProperty(p, portal) {
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('content').classList.remove('hidden');
 
-  // SEO
+  // SEO title for in-app navigation (server already injected meta tags for crawlers)
   document.title = p.title + ' — ' + portal.agencyName;
-  document.getElementById('ogTitle').content = p.title;
-  document.getElementById('ogDesc').content  = p.description || '';
-  if (p.photos?.[0]) document.getElementById('ogImage').content = p.photos[0];
 
   // Badges
   document.getElementById('opBadge').textContent   = OP_LABELS[p.operation] || p.operation;
