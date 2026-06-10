@@ -63,8 +63,11 @@ export function createApp() {
 
   // Public plan pricing (for landing + future checkout)
   app.get('/api/plans', async (_req, res, next) => {
-    try { const s = await Settings.getSingleton(); res.json({ plans: s.plans }); }
-    catch (err) { next(err); }
+    try {
+      const s = await Settings.getSingleton();
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ plans: s.plans });
+    } catch (err) { next(err); }
   });
 
   // Landing page

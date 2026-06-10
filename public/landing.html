@@ -501,7 +501,7 @@
       <!-- Pro (highlighted) -->
       <div class="gradient-bg rounded-2xl p-8 shadow-2xl shadow-indigo-200 relative">
         <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-xs font-bold px-4 py-1.5 rounded-full">⭐ Más popular</div>
-        <p class="text-sm font-semibold text-indigo-200 mb-1">Pro</p>
+        <p class="text-sm font-semibold text-indigo-200 mb-1" id="lpProName">Pro</p>
         <div class="flex items-end gap-1 mb-1">
           <span class="text-4xl font-bold text-white" id="lpProPrice">$29</span>
           <span class="text-indigo-200 text-sm mb-1" id="lpProInterval">/mes</span>
@@ -519,7 +519,7 @@
 
       <!-- Agency -->
       <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-        <p class="text-sm font-semibold text-gray-500 mb-1">Agencia</p>
+        <p class="text-sm font-semibold text-gray-500 mb-1" id="lpBizName">Agencia</p>
         <div class="flex items-end gap-1 mb-1">
           <span class="text-4xl font-bold text-gray-900" id="lpBizPrice">$79</span>
           <span class="text-gray-400 text-sm mb-1" id="lpBizInterval">/mes</span>
@@ -582,15 +582,16 @@
 // Fill pricing from the platform's configurable plans
 (async () => {
   try {
-    const r = await fetch('/api/plans');
+    const r = await fetch('/api/plans', { cache: 'no-store' });
     if (!r.ok) return;
     const { plans } = await r.json();
     const fmt = (p) => `${(p.currency && p.currency !== 'USD') ? p.currency + ' ' : '$'}${p.price}`;
     const intv = (p) => p.interval === 'year' ? '/año' : '/mes';
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
     const pro = plans.find(p => p.key === 'pro');
     const biz = plans.find(p => p.key === 'business');
-    if (pro) { document.getElementById('lpProPrice').textContent = fmt(pro); document.getElementById('lpProInterval').textContent = intv(pro); }
-    if (biz) { document.getElementById('lpBizPrice').textContent = fmt(biz); document.getElementById('lpBizInterval').textContent = intv(biz); }
+    if (pro) { set('lpProName', pro.label); set('lpProPrice', fmt(pro)); set('lpProInterval', intv(pro)); }
+    if (biz) { set('lpBizName', biz.label); set('lpBizPrice', fmt(biz)); set('lpBizInterval', intv(biz)); }
   } catch {}
 })();
 </script>

@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.0.1'; // fix: live admin check via /api/auth/me (no full re-login needed)
+export const APP_VERSION = '3.0.2'; // fix: landing syncs plan name too + no-store on /api/plans
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
