@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.10.0'; // feat: Claude help assistant (bot) grounded in AYUDA-CRM.md knowledge base
+export const APP_VERSION = '3.10.1'; // docs: full per-menu help in AYUDA-CRM.md so the bot has real context
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
