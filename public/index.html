@@ -12,6 +12,14 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
+    /* Help tooltip icon (?) — shows native tooltip on hover */
+    .htip {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 999px;
+      background: #E0E7FF; color: #4F46E5; font-size: 9px; font-weight: 800;
+      cursor: help; vertical-align: middle; user-select: none;
+    }
+    .htip:hover { background: #C7D2FE; }
     /* ── Design system ──────────────────────────────────────────────────────── */
     :root {
       --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif;
@@ -1436,48 +1444,54 @@
               <p class="font-semibold text-gray-900">Mi Portal Público</p>
               <p class="text-xs text-gray-400">Página pública para mostrar tus propiedades</p>
             </div>
-            <div class="ml-auto flex items-center gap-2">
-              <span class="text-xs text-gray-500">Activo</span>
-              <button id="portalActiveToggle" onclick="togglePortalActive()" class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-gray-200">
-                <span id="portalActiveKnob" class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform translate-x-0.5"></span>
+            <div class="ml-auto flex items-center gap-3">
+              <button type="button" onclick="openPortalGuide()" class="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                Guía
               </button>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">Activo</span>
+                <button id="portalActiveToggle" onclick="togglePortalActive()" class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-gray-200">
+                  <span id="portalActiveKnob" class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform translate-x-0.5"></span>
+                </button>
+              </div>
             </div>
           </div>
           <form id="portalConfigForm" class="space-y-4" onsubmit="savePortalConfig(event)">
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="text-xs text-gray-500 font-medium">Nombre de la agencia</label>
+                <label class="text-xs text-gray-500 font-medium">Nombre de la agencia <span class="htip" title="El nombre de tu inmobiliaria. Aparece en el encabezado del portal, el título de la pestaña y al compartir el link.">?</span></label>
                 <input id="portalAgencyName" type="text" placeholder="Inmobiliaria ABC" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
               <div>
-                <label class="text-xs text-gray-500 font-medium">Slug (URL)</label>
+                <label class="text-xs text-gray-500 font-medium">Slug (URL) <span class="htip" title="La parte final de la dirección de tu portal: tudominio/portal/ESTO. Usá solo letras, números y guiones (ej: mi-agencia). Es tu link público.">?</span></label>
                 <input id="portalSlug" type="text" placeholder="mi-agencia" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
             </div>
             <div>
-              <label class="text-xs text-gray-500 font-medium">Tagline</label>
+              <label class="text-xs text-gray-500 font-medium">Tagline <span class="htip" title="Una frase corta que describe tu agencia. Se muestra grande debajo del nombre en la portada del portal. Ej: 'Tu hogar ideal te espera'.">?</span></label>
               <input id="portalTagline" type="text" placeholder="Tu hogar ideal te espera" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="text-xs text-gray-500 font-medium">WhatsApp de contacto</label>
-                <input id="portalWhatsapp" type="text" placeholder="+5491100000000" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                <label class="text-xs text-gray-500 font-medium">WhatsApp de contacto <span class="htip" title="Número en formato internacional con código de país, ej: +50760000000. Activa el botón verde de WhatsApp del portal: al tocarlo abre el chat con un mensaje listo para enviarte.">?</span></label>
+                <input id="portalWhatsapp" type="text" placeholder="+50760000000" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
               <div>
-                <label class="text-xs text-gray-500 font-medium">Email de contacto</label>
+                <label class="text-xs text-gray-500 font-medium">Email de contacto <span class="htip" title="Tu correo de contacto. Se muestra en la ficha de la agencia y en el pie del portal.">?</span></label>
                 <input id="portalEmail" type="email" placeholder="info@agencia.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="text-xs text-gray-500 font-medium">Color principal</label>
+                <label class="text-xs text-gray-500 font-medium">Color principal <span class="htip" title="El color de marca de tu portal. Se aplica a botones, encabezado y detalles. Elegí el color de tu logo o marca.">?</span></label>
                 <div class="flex items-center gap-3 mt-1">
                   <input id="portalColor" type="color" value="#6366F1" class="h-9 w-16 rounded-lg border border-gray-300 cursor-pointer p-1" />
                   <span class="text-xs text-gray-400">Color del portal</span>
                 </div>
               </div>
               <div>
-                <label class="text-xs text-gray-500 font-medium">Logo (URL, opcional)</label>
+                <label class="text-xs text-gray-500 font-medium">Logo (URL, opcional) <span class="htip" title="Link a la imagen de tu logo (PNG/JPG). Aparece en el encabezado del portal. Si lo dejás vacío, usamos la inicial de tu agencia.">?</span></label>
                 <input id="portalLogo" type="url" placeholder="https://...logo.png" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
             </div>
@@ -1515,21 +1529,21 @@
               </summary>
               <div class="px-3 pb-3 pt-1 space-y-3">
                 <label class="flex items-center justify-between gap-3 cursor-pointer">
-                  <span class="text-xs text-gray-600">Permitir que Google indexe el portal</span>
+                  <span class="text-xs text-gray-600">Permitir que Google indexe el portal <span class="htip" title="Activado: Google y otros buscadores pueden mostrar tu portal en los resultados. Desactivalo solo si querés un portal privado que no aparezca en búsquedas.">?</span></span>
                   <button type="button" id="portalIndexToggle" onclick="togglePortalIndexing()" class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-indigo-500">
                     <span id="portalIndexKnob" class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform translate-x-4"></span>
                   </button>
                 </label>
                 <div>
-                  <label class="text-xs text-gray-500 font-medium">Meta título <span class="text-gray-300">(máx ~60 car.)</span></label>
+                  <label class="text-xs text-gray-500 font-medium">Meta título <span class="text-gray-300">(máx ~60 car.)</span> <span class="htip" title="El título azul que muestra Google en los resultados de búsqueda. Incluí tu agencia + zona. Ej: 'Inmobiliaria López — Casas en David, Chiriquí'. Si lo dejás vacío, se genera solo.">?</span></label>
                   <input id="portalMetaTitle" type="text" maxlength="70" placeholder="Inmobiliaria ABC — Propiedades en Panamá" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                 </div>
                 <div>
-                  <label class="text-xs text-gray-500 font-medium">Meta descripción <span class="text-gray-300">(máx ~160 car.)</span></label>
+                  <label class="text-xs text-gray-500 font-medium">Meta descripción <span class="text-gray-300">(máx ~160 car.)</span> <span class="htip" title="El texto gris debajo del título en Google. Resumí qué ofrecés para invitar al clic. Si lo dejás vacío, se genera automáticamente.">?</span></label>
                   <textarea id="portalMetaDesc" rows="2" maxlength="170" placeholder="Casas, departamentos y terrenos en venta y alquiler. Encontrá tu próxima propiedad con nosotros." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"></textarea>
                 </div>
                 <div>
-                  <label class="text-xs text-gray-500 font-medium">Palabras clave <span class="text-gray-300">(separadas por coma)</span></label>
+                  <label class="text-xs text-gray-500 font-medium">Palabras clave <span class="text-gray-300">(separadas por coma)</span> <span class="htip" title="Términos por los que querés que te encuentren. Pensá cómo buscaría un cliente: zonas + tipo de operación. Ej: 'casas en venta panamá, alquiler chiriquí, terrenos bocas del toro'.">?</span></label>
                   <input id="portalKeywords" type="text" placeholder="inmobiliaria panamá, casas en venta, alquiler" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                 </div>
                 <div>
@@ -1989,6 +2003,71 @@
 </div>
 
 <!-- Property Modal -->
+<!-- ── PORTAL GUIDE MODAL ──────────────────────────────────────────────────── -->
+<div id="portalGuideModal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+  <div class="card w-full max-w-2xl fade-in flex flex-col" style="max-height:90vh">
+    <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 flex-shrink-0">
+      <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        Guía: publicar y promocionar tu portal
+      </h3>
+      <button onclick="closePortalGuide()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="px-6 py-5 overflow-y-auto text-sm text-gray-600 leading-relaxed space-y-5">
+
+      <div>
+        <h4 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">1</span> Configurá tu portal</h4>
+        <p>En este mismo card completá <b>nombre, slug, color, WhatsApp</b> y subí imágenes de portada. Activá el toggle <b>Activo</b> y tocá <b>Guardar portal</b>. Tu portal queda en <code class="bg-gray-100 px-1 rounded">tudominio/portal/tu-slug</code>.</p>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">2</span> Publicá propiedades</h4>
+        <p>Andá a <b>Propiedades</b> y activá el toggle <b>"Portal público"</b> en cada una que quieras mostrar. Cargá la <b>dirección completa</b> para que el mapa y el SEO sean precisos.</p>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">3</span> SEO y visibilidad en Google</h4>
+        <p>En el desplegable <b>"SEO y visibilidad en Google"</b> dejá activada la indexación. Opcionalmente personalizá título, descripción y palabras clave (si los dejás vacíos, se generan solos).</p>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">4</span> Avisale a Google (Search Console)</h4>
+        <p>Entrá a <a href="https://search.google.com/search-console" target="_blank" class="text-indigo-600 hover:underline">Google Search Console</a>, agregá tu dominio y enviá tu sitemap:</p>
+        <p class="mt-1"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs break-all" id="guideSitemapUrl">tudominio/sitemap.xml</code></p>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">5</span> Google Business Profile</h4>
+        <p>Creá tu ficha en <a href="https://business.google.com" target="_blank" class="text-indigo-600 hover:underline">business.google.com</a> con dirección, teléfono y fotos, y poné el link de tu portal como sitio web. Es lo que más te hace aparecer en Google Maps y búsquedas locales.</p>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">6</span> Compartí en redes y WhatsApp</h4>
+        <p>Al pegar el link del portal o de una propiedad en WhatsApp, Instagram o Facebook, aparece una <b>tarjeta con foto, título y precio</b>. Compartí fichas individuales y poné el link del portal en tu bio de Instagram.</p>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">7</span> Medí las visitas (Google Analytics)</h4>
+        <p>Creá una propiedad GA4 en <a href="https://analytics.google.com" target="_blank" class="text-indigo-600 hover:underline">analytics.google.com</a>, copiá el <b>ID de medición</b> (<code class="bg-gray-100 px-1 rounded">G-XXXX</code>) y pegalo en el campo <b>"ID de Google Analytics"</b> del panel SEO. Vas a ver visitas, ubicación y dispositivos en tiempo real.</p>
+      </div>
+
+      <div class="rounded-xl bg-indigo-50 border border-indigo-100 p-4">
+        <p class="font-semibold text-indigo-900 mb-1">✅ Checklist rápido</p>
+        <ul class="list-disc list-inside text-indigo-800/90 space-y-0.5 text-xs">
+          <li>Portal activo + propiedades publicadas con dirección</li>
+          <li>SEO configurado e indexación activada</li>
+          <li>Sitemap enviado a Search Console</li>
+          <li>Google Business Profile creado y enlazado</li>
+          <li>Link del portal en Instagram y firma de WhatsApp</li>
+        </ul>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-gray-100 flex-shrink-0 flex justify-end">
+      <button onclick="closePortalGuide()" class="gradient-bg text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition">Entendido</button>
+    </div>
+  </div>
+</div>
+
 <div id="propertyModal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
   <div class="card w-full max-w-2xl fade-in flex flex-col" style="max-height:90vh">
     <!-- Header -->
@@ -2245,7 +2324,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '2.7.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '2.8.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -5904,6 +5983,15 @@ function _updateIndexToggleUI() {
 function togglePortalIndexing() {
   _portalAllowIndexing = !_portalAllowIndexing;
   _updateIndexToggleUI();
+}
+
+function openPortalGuide() {
+  const el = document.getElementById('guideSitemapUrl');
+  if (el) el.textContent = `${window.location.origin}/sitemap.xml`;
+  document.getElementById('portalGuideModal').classList.remove('hidden');
+}
+function closePortalGuide() {
+  document.getElementById('portalGuideModal').classList.add('hidden');
 }
 
 function renderHeroThumbs() {

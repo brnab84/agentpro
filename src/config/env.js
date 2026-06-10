@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '2.7.0'; // minor: GA4 analytics per portal + noindex on private app
+export const APP_VERSION = '2.8.0'; // minor: in-CRM portal guide modal + per-field help tooltips
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
