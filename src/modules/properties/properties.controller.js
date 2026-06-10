@@ -2,7 +2,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/AppError.js';
 import { getAnthropic } from '../../config/anthropic.js';
 import { env } from '../../config/env.js';
-import { renderPageHtml } from './render.service.js';
+import { renderPageHtml, headlessStatus } from './render.service.js';
 import * as service from './properties.service.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -392,8 +392,8 @@ export const importFromUrl = asyncHandler(async (req, res) => {
   const { url } = req.body;
   if (!url) throw new AppError('url is required', 400);
 
-  const headers = buildFetchHeaders(url);
-  const html    = await fetchHtml(url, headers);
+  const headers           = buildFetchHeaders(url);
+  const { html, method }  = await fetchHtml(url, headers);
 
   validateHtmlContent(html, url);
 
@@ -407,9 +407,12 @@ export const importFromUrl = asyncHandler(async (req, res) => {
   delete merged.photos;
 
   const fieldCount = Object.values(merged).filter(v => v != null && v !== '' && !(Array.isArray(v) && !v.length)).length;
-  console.log(`import-url: ${fieldCount} fields, ${photos.length} photos — ${url}`);
+  console.log(`import-url: ${fieldCount} fields, ${photos.length} photos, method=${method}, html=${html.length}b — ${url}`);
 
-  res.json({ ...merged, photos, sourceUrl: url });
+  res.json({
+    ...merged, photos, sourceUrl: url,
+    _debug: { method, htmlBytes: html.length, fields: fieldCount, photos: photos.length, headless: headlessStatus() },
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -453,14 +456,15 @@ async function fetchHtmlViaProvider(url) {
   return await response.text();
 }
 
+/** Returns { html, method } where method is headless | provider | direct. */
 async function fetchHtml(url, headers) {
   // 1) Self-hosted headless Chromium (renders JS galleries, no third party)
   if (env.useHeadless) {
     try {
       const rendered = await renderPageHtml(url);
       if (rendered && rendered.length > MIN_HTML_LENGTH) {
-        console.log('import-url: rendered with headless Chromium');
-        return rendered;
+        console.log('import-url: rendered with headless Chromium', rendered.length, 'bytes');
+        return { html: rendered, method: 'headless' };
       }
     } catch (err) {
       console.warn('import-url: headless render error, continuing:', err.message);
@@ -470,7 +474,7 @@ async function fetchHtml(url, headers) {
   if (env.scraperApiKey) {
     try {
       const html = await fetchHtmlViaProvider(url);
-      if (html && html.length > MIN_HTML_LENGTH) return html;
+      if (html && html.length > MIN_HTML_LENGTH) return { html, method: 'provider' };
       console.warn('import-url: provider returned little/no HTML, falling back to direct fetch');
     } catch (err) {
       console.warn('import-url: scraping provider failed, falling back to direct fetch:', err.message);
@@ -484,7 +488,7 @@ async function fetchHtml(url, headers) {
       redirect: 'follow',
     });
     if (!response.ok) console.warn(`import-url: HTTP ${response.status} for ${url} (proceeding anyway)`);
-    return await response.text();
+    return { html: await response.text(), method: 'direct' };
   } catch (err) {
     throw new AppError(`No se pudo acceder a la URL: ${err.message}`, 422);
   }

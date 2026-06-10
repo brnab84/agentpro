@@ -2623,7 +2623,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.13.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.13.1'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -3742,6 +3742,23 @@ async function importPropertyFromUrl() {
     if (data.photos?.length) { propPhotos = [...data.photos]; renderPhotosPreview(); showPropTab('photos'); }
     if (data.address || data.zone) refreshPropMap();
     showToast(`✅ Importado: ${data.title || 'propiedad'} · ${data.photos?.length || 0} fotos`);
+    // Diagnostic line (helps see whether the headless browser actually ran)
+    const d = data._debug;
+    if (d) {
+      const kb = Math.round((d.htmlBytes || 0) / 1024);
+      const hl = d.headless || {};
+      const method = d.method === 'headless' ? 'navegador propio ✅' : d.method === 'provider' ? 'proveedor' : 'fetch directo';
+      let diag = `Método: ${method} · ${kb} KB · ${d.fields} campos · ${d.photos} fotos`;
+      if (d.method !== 'headless') {
+        diag += hl.enabled
+          ? (hl.binaryExists ? ' · (headless activo pero no rindió)' : ' · ⚠️ Chromium NO instalado en el server')
+          : ' · headless apagado';
+      }
+      const el = document.getElementById('importError');
+      el.textContent = diag;
+      el.classList.remove('hidden');
+      el.style.color = '#6b7280';
+    }
   } catch(e) {
     errEl.textContent = e.message || 'No se pudo importar la URL';
     errEl.classList.remove('hidden');

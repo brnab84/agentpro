@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.13.0'; // feat: self-hosted headless Chromium for property import (Dockerfile + puppeteer-core)
+export const APP_VERSION = '3.13.1'; // chore: import diagnostics (method/html size/headless status) to debug ML+Encuentra24
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

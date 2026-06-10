@@ -11,6 +11,16 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
 
 let _unavailable = false; // remember if Chromium can't launch, to skip future tries
 
+/** Report whether headless rendering is enabled and the Chromium binary exists. */
+export function headlessStatus() {
+  return {
+    enabled: env.useHeadless,
+    path: env.chromiumPath,
+    binaryExists: env.chromiumPath ? existsSync(env.chromiumPath) : false,
+    markedUnavailable: _unavailable,
+  };
+}
+
 /** Render a URL with headless Chromium; returns HTML string or null. */
 export async function renderPageHtml(url) {
   if (!env.useHeadless || _unavailable) return null;
