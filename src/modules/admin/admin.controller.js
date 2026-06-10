@@ -17,6 +17,11 @@ export const updateTenant = asyncHandler(async (req, res) => {
   res.json(await service.updateTenant(req.params.id, { plan, status }));
 });
 
+/** POST /api/admin/tenants/:id/reset-password — reset owner password */
+export const resetPassword = asyncHandler(async (req, res) => {
+  res.json(await service.resetTenantPassword(req.params.id));
+});
+
 /** GET /api/admin/settings — configurable plan pricing */
 export const getSettings = asyncHandler(async (_req, res) => {
   res.json(await service.getSettings());

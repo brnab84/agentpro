@@ -1751,6 +1751,7 @@
                   <th class="px-3 py-3 font-medium">Alta</th>
                   <th class="px-3 py-3 font-medium">Último login</th>
                   <th class="px-3 py-3 font-medium">Estado</th>
+                  <th class="px-3 py-3 font-medium">Acciones</th>
                 </tr>
               </thead>
               <tbody id="admTenantsBody"></tbody>
@@ -2480,7 +2481,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.5.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.6.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6702,6 +6703,7 @@ function renderAdminTenants() {
           <option value="pro" ${t.plan==='pro'?'selected':''}>Pro</option>
           <option value="business" ${t.plan==='business'?'selected':''}>Business</option>
         </select>
+        ${t.comp ? '<span class="block mt-1 text-[10px] font-semibold text-amber-600">★ Cortesía</span>' : ''}
       </td>
       <td class="px-3 py-3 text-center text-gray-600">${t.users}</td>
       <td class="px-3 py-3 text-center text-gray-600">${t.properties}</td>
@@ -6711,6 +6713,11 @@ function renderAdminTenants() {
       <td class="px-3 py-3">
         <button onclick="adminToggleStatus('${t.id}', ${suspended})" class="text-xs font-semibold px-2.5 py-1 rounded-full ${suspended?'bg-red-100 text-red-600':'bg-green-100 text-green-700'}">
           ${suspended ? 'Suspendida' : 'Activa'}
+        </button>
+      </td>
+      <td class="px-3 py-3">
+        <button onclick="adminResetPassword('${t.id}', '${(t.ownerEmail||'').replace(/'/g,'')}')" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline whitespace-nowrap" title="Resetear contraseña del dueño">
+          🔑 Reset pass
         </button>
       </td>
     </tr>`;
@@ -6723,6 +6730,15 @@ async function adminSetPlan(id, plan) {
     const t = _adminTenants.find(x => x.id === id); if (t) t.plan = plan;
     showToast('Plan actualizado');
     loadAdmin();
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+}
+
+async function adminResetPassword(id, email) {
+  if (!confirm(`¿Resetear la contraseña de ${email || 'esta cuenta'}?\nSe generará una contraseña temporal que deberás compartir con el cliente.`)) return;
+  try {
+    const r = await api('POST', `/api/admin/tenants/${id}/reset-password`, {});
+    // Show in a prompt so the admin can copy it
+    window.prompt(`Contraseña temporal para ${r.email}\n\nCopiala y compartila con el cliente (pedile que la cambie luego):`, r.tempPassword);
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
 }
 

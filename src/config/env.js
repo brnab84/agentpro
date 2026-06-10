@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.5.0'; // feat: site-wide loading shimmer — all CRM tabs + landing prices (portal already had skeletons)
+export const APP_VERSION = '3.6.0'; // feat: admin reset password + courtesy (free) plan grants marked as comp
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

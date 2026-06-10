@@ -11,6 +11,7 @@ router.use(auth, requireAdmin);
 router.get  ('/overview',     controller.getOverview);
 router.get  ('/tenants',      controller.listTenants);
 router.patch('/tenants/:id',  controller.updateTenant);
+router.post ('/tenants/:id/reset-password', controller.resetPassword);
 router.get  ('/settings',     controller.getSettings);
 router.put  ('/settings',     controller.updateSettings);
 

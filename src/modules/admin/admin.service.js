@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { Tenant }   from '../../models/Tenant.js';
 import { User }     from '../../models/User.js';
 import { Property } from '../../models/Property.js';
@@ -148,6 +149,8 @@ export async function listTenants() {
       portalActive: !!t.portal?.active,
       portalSlug: t.slug || '',
       mrr: prices[t.plan || 'free'] || 0,
+      comp: t.billing?.provider === 'comp',
+      subStatus: t.billing?.subscriptionStatus || '',
     };
   });
 }
@@ -160,6 +163,17 @@ export async function updateTenant(tenantId, { plan, status }) {
   if (plan !== undefined) {
     if (!VALID_PLANS.includes(plan)) throw new AppError('Plan inválido', 400);
     tenant.plan = plan;
+    const hasRealSub = tenant.billing?.stripeSubscriptionId || tenant.billing?.mpPreapprovalId;
+    if (plan === 'free') {
+      // Clear a courtesy grant when downgrading to free
+      if (tenant.billing?.provider === 'comp') {
+        tenant.billing.provider = '';
+        tenant.billing.subscriptionStatus = '';
+      }
+    } else if (!hasRealSub) {
+      // Granting a paid plan without a real subscription = courtesy
+      tenant.billing = { ...(tenant.billing || {}), provider: 'comp', subscriptionStatus: 'comp' };
+    }
   }
   if (status !== undefined) {
     if (!VALID_STATUS.includes(status)) throw new AppError('Estado inválido', 400);
@@ -167,4 +181,22 @@ export async function updateTenant(tenantId, { plan, status }) {
   }
   await tenant.save();
   return { id: String(tenant._id), plan: tenant.plan, status: tenant.status };
+}
+
+/** Generate a readable temporary password. */
+function genTempPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let out = '';
+  for (let i = 0; i < 10; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
+/** Reset the owner's password to a generated temporary one (admin shares it). */
+export async function resetTenantPassword(tenantId) {
+  const owner = await User.findOne({ tenantId, role: 'owner' }).sort({ createdAt: 1 });
+  if (!owner) throw new AppError('No se encontró el dueño de la cuenta', 404);
+  const tempPassword = genTempPassword();
+  owner.passwordHash = await bcrypt.hash(tempPassword, 10);
+  await owner.save();
+  return { email: owner.email, tempPassword };
 }
