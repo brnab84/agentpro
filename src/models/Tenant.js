@@ -19,6 +19,7 @@ const tenantSchema = new mongoose.Schema(
       whatsapp:     { type: String, trim: true },
       email:        { type: String, trim: true },
       logoUrl:      { type: String, trim: true },
+      heroImages:   { type: [String], default: [] },
     },
   },
   { timestamps: true },

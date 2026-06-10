@@ -146,6 +146,11 @@ export async function savePortalConfig(tenantId, data) {
   const conflict = await Tenant.findOne({ slug: rawSlug, _id: { $ne: tenantId } });
   if (conflict) throw new AppError(`El slug "${rawSlug}" ya está en uso`, 409);
 
+  // Hero images: accept array of URLs, trim + drop empties, cap at 8
+  const heroImages = Array.isArray(p.heroImages)
+    ? p.heroImages.map(u => (u || '').trim()).filter(Boolean).slice(0, 8)
+    : [];
+
   tenant.slug = rawSlug;
   tenant.portal = {
     active:       Boolean(p.active),
@@ -155,6 +160,7 @@ export async function savePortalConfig(tenantId, data) {
     whatsapp:     p.whatsapp?.trim()      || '',
     email:        p.email?.trim()         || '',
     logoUrl:      p.logoUrl?.trim()       || '',
+    heroImages,
   };
 
   await tenant.save();
@@ -184,6 +190,7 @@ function buildPortalPublicConfig(tenant) {
     whatsapp:     tenant.portal?.whatsapp      || '',
     email:        tenant.portal?.email         || '',
     logoUrl:      tenant.portal?.logoUrl       || '',
+    heroImages:   tenant.portal?.heroImages    || [],
     slug:         tenant.slug,
   };
 }

@@ -1467,13 +1467,34 @@
                 <input id="portalEmail" type="email" placeholder="info@agencia.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
             </div>
-            <div>
-              <label class="text-xs text-gray-500 font-medium">Color principal</label>
-              <div class="flex items-center gap-3 mt-1">
-                <input id="portalColor" type="color" value="#6366F1" class="h-9 w-16 rounded-lg border border-gray-300 cursor-pointer p-1" />
-                <span class="text-xs text-gray-400">Color del portal público</span>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Color principal</label>
+                <div class="flex items-center gap-3 mt-1">
+                  <input id="portalColor" type="color" value="#6366F1" class="h-9 w-16 rounded-lg border border-gray-300 cursor-pointer p-1" />
+                  <span class="text-xs text-gray-400">Color del portal</span>
+                </div>
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Logo (URL, opcional)</label>
+                <input id="portalLogo" type="url" placeholder="https://...logo.png" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
             </div>
+
+            <!-- Hero carousel images -->
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Imágenes del portada (carrusel)</label>
+              <p class="text-xs text-gray-400 mt-0.5 mb-2">Pegá URLs de imágenes. Si no agregás ninguna, usamos imágenes inmobiliarias por defecto.</p>
+              <div class="flex gap-2">
+                <input id="portalHeroInput" type="url" placeholder="https://...imagen.jpg" onkeydown="if(event.key==='Enter'){event.preventDefault();addHeroImage();}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                <button type="button" onclick="addHeroImage()" class="px-3 py-2 text-sm font-medium rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  Agregar
+                </button>
+              </div>
+              <div id="portalHeroThumbs" class="flex flex-wrap gap-2 mt-3"></div>
+            </div>
+
             <!-- Link preview -->
             <div id="portalLinkPreview" class="hidden rounded-lg p-3 flex items-center justify-between gap-2" style="background:#F0F4FF;border:1px solid #C7D2FE">
               <div class="flex items-center gap-2 min-w-0">
@@ -2175,7 +2196,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '2.2.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '2.3.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -5820,6 +5841,34 @@ async function syncGoogleCalendar() {
 
 let _portalActive = false;
 let _portalSlug   = '';
+let _portalHeroImages = [];
+
+function renderHeroThumbs() {
+  const wrap = document.getElementById('portalHeroThumbs');
+  if (!wrap) return;
+  wrap.innerHTML = _portalHeroImages.map((url, i) => `
+    <div class="relative w-20 h-14 rounded-lg overflow-hidden border border-gray-200 group">
+      <img src="${url}" class="w-full h-full object-cover" onerror="this.parentElement.style.display='none'"/>
+      <button type="button" onclick="removeHeroImage(${i})" title="Quitar"
+        class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-xs">✕</button>
+    </div>`).join('');
+}
+
+function addHeroImage() {
+  const input = document.getElementById('portalHeroInput');
+  const url = input.value.trim();
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url)) { showToast('La URL debe empezar con http:// o https://', 'error'); return; }
+  if (_portalHeroImages.length >= 8) { showToast('Máximo 8 imágenes', 'error'); return; }
+  _portalHeroImages.push(url);
+  input.value = '';
+  renderHeroThumbs();
+}
+
+function removeHeroImage(i) {
+  _portalHeroImages.splice(i, 1);
+  renderHeroThumbs();
+}
 
 function openMyPortal() {
   closeUserMenu();
@@ -5842,6 +5891,9 @@ async function loadPortalConfig() {
     document.getElementById('portalWhatsapp').value    = cfg.portal?.whatsapp || '';
     document.getElementById('portalEmail').value       = cfg.portal?.email || '';
     document.getElementById('portalColor').value       = cfg.portal?.primaryColor || '#6366F1';
+    document.getElementById('portalLogo').value        = cfg.portal?.logoUrl || '';
+    _portalHeroImages = Array.isArray(cfg.portal?.heroImages) ? [...cfg.portal.heroImages] : [];
+    renderHeroThumbs();
     _updatePortalToggleUI(_portalActive);
     _updatePortalLink(_portalSlug);
     // Show "Ver portal" button in properties tab if slug exists
@@ -5885,6 +5937,8 @@ async function savePortalConfig(e) {
       primaryColor: document.getElementById('portalColor').value,
       whatsapp:     document.getElementById('portalWhatsapp').value.trim(),
       email:        document.getElementById('portalEmail').value.trim(),
+      logoUrl:      document.getElementById('portalLogo').value.trim(),
+      heroImages:   _portalHeroImages,
     }
   };
   try {

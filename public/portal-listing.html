@@ -30,6 +30,10 @@
     .wa-float:hover { transform: scale(1.07) }
     .fade-up { animation: fadeUp .5s ease both }
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    .hero-slide { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity 1.1s ease, transform 6s ease; transform:scale(1.05) }
+    .hero-slide.active { opacity:1; transform:scale(1.12) }
+    .hero-dot { width:8px; height:8px; border-radius:999px; background:rgba(255,255,255,.5); cursor:pointer; transition:all .2s }
+    .hero-dot.active { width:22px; background:#fff }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen antialiased text-gray-900">
@@ -51,25 +55,32 @@
   </div>
 </nav>
 
-<!-- ── HERO ──────────────────────────────────────────────────────────────────── -->
+<!-- ── HERO (carousel) ───────────────────────────────────────────────────────── -->
 <section id="hero" class="relative overflow-hidden text-white brand-grad">
-  <div class="absolute inset-0 hero-pattern opacity-60"></div>
-  <div class="relative max-w-4xl mx-auto px-4 py-16 sm:py-20 text-center">
+  <!-- Carousel slides -->
+  <div id="heroCarousel" class="absolute inset-0"></div>
+  <!-- Overlay for legibility -->
+  <div class="absolute inset-0" style="background:linear-gradient(135deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.35) 100%)"></div>
+  <div class="absolute inset-0 hero-pattern opacity-30"></div>
+  <!-- Content -->
+  <div class="relative max-w-4xl mx-auto px-4 py-20 sm:py-28 text-center">
     <div id="heroLogo" class="hidden w-16 h-16 rounded-2xl bg-white/15 backdrop-blur mx-auto mb-5 items-center justify-center overflow-hidden"></div>
-    <h1 id="heroTitle" class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3">Nuestras Propiedades</h1>
-    <p id="heroTagline" class="text-white/85 text-base sm:text-lg max-w-xl mx-auto"></p>
+    <h1 id="heroTitle" class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3 drop-shadow-lg">Nuestras Propiedades</h1>
+    <p id="heroTagline" class="text-white/90 text-base sm:text-lg max-w-xl mx-auto drop-shadow"></p>
     <div class="flex items-center justify-center gap-6 mt-8 text-sm">
       <div class="flex flex-col items-center">
-        <span id="heroCount" class="text-2xl sm:text-3xl font-extrabold">—</span>
-        <span class="text-white/70">Propiedades</span>
+        <span id="heroCount" class="text-2xl sm:text-3xl font-extrabold drop-shadow">—</span>
+        <span class="text-white/80">Propiedades</span>
       </div>
-      <div class="w-px h-10 bg-white/25"></div>
+      <div class="w-px h-10 bg-white/30"></div>
       <button onclick="scrollToContact()" class="flex flex-col items-center group">
-        <span class="text-2xl sm:text-3xl font-extrabold group-hover:scale-110 transition">💬</span>
-        <span class="text-white/70 group-hover:text-white transition">Asesoría gratis</span>
+        <span class="text-2xl sm:text-3xl font-extrabold group-hover:scale-110 transition drop-shadow">💬</span>
+        <span class="text-white/80 group-hover:text-white transition">Asesoría gratis</span>
       </button>
     </div>
   </div>
+  <!-- Carousel dots -->
+  <div id="heroDots" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10"></div>
 </section>
 
 <!-- ── FILTERS ────────────────────────────────────────────────────────────────── -->
@@ -156,6 +167,17 @@ let portal   = {};
 let filters  = { operation: '', type: '', zone: '', page: 1 };
 let totalPages = 1;
 
+// Default real-estate hero images (used when agency hasn't uploaded any)
+const DEFAULT_HERO_IMAGES = [
+  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80',
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80',
+];
+let _heroTimer = null;
+let _heroIdx   = 0;
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 /** Normalize a phone string into a wa.me-compatible international number. */
 function waNumber(raw) { return (raw || '').replace(/\D/g, '').replace(/^0+/, ''); }
@@ -210,6 +232,9 @@ function applyBranding(p) {
   document.getElementById('footerAgency').textContent  = p.agencyName || '';
   document.getElementById('footerContact').textContent = [p.whatsapp, p.email].filter(Boolean).join('  ·  ');
 
+  // Hero carousel (agency images or defaults)
+  initHeroCarousel(p.heroImages);
+
   // WhatsApp links (nav + floating button)
   const link = waLink(p.whatsapp, `Hola ${p.agencyName || ''}, vi su portal de propiedades y quiero más información.`);
   if (link) {
@@ -229,6 +254,38 @@ function applyBranding(p) {
     hl.innerHTML = `<img src="${p.logoUrl}" class="w-full h-full object-cover"/>`;
     hl.classList.remove('hidden'); hl.classList.add('flex');
   }
+}
+
+// ── Hero carousel ─────────────────────────────────────────────────────────────
+function initHeroCarousel(images) {
+  const imgs = (images && images.length) ? images : DEFAULT_HERO_IMAGES;
+  const track = document.getElementById('heroCarousel');
+  const dots  = document.getElementById('heroDots');
+  if (!track) return;
+
+  track.innerHTML = imgs.map((url, i) =>
+    `<div class="hero-slide ${i===0?'active':''}" style="background-image:url('${url}')"></div>`
+  ).join('');
+
+  // Single image → no dots / no autoplay
+  if (imgs.length <= 1) { dots.innerHTML = ''; return; }
+
+  dots.innerHTML = imgs.map((_, i) =>
+    `<button class="hero-dot ${i===0?'active':''}" onclick="goHeroSlide(${i})" aria-label="Imagen ${i+1}"></button>`
+  ).join('');
+
+  _heroIdx = 0;
+  clearInterval(_heroTimer);
+  _heroTimer = setInterval(() => goHeroSlide(_heroIdx + 1), 5000);
+}
+
+function goHeroSlide(idx) {
+  const slides = document.querySelectorAll('.hero-slide');
+  const dots   = document.querySelectorAll('.hero-dot');
+  if (!slides.length) return;
+  _heroIdx = (idx + slides.length) % slides.length;
+  slides.forEach((s, i) => s.classList.toggle('active', i === _heroIdx));
+  dots.forEach((d, i) => d.classList.toggle('active', i === _heroIdx));
 }
 
 /** Lighten/darken a hex color by percent (-100..100) */
