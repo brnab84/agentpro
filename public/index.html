@@ -1483,16 +1483,26 @@
 
             <!-- Hero carousel images -->
             <div>
-              <label class="text-xs text-gray-500 font-medium">Imágenes del portada (carrusel)</label>
-              <p class="text-xs text-gray-400 mt-0.5 mb-2">Pegá URLs de imágenes. Si no agregás ninguna, usamos imágenes inmobiliarias por defecto.</p>
+              <label class="text-xs text-gray-500 font-medium">Imágenes de portada (carrusel)</label>
+              <p class="text-xs text-gray-400 mt-0.5 mb-2">Subí tus fotos o pegá una URL. Si no agregás ninguna, usamos imágenes inmobiliarias por defecto.</p>
               <div class="flex gap-2">
                 <input id="portalHeroInput" type="url" placeholder="https://...imagen.jpg" onkeydown="if(event.key==='Enter'){event.preventDefault();addHeroImage();}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-                <button type="button" onclick="addHeroImage()" class="px-3 py-2 text-sm font-medium rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                  Agregar
+                <button type="button" onclick="addHeroImage()" class="px-3 py-2 text-sm font-medium rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition flex items-center gap-1 flex-shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                  URL
                 </button>
+                <button type="button" onclick="document.getElementById('portalHeroFile').click()" class="px-3 py-2 text-sm font-medium rounded-lg gradient-bg text-white hover:opacity-90 transition flex items-center gap-1 flex-shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  Subir
+                </button>
+                <input id="portalHeroFile" type="file" accept="image/*" multiple class="hidden" onchange="uploadHeroImages(this)" />
               </div>
+              <p class="text-xs text-gray-400 mt-2">💡 Imágenes gratis: <a href="https://unsplash.com/es/s/fotos/inmobiliaria" target="_blank" class="text-indigo-500 hover:underline">unsplash.com</a> o <a href="https://www.pexels.com/es-es/buscar/inmobiliaria/" target="_blank" class="text-indigo-500 hover:underline">pexels.com</a> → clic derecho en la foto → "Copiar dirección de imagen".</p>
               <div id="portalHeroThumbs" class="flex flex-wrap gap-2 mt-3"></div>
+              <div id="portalHeroUploading" class="hidden text-xs text-indigo-500 mt-2 flex items-center gap-2">
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg>
+                Procesando imágenes…
+              </div>
             </div>
 
             <!-- Link preview -->
@@ -2196,7 +2206,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '2.3.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '2.4.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -5868,6 +5878,50 @@ function addHeroImage() {
 function removeHeroImage(i) {
   _portalHeroImages.splice(i, 1);
   renderHeroThumbs();
+}
+
+/** Resize + compress an image File into a JPEG data URI (keeps payload small). */
+function compressImageFile(file, maxW = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Imagen inválida'));
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadHeroImages(input) {
+  const files = Array.from(input.files || []);
+  input.value = '';
+  if (!files.length) return;
+  const status = document.getElementById('portalHeroUploading');
+  status.classList.remove('hidden');
+  try {
+    for (const file of files) {
+      if (_portalHeroImages.length >= 8) { showToast('Máximo 8 imágenes', 'error'); break; }
+      if (!file.type.startsWith('image/')) continue;
+      const dataUri = await compressImageFile(file);
+      _portalHeroImages.push(dataUri);
+      renderHeroThumbs();
+    }
+  } catch (err) {
+    showToast('Error al procesar imagen: ' + err.message, 'error');
+  } finally {
+    status.classList.add('hidden');
+  }
 }
 
 function openMyPortal() {

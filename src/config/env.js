@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '2.3.0'; // minor: portal hero carousel + logo/hero image manager in CRM
+export const APP_VERSION = '2.4.0'; // minor: direct hero image upload (client-side compress) + image source tip
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
