@@ -2557,7 +2557,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.10.3'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.10.4'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6895,7 +6895,8 @@ function toggleHelpBot() {
   const open = panel.style.display === 'none' || !panel.style.display;
   panel.style.display = open ? 'flex' : 'none';
   if (open) {
-    if (!_helpHistory.length) {
+    // Show the welcome only once (when there are no messages yet on screen)
+    if (!document.getElementById('helpBotMsgs').children.length) {
       addHelpMsg('assistant', '¡Hola! 👋 Soy tu asistente. Preguntame cómo hacer cualquier cosa en AgentPro: publicar una propiedad, configurar tu portal, cobrar con un plan, etc.');
     }
     setTimeout(() => document.getElementById('helpBotInput')?.focus(), 100);

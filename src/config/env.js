@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.10.3'; // chore: "Powered by Anthropic" label in the help assistant
+export const APP_VERSION = '3.10.4'; // fix: help bot welcome message no longer duplicates on each open
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
