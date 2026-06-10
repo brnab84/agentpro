@@ -709,6 +709,11 @@
 
       <!-- ── LEADS ── -->
       <div id="tab-leads" class="tab-content hidden fade-in">
+        <div id="help-leads" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Acá ves todos tus prospectos. Creá uno con <b>"Nuevo lead"</b> (mínimo nombre + teléfono o email). La IA le pone un puntaje y te sugiere la próxima acción. <b>Ejemplo:</b> "Juan Pérez, +54 9 11 1234-5678, busca 2 ambientes en Palermo hasta USD 120.000".</p>
+          <button onclick="dismissHelp('help-leads')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex items-center justify-between mb-6">
           <div class="flex gap-2">
             <input id="leadSearch" type="text" placeholder="Buscar lead..." onkeyup="filterLeads()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64" />
@@ -755,6 +760,11 @@
 
       <!-- ── AGENDA ── -->
       <div id="tab-agenda" class="tab-content hidden fade-in">
+        <div id="help-agenda" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Tu calendario de visitas. Tocá <b>"Nueva Cita"</b> para agendar. Para sincronizar con tu Google, andá a <b>Equipo → Google Calendar → Conectar</b>. <b>Ejemplo:</b> "Visita depto Av. Centro, mañana 16:00, con Ana Torres".</p>
+          <button onclick="dismissHelp('help-agenda')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-4">
             <button onclick="calPrev()" class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition">
@@ -794,6 +804,11 @@
 
       <!-- ── PROPERTIES ── -->
       <div id="tab-properties" class="tab-content hidden fade-in">
+        <div id="help-properties" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Tu inventario. Cargá a mano con <b>"Nueva Propiedad"</b>, o pegá un link de <b>MercadoLibre/ZonaProp</b> en la barra de importar y se completa solo (fotos, precio, etc.). Activá el toggle <b>"Portal público"</b> en una tarjeta para mostrarla en tu portal. <b>Tip:</b> cargá la dirección completa para que el mapa salga bien.</p>
+          <button onclick="dismissHelp('help-properties')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex justify-between mb-6">
           <div class="flex items-center gap-3">
             <p class="text-sm text-gray-500">Inventario de propiedades</p>
@@ -813,6 +828,11 @@
 
       <!-- ── PIPELINE ── -->
       <div id="tab-pipeline" class="tab-content hidden fade-in">
+        <div id="help-pipeline" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Tablero de tus leads por etapa. <b>Arrastrá</b> una tarjeta entre columnas para mover el lead (Nuevo → Calificado → Visita → Cerrado). El <b>lápiz (✏️)</b> en la tarjeta abre el lead para editarlo. Arriba de cada columna ves el valor estimado.</p>
+          <button onclick="dismissHelp('help-pipeline')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex items-center justify-between mb-5">
           <div>
             <h2 class="text-xl font-bold" style="color:var(--text-1)">Pipeline</h2>
@@ -889,6 +909,11 @@
 
       <!-- ── Campañas ── -->
       <div id="tab-campaigns" class="tab-content hidden fade-in">
+        <div id="help-campaigns" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Envíos masivos a tus leads. Tocá <b>"Nueva campaña"</b>, escribí el mensaje y elegí a quién. Queda en <b>Borrador</b>; cuando la revisás tocás <b>"🚀 Enviar"</b>. <b>Ojo WhatsApp:</b> fuera de las 24hs necesitás una plantilla aprobada (ver "Plantillas WhatsApp").</p>
+          <button onclick="dismissHelp('help-campaigns')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex items-center justify-between mb-4">
           <div>
             <h2 class="page-title">Campañas</h2>
@@ -1029,6 +1054,11 @@
 
       <!-- ── Mis Números WA ── -->
       <div id="tab-phones" class="tab-content hidden fade-in">
+        <div id="help-phones" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Tus números de WhatsApp Business. <b>"Agregar número"</b> y pegás el <b>Phone Number ID</b> que te da Meta. <b>Dónde está:</b> Meta for Developers → WhatsApp → API Setup. <b>Ejemplo:</b> 109876543210987.</p>
+          <button onclick="dismissHelp('help-phones')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex items-center justify-between mb-6">
           <div>
             <h2 class="page-title">Mis Números</h2>
@@ -1049,6 +1079,11 @@
 
       <!-- ── Plantillas WhatsApp ── -->
       <div id="tab-templates" class="tab-content hidden fade-in">
+        <div id="help-templates" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Plantillas (HSM) aprobadas por Meta: las necesitás para escribirle a alguien por WhatsApp <b>pasadas 24hs</b> de su último mensaje. Tocá <b>"Sincronizar con Meta"</b> para traer las aprobadas. <b>Ejemplo de uso:</b> recordatorio de visita o seguimiento.</p>
+          <button onclick="dismissHelp('help-templates')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex items-center justify-between mb-6">
           <div>
             <h2 class="page-title">Plantillas WhatsApp</h2>
@@ -1257,6 +1292,11 @@
       <!-- ── EQUIPO ── -->
       <!-- ── Funnels ── -->
       <div id="tab-funnels" class="tab-content hidden fade-in">
+        <div id="help-funnels" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Flujos automáticos que califican leads por WhatsApp con IA. Tocá <b>"Nuevo Funnel"</b> y seguí los pasos: poné una <b>palabra clave</b> (ej: <b>INFO</b>) → cuando alguien la escribe, el bot conversa y lo califica. Podés subir un <b>PDF de contexto</b> (ej: tu lista de precios) para que responda con esos datos.</p>
+          <button onclick="dismissHelp('help-funnels')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex items-center justify-between mb-4">
           <div>
             <h2 class="page-title">Funnels / Perfilamientos</h2>
@@ -1360,6 +1400,11 @@
 
       <!-- ── Mis Emails ── -->
       <div id="tab-email-accounts" class="tab-content hidden fade-in">
+        <div id="help-email-accounts" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Conectá tu email por <b>SMTP</b> para enviar correos desde AgentPro. Tocá <b>"Agregar cuenta"</b>. <b>Ejemplo Gmail:</b> servidor <code style="background:#fff;padding:0 3px;border-radius:3px">smtp.gmail.com</code>, puerto <b>587</b>, y una <b>"contraseña de aplicación"</b> (no tu clave normal — se genera en la seguridad de tu cuenta Google).</p>
+          <button onclick="dismissHelp('help-email-accounts')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex items-center justify-between mb-6">
           <div>
             <h2 class="page-title">Mis Emails</h2>
@@ -1388,6 +1433,11 @@
 
       <!-- ── Mis Firmas ── -->
       <div id="tab-email-signatures" class="tab-content hidden fade-in">
+        <div id="help-email-signatures" data-help class="rounded-xl px-3.5 py-2.5 mb-5 flex items-start gap-2.5" style="background:#F5F3FF;border:1px solid #DDD6FE">
+          <span style="font-size:15px">💡</span>
+          <p class="flex-1 text-xs" style="color:#5b21b6;line-height:1.5">Firmas que se agregan solas al final de tus correos. Tocá <b>"Nueva firma"</b>. <b>Ejemplo:</b> "Bernardo González · Asesor inmobiliario · 📱 +54 9 11 1234-5678 · Inmobiliaria Canaima".</p>
+          <button onclick="dismissHelp('help-email-signatures')" title="No mostrar de nuevo" style="background:none;border:none;cursor:pointer;color:#a78bda;font-size:14px;flex-shrink:0">✕</button>
+        </div>
         <div class="flex items-center justify-between mb-6">
           <div>
             <h2 class="page-title">Mis Firmas</h2>
@@ -2557,7 +2607,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.10.4'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.11.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -2640,6 +2690,7 @@ function showApp() {
   document.getElementById('registerPage').classList.add('hidden');
   document.getElementById('appPage').classList.remove('hidden');
   document.getElementById('helpBot')?.classList.remove('hidden');
+  initHelpBanners();
   document.getElementById('userLabel').textContent = currentUser?.name || '';
   document.getElementById('userAvatar').textContent = (currentUser?.name || 'U')[0].toUpperCase();
   const roleDisplay = currentUser?.role === 'owner' ? 'Propietario' : currentUser?.role === 'agent' ? 'Agente' : currentUser?.role || '';
@@ -6885,6 +6936,18 @@ async function adminToggleStatus(id, isSuspended) {
     renderAdminTenants();
     showToast(status === 'suspended' ? 'Cuenta suspendida' : 'Cuenta reactivada');
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
+}
+
+// ── Contextual help banners (dismissible, remembered) ─────────────────────────
+function dismissHelp(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+  try { localStorage.setItem('help_' + id, '1'); } catch {}
+}
+function initHelpBanners() {
+  document.querySelectorAll('[data-help]').forEach(el => {
+    try { if (localStorage.getItem('help_' + el.id)) el.style.display = 'none'; } catch {}
+  });
 }
 
 // ── Help assistant (Claude) ───────────────────────────────────────────────────

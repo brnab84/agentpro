@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.10.4'; // fix: help bot welcome message no longer duplicates on each open
+export const APP_VERSION = '3.11.0'; // feat: dismissible contextual help banners with examples on each section
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
