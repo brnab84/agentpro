@@ -2,6 +2,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/AppError.js';
 import { getAnthropic } from '../../config/anthropic.js';
 import { env } from '../../config/env.js';
+import { renderPageHtml } from './render.service.js';
 import * as service from './properties.service.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -453,7 +454,19 @@ async function fetchHtmlViaProvider(url) {
 }
 
 async function fetchHtml(url, headers) {
-  // Prefer the rendering provider when available (handles JS galleries + Cloudflare)
+  // 1) Self-hosted headless Chromium (renders JS galleries, no third party)
+  if (env.useHeadless) {
+    try {
+      const rendered = await renderPageHtml(url);
+      if (rendered && rendered.length > MIN_HTML_LENGTH) {
+        console.log('import-url: rendered with headless Chromium');
+        return rendered;
+      }
+    } catch (err) {
+      console.warn('import-url: headless render error, continuing:', err.message);
+    }
+  }
+  // 2) External rendering provider, if configured (handles hard Cloudflare)
   if (env.scraperApiKey) {
     try {
       const html = await fetchHtmlViaProvider(url);
@@ -463,6 +476,7 @@ async function fetchHtml(url, headers) {
       console.warn('import-url: scraping provider failed, falling back to direct fetch:', err.message);
     }
   }
+  // 3) Plain direct fetch
   try {
     const response = await fetch(url, {
       headers,

@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.12.0'; // feat: property import via JS-rendering scraper provider + richer image extraction
+export const APP_VERSION = '3.13.0'; // feat: self-hosted headless Chromium for property import (Dockerfile + puppeteer-core)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
@@ -58,4 +58,8 @@ export const env = {
   // Property import — JS-rendering scraping provider (bypasses Cloudflare / lazy images)
   scraperApiKey:        process.env.SCRAPER_API_KEY || '',
   scraperProvider:      process.env.SCRAPER_PROVIDER || 'scraperapi', // 'scraperapi' | 'scrapingbee'
+
+  // Property import — self-hosted headless Chromium (renders JS galleries)
+  useHeadless:          process.env.USE_HEADLESS !== 'false', // on by default; needs system Chromium
+  chromiumPath:         process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
 };
