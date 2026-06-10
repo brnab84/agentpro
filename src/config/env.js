@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.2.1'; // fix: logged-in plan CTA routes to billing section instead of dashboard
+export const APP_VERSION = '3.2.2'; // feat: register screen shows chosen plan + create-then-pay flow
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
