@@ -167,3 +167,4 @@ Aparece "Admin" en el menú si tu email está autorizado (variable ADMIN_EMAILS)
 - "No me deja crear más propiedades/leads/usuarios": llegaste al límite de tu plan; mejoralo en Plan y facturación.
 - "Quiero conectar WhatsApp": configurá el Phone Number ID en Equipo → Configuración de canales.
 - "Cómo creo un funnel": Funnels → Nuevo Funnel → seguí los pasos del asistente (palabra clave, perfiles, flujo, contexto, activar).
+- "Importé un link y trae pocas/ninguna foto o falla": algunos portales (MercadoLibre, ZonaProp, Encuentra24) cargan las fotos con JavaScript y bloquean robots. Si el administrador configuró el servicio de scraping con render de JS (variable SCRAPER_API_KEY), la importación mejora mucho y trae la galería completa. Si no está configurado, copiá los datos a mano o probá con otra URL.

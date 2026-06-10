@@ -127,8 +127,23 @@ function extractPhotosFromHtml(html) {
     if (match[1].startsWith('http') && /\.(jpg|jpeg|png|webp)(\?|$)/i.test(match[1])) photos.add(match[1]);
   }
 
-  // JSON string values containing image URLs
-  for (const match of html.matchAll(/"(https?:\/\/[^"]{15,}\.(jpg|jpeg|png|webp)(?:\?[^"]{0,120})?)"/gi)) photos.add(match[1]);
+  // srcset (responsive galleries): take each candidate URL
+  for (const match of html.matchAll(/srcset=["']([^"']+)["']/gi)) {
+    for (const part of match[1].split(',')) {
+      const u = part.trim().split(/\s+/)[0];
+      if (u?.startsWith('http') && /\.(jpg|jpeg|png|webp|avif)(\?|$)/i.test(u)) photos.add(u);
+    }
+  }
+
+  // JSON string values containing image URLs (keys: url/src/image/thumbnail/...)
+  for (const match of html.matchAll(/"(?:url|src|image|imageUrl|image_url|thumbnail|picture|photo)"\s*:\s*"(https?:\/\/[^"]{15,})"/gi)) {
+    if (/\.(jpg|jpeg|png|webp|avif)(\?|\\u|$)/i.test(match[1])) photos.add(match[1].replace(/\\\//g, '/'));
+  }
+
+  // Bare image URLs anywhere in scripts/JSON
+  for (const match of html.matchAll(/"(https?:\/\/[^"]{15,}\.(jpg|jpeg|png|webp|avif)(?:\?[^"]{0,120})?)"/gi)) {
+    photos.add(match[1].replace(/\\\//g, '/'));
+  }
 
   return [...photos].filter(isValidPhoto).slice(0, MAX_PHOTOS_HARVEST);
 }
@@ -410,11 +425,44 @@ function buildFetchHeaders(url) {
     headers['Cookie']  = '';
   } else if (/argenprop\.com/i.test(url)) {
     headers['Referer'] = 'https://www.argenprop.com/';
+  } else if (/encuentra24\.com/i.test(url)) {
+    headers['Referer'] = 'https://www.encuentra24.com/';
   }
   return headers;
 }
 
+/**
+ * Fetch the page HTML through a JS-rendering scraping provider (ScraperAPI or
+ * ScrapingBee). These render JavaScript and rotate residential proxies, so they
+ * get the full gallery and bypass Cloudflare. Returns null if not configured.
+ */
+async function fetchHtmlViaProvider(url) {
+  if (!env.scraperApiKey) return null;
+  const key = env.scraperApiKey;
+  let apiUrl;
+  if (env.scraperProvider === 'scrapingbee') {
+    apiUrl = `https://app.scrapingbee.com/api/v1/?api_key=${key}` +
+      `&url=${encodeURIComponent(url)}&render_js=true&premium_proxy=true&wait=3000`;
+  } else { // scraperapi (default)
+    apiUrl = `https://api.scraperapi.com/?api_key=${key}` +
+      `&url=${encodeURIComponent(url)}&render=true&country_code=us`;
+  }
+  const response = await fetch(apiUrl, { signal: AbortSignal.timeout(70_000) });
+  if (!response.ok) throw new Error(`proveedor de scraping HTTP ${response.status}`);
+  return await response.text();
+}
+
 async function fetchHtml(url, headers) {
+  // Prefer the rendering provider when available (handles JS galleries + Cloudflare)
+  if (env.scraperApiKey) {
+    try {
+      const html = await fetchHtmlViaProvider(url);
+      if (html && html.length > MIN_HTML_LENGTH) return html;
+      console.warn('import-url: provider returned little/no HTML, falling back to direct fetch');
+    } catch (err) {
+      console.warn('import-url: scraping provider failed, falling back to direct fetch:', err.message);
+    }
+  }
   try {
     const response = await fetch(url, {
       headers,
