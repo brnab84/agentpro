@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '2.1.0'; // minor: public property portal + CRM portal settings
+export const APP_VERSION = '2.2.0'; // minor: pro portal redesign + WhatsApp fix (save bug + float button)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

@@ -8,22 +8,31 @@
   <meta id="ogDesc"    property="og:description" content=""/>
   <meta id="ogImage"   property="og:image"        content=""/>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236366F1'/%3E%3Cpath d='M32 14 L50 30 L46 30 L46 50 L18 50 L18 30 L14 30 Z' fill='white'/%3E%3C/svg%3E"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root { --primary: #6366F1 }
+    body { font-family:'Plus Jakarta Sans', system-ui, sans-serif }
+    :root { --primary: #6366F1; --primary-dark: #4F46E5 }
     .brand-bg   { background: var(--primary) }
     .brand-text { color: var(--primary) }
-    .thumb { cursor:pointer; transition: opacity .15s; border: 2px solid transparent }
+    .brand-grad { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) }
+    .thumb { cursor:pointer; transition: opacity .15s, transform .15s; border: 2px solid transparent }
     .thumb.active { border-color: var(--primary); opacity:1 }
-    .thumb:not(.active) { opacity:.65 }
-    .thumb:not(.active):hover { opacity:.9 }
+    .thumb:not(.active) { opacity:.6 }
+    .thumb:not(.active):hover { opacity:.95; transform: translateY(-1px) }
     .photo-placeholder { background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%) }
     .skeleton { animation: pulse 1.5s ease-in-out infinite; background: #e5e7eb; border-radius:8px }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .feature-chip { background:#F3F4F6; color:#374151; border-radius:999px; font-size:12px; font-weight:600; padding:4px 12px; display:inline-block }
+    .feature-chip { background:#F3F4F6; color:#374151; border-radius:999px; font-size:12px; font-weight:600; padding:6px 14px; display:inline-flex; align-items:center; gap:5px }
+    .feature-chip::before { content:'✓'; color:var(--primary); font-weight:800 }
+    .wa-float { box-shadow: 0 8px 24px rgba(37,211,102,.45); animation: wa-pop .4s ease }
+    @keyframes wa-pop { 0%{transform:scale(0)} 70%{transform:scale(1.12)} 100%{transform:scale(1)} }
+    .wa-float:hover { transform: scale(1.07) }
+    #mainPhoto { cursor: zoom-in }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans antialiased">
+<body class="bg-gray-50 min-h-screen antialiased text-gray-900">
 
 <!-- ── NAVBAR ─────────────────────────────────────────────────────────────── -->
 <nav id="navbar" class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
@@ -33,7 +42,8 @@
       Volver
     </a>
     <div class="w-px h-5 bg-gray-200"></div>
-    <span id="navAgencyName" class="font-bold text-gray-900 text-sm"></span>
+    <div id="navLogoImg" class="w-8 h-8 rounded-lg brand-grad flex items-center justify-center text-white font-extrabold text-sm flex-shrink-0">A</div>
+    <span id="navAgencyName" class="font-extrabold text-gray-900 text-sm tracking-tight"></span>
     <div class="ml-auto flex items-center gap-2">
       <a id="navWhatsApp" href="#" target="_blank" class="hidden sm:flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition">
         <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
@@ -87,9 +97,15 @@
       </div>
 
       <!-- Price -->
-      <div class="mb-6 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Precio</p>
-        <p id="propPrice" class="text-3xl font-bold brand-text"></p>
+      <div class="mb-6 p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between" style="background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(124,58,237,.04))">
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Precio</p>
+          <p id="propPrice" class="text-3xl font-extrabold brand-text"></p>
+        </div>
+        <a id="priceWa" href="#" target="_blank" rel="noopener" class="hidden sm:flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe5a] text-white text-sm font-bold px-4 py-2.5 rounded-xl transition shadow-sm">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+          Consultar
+        </a>
       </div>
 
       <!-- Stats grid -->
@@ -125,7 +141,7 @@
             <input id="cPhone" type="tel"   placeholder="Teléfono / WhatsApp *" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2"/>
             <input id="cEmail" type="email" placeholder="Email (opcional)" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2"/>
             <textarea id="cMsg" rows="2" placeholder="¿Algún mensaje?" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 resize-none"></textarea>
-            <button type="submit" id="contactBtn" class="w-full brand-bg text-white font-bold text-sm py-3 rounded-xl hover:opacity-90 transition">Enviar consulta</button>
+            <button type="submit" id="contactBtn" class="w-full brand-grad text-white font-bold text-sm py-3 rounded-xl hover:opacity-90 transition shadow-sm">Enviar consulta</button>
             <div id="contactSuccess" class="hidden text-center text-xs text-green-600 font-medium py-1">✅ ¡Consulta enviada!</div>
             <div id="contactError"   class="hidden text-center text-xs text-red-500 py-1"></div>
           </form>
@@ -143,9 +159,17 @@
   </div>
 </main>
 
-<footer class="bg-gray-900 text-gray-400 py-6 px-4 text-center mt-12">
-  <p class="text-xs">Powered by <a href="/landing" class="text-indigo-400 hover:underline">AgentPro</a></p>
+<footer class="bg-gray-900 text-gray-400 py-8 px-4 text-center mt-12">
+  <p id="footerAgency" class="font-bold text-white mb-1"></p>
+  <p class="text-xs text-gray-500">Powered by <a href="/landing" class="text-indigo-400 hover:underline font-medium">AgentPro</a></p>
 </footer>
+
+<!-- ── FLOATING WHATSAPP ──────────────────────────────────────────────────────── -->
+<a id="waFloat" href="#" target="_blank" rel="noopener"
+   class="hidden fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#1ebe5a] text-white flex items-center justify-center wa-float transition"
+   title="Consultar por WhatsApp" aria-label="WhatsApp">
+  <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+</a>
 
 <script>
 const pathParts = location.pathname.split('/');
@@ -161,6 +185,23 @@ const OP_COLORS     = { sale:'bg-blue-100 text-blue-700', rent:'bg-green-100 tex
 const STATUS_LABELS = { available:'Disponible', reserved:'Reservada', sold:'Vendida' };
 const STATUS_COLORS = { available:'bg-green-100 text-green-700', reserved:'bg-amber-100 text-amber-700', sold:'bg-red-100 text-red-500' };
 
+// ── WhatsApp / color helpers ──────────────────────────────────────────────────
+function waNumber(raw) { return (raw || '').replace(/\D/g, '').replace(/^0+/, ''); }
+function waLink(raw, text) {
+  const n = waNumber(raw);
+  if (!n) return '';
+  return `https://wa.me/${n}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}
+function shade(hex, pct) {
+  const n = parseInt((hex||'').replace('#',''), 16);
+  if (isNaN(n)) return hex;
+  let r = (n>>16)&255, g = (n>>8)&255, b = n&255; const f = pct/100;
+  r = Math.round(r + (f<0 ? r : 255-r)*f);
+  g = Math.round(g + (f<0 ? g : 255-g)*f);
+  b = Math.round(b + (f<0 ? b : 255-b)*f);
+  return '#' + [r,g,b].map(x => Math.max(0,Math.min(255,x)).toString(16).padStart(2,'0')).join('');
+}
+
 async function init() {
   if (!slug || !propId) { showError('URL inválida'); return; }
   try {
@@ -174,16 +215,28 @@ async function init() {
 
 function applyBranding(p) {
   document.documentElement.style.setProperty('--primary', p.primaryColor || '#6366F1');
-  document.getElementById('navAgencyName').textContent = p.agencyName;
+  document.documentElement.style.setProperty('--primary-dark', shade(p.primaryColor || '#6366F1', -18));
+  document.getElementById('navAgencyName').textContent = p.agencyName || '';
+  document.getElementById('navLogoImg').textContent    = (p.agencyName||'A')[0].toUpperCase();
   document.getElementById('backLink').href = `/portal/${slug}`;
-  if (p.whatsapp) {
-    const wa = document.getElementById('navWhatsApp');
-    wa.href = `https://wa.me/${p.whatsapp.replace(/\D/g,'')}`;
-    wa.classList.remove('hidden');
-  }
-  document.getElementById('agencyName').textContent  = p.agencyName;
+  document.getElementById('agencyName').textContent  = p.agencyName || '';
   document.getElementById('agencyEmail').textContent = p.email  || '';
   document.getElementById('agencyPhone').textContent = p.whatsapp ? '📱 ' + p.whatsapp : '';
+  const fa = document.getElementById('footerAgency'); if (fa) fa.textContent = p.agencyName || '';
+
+  // Logo
+  if (p.logoUrl) {
+    const img = document.createElement('img');
+    img.src = p.logoUrl; img.className = 'w-8 h-8 rounded-lg object-cover flex-shrink-0';
+    document.getElementById('navLogoImg').replaceWith(img);
+  }
+
+  // Nav WhatsApp (generic, no property text yet — refined in renderProperty)
+  const generic = waLink(p.whatsapp, `Hola ${p.agencyName || ''}, quiero más información.`);
+  if (generic) {
+    const wa = document.getElementById('navWhatsApp');
+    wa.href = generic; wa.classList.remove('hidden');
+  }
 }
 
 function renderProperty(p, portal) {
@@ -263,12 +316,17 @@ function renderProperty(p, portal) {
     document.getElementById('noPhoto').classList.remove('hidden');
   }
 
-  // WhatsApp CTA
-  if (portal.whatsapp) {
-    const text = encodeURIComponent(`Hola, me interesa la propiedad: ${p.title} — ${location.href}`);
+  // WhatsApp CTA + floating button + nav (all with property-specific message)
+  const link = waLink(portal.whatsapp, `Hola ${portal.agencyName || ''}, me interesa la propiedad: "${p.title}" — ${location.href}`);
+  if (link) {
     const waCta = document.getElementById('waCta');
-    waCta.href = `https://wa.me/${portal.whatsapp.replace(/\D/g,'')}?text=${text}`;
-    waCta.classList.remove('hidden');
+    waCta.href = link; waCta.classList.remove('hidden');
+    const flo = document.getElementById('waFloat');
+    flo.href = link; flo.classList.remove('hidden');
+    const nav = document.getElementById('navWhatsApp');
+    nav.href = link; nav.classList.remove('hidden');
+    const pw = document.getElementById('priceWa');
+    if (pw) { pw.href = link; pw.classList.remove('hidden'); }
   }
 }
 

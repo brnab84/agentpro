@@ -135,6 +135,10 @@ export async function savePortalConfig(tenantId, data) {
   const tenant = await Tenant.findById(tenantId);
   if (!tenant) throw new AppError('Tenant no encontrado', 404);
 
+  // Accept portal fields either nested under `portal` (current frontend) or
+  // at the top level (legacy), so both shapes work.
+  const p = data.portal || data;
+
   // Build and validate slug
   const rawSlug = data.slug?.trim() ? buildSlug(data.slug) : buildSlug(tenant.name);
 
@@ -144,13 +148,13 @@ export async function savePortalConfig(tenantId, data) {
 
   tenant.slug = rawSlug;
   tenant.portal = {
-    active:       Boolean(data.active),
-    agencyName:   data.agencyName?.trim()   || tenant.name,
-    tagline:      data.tagline?.trim()       || '',
-    primaryColor: data.primaryColor?.trim()  || '#6366F1',
-    whatsapp:     data.whatsapp?.trim()      || '',
-    email:        data.email?.trim()         || '',
-    logoUrl:      data.logoUrl?.trim()       || '',
+    active:       Boolean(p.active),
+    agencyName:   p.agencyName?.trim()   || tenant.name,
+    tagline:      p.tagline?.trim()       || '',
+    primaryColor: p.primaryColor?.trim()  || '#6366F1',
+    whatsapp:     p.whatsapp?.trim()      || '',
+    email:        p.email?.trim()         || '',
+    logoUrl:      p.logoUrl?.trim()       || '',
   };
 
   await tenant.save();

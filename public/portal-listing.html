@@ -6,61 +6,82 @@
   <title id="pageTitle">Propiedades</title>
   <meta id="pageDesc" name="description" content="Listado de propiedades"/>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236366F1'/%3E%3Cpath d='M32 14 L50 30 L46 30 L46 50 L18 50 L18 30 L14 30 Z' fill='white'/%3E%3C/svg%3E"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html { scroll-behavior:smooth }
-    :root { --primary: #6366F1 }
-    .brand-bg  { background: var(--primary) }
-    .brand-text{ color: var(--primary) }
-    .brand-border{ border-color: var(--primary) }
-    .card-hover { transition: transform .18s ease, box-shadow .18s ease }
-    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,.1) }
+    body { font-family:'Plus Jakarta Sans', system-ui, sans-serif }
+    :root { --primary: #6366F1; --primary-dark: #4F46E5 }
+    .brand-bg   { background: var(--primary) }
+    .brand-text { color: var(--primary) }
+    .brand-grad { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) }
+    .card-hover { transition: transform .22s ease, box-shadow .22s ease }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(17,24,39,.12) }
+    .card-hover:hover .card-img { transform: scale(1.06) }
+    .card-img { transition: transform .5s ease }
     .filter-chip { transition: all .15s; cursor:pointer; user-select:none }
-    .filter-chip.active { color:#fff }
     .skeleton { animation: pulse 1.5s ease-in-out infinite; background: #e5e7eb; border-radius:8px }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     .photo-placeholder { background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%) }
+    .hero-pattern { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.18) 1px, transparent 0); background-size: 22px 22px }
+    .wa-float { box-shadow: 0 8px 24px rgba(37,211,102,.45); animation: wa-pop .4s ease }
+    @keyframes wa-pop { 0%{transform:scale(0)} 70%{transform:scale(1.12)} 100%{transform:scale(1)} }
+    .wa-float:hover { transform: scale(1.07) }
+    .fade-up { animation: fadeUp .5s ease both }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans antialiased">
+<body class="bg-gray-50 min-h-screen antialiased text-gray-900">
 
 <!-- ── NAVBAR ─────────────────────────────────────────────────────────────── -->
-<nav id="navbar" class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
-  <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+<nav id="navbar" class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
     <a id="navLogo" href="#" class="flex items-center gap-2.5 flex-shrink-0">
-      <div id="navLogoImg" class="w-8 h-8 rounded-xl brand-bg flex items-center justify-center text-white font-bold text-sm">A</div>
-      <span id="navAgencyName" class="font-bold text-gray-900 text-lg hidden sm:block">Agencia</span>
+      <div id="navLogoImg" class="w-9 h-9 rounded-xl brand-grad flex items-center justify-center text-white font-extrabold text-base shadow-sm">A</div>
+      <span id="navAgencyName" class="font-extrabold text-gray-900 text-lg tracking-tight hidden sm:block">Agencia</span>
     </a>
-    <div class="flex items-center gap-3 ml-auto">
-      <a id="navWhatsApp" href="#" target="_blank" class="hidden sm:flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition">
-        <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+    <div class="flex items-center gap-2 sm:gap-3 ml-auto">
+      <a id="navWhatsApp" href="#" target="_blank" rel="noopener" class="hidden sm:flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-green-600 transition">
+        <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
         WhatsApp
       </a>
-      <button onclick="scrollToContact()" class="brand-bg text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition">Contactar</button>
+      <button onclick="scrollToContact()" class="brand-grad text-white text-sm font-semibold px-4 sm:px-5 py-2.5 rounded-xl hover:opacity-90 transition shadow-sm">Contactar</button>
     </div>
   </div>
 </nav>
 
 <!-- ── HERO ──────────────────────────────────────────────────────────────────── -->
-<section id="hero" class="py-12 px-4 text-white text-center" style="background: linear-gradient(135deg, var(--primary) 0%, #7C3AED 100%)">
-  <div class="max-w-2xl mx-auto">
-    <h1 id="heroTitle" class="text-3xl md:text-4xl font-bold mb-2">Nuestras Propiedades</h1>
-    <p id="heroTagline" class="text-white/80 text-base"></p>
+<section id="hero" class="relative overflow-hidden text-white brand-grad">
+  <div class="absolute inset-0 hero-pattern opacity-60"></div>
+  <div class="relative max-w-4xl mx-auto px-4 py-16 sm:py-20 text-center">
+    <div id="heroLogo" class="hidden w-16 h-16 rounded-2xl bg-white/15 backdrop-blur mx-auto mb-5 items-center justify-center overflow-hidden"></div>
+    <h1 id="heroTitle" class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3">Nuestras Propiedades</h1>
+    <p id="heroTagline" class="text-white/85 text-base sm:text-lg max-w-xl mx-auto"></p>
+    <div class="flex items-center justify-center gap-6 mt-8 text-sm">
+      <div class="flex flex-col items-center">
+        <span id="heroCount" class="text-2xl sm:text-3xl font-extrabold">—</span>
+        <span class="text-white/70">Propiedades</span>
+      </div>
+      <div class="w-px h-10 bg-white/25"></div>
+      <button onclick="scrollToContact()" class="flex flex-col items-center group">
+        <span class="text-2xl sm:text-3xl font-extrabold group-hover:scale-110 transition">💬</span>
+        <span class="text-white/70 group-hover:text-white transition">Asesoría gratis</span>
+      </button>
+    </div>
   </div>
 </section>
 
 <!-- ── FILTERS ────────────────────────────────────────────────────────────────── -->
 <section class="bg-white border-b border-gray-100 sticky top-16 z-30 shadow-sm">
-  <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-    <!-- Operation -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center gap-2.5">
     <div class="flex items-center gap-1.5">
-      <button id="fAll"  onclick="setFilter('operation','')"      class="filter-chip text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 active brand-bg" style="">Todo</button>
-      <button id="fSale" onclick="setFilter('operation','sale')"  class="filter-chip text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-200 text-gray-600">Venta</button>
-      <button id="fRent" onclick="setFilter('operation','rent')"  class="filter-chip text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-200 text-gray-600">Alquiler</button>
+      <button id="fAll"  onclick="setFilter('operation','')"      class="filter-chip text-xs font-semibold px-3.5 py-2 rounded-full brand-bg text-white">Todo</button>
+      <button id="fSale" onclick="setFilter('operation','sale')"  class="filter-chip text-xs font-semibold px-3.5 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-gray-300">Venta</button>
+      <button id="fRent" onclick="setFilter('operation','rent')"  class="filter-chip text-xs font-semibold px-3.5 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-gray-300">Alquiler</button>
     </div>
     <div class="w-px h-5 bg-gray-200 hidden sm:block"></div>
-    <!-- Type -->
-    <select id="fType" onchange="setFilter('type', this.value)" class="text-xs font-medium border border-gray-200 rounded-full px-3 py-1.5 focus:outline-none focus:ring-2 text-gray-600 bg-white cursor-pointer">
+    <select id="fType" onchange="setFilter('type', this.value)" class="text-xs font-semibold border border-gray-200 rounded-full px-3.5 py-2 focus:outline-none focus:ring-2 text-gray-600 bg-white cursor-pointer hover:border-gray-300">
       <option value="">Todos los tipos</option>
       <option value="house">Casa</option>
       <option value="apartment">Departamento</option>
@@ -69,55 +90,63 @@
       <option value="office">Oficina</option>
       <option value="warehouse">Depósito</option>
     </select>
-    <!-- Zone search -->
-    <div class="flex items-center gap-1.5 border border-gray-200 rounded-full px-3 py-1.5 bg-white">
+    <div class="flex items-center gap-1.5 border border-gray-200 rounded-full px-3.5 py-2 bg-white hover:border-gray-300 transition">
       <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      <input id="fZone" type="text" placeholder="Zona / barrio" onkeydown="if(event.key==='Enter') applyZoneFilter()" class="text-xs font-medium focus:outline-none w-28 text-gray-600 placeholder-gray-400"/>
-      <button onclick="applyZoneFilter()" class="text-xs brand-text font-semibold">Buscar</button>
+      <input id="fZone" type="text" placeholder="Zona / barrio" onkeydown="if(event.key==='Enter') applyZoneFilter()" class="text-xs font-medium focus:outline-none w-28 text-gray-600 placeholder-gray-400 bg-transparent"/>
+      <button onclick="applyZoneFilter()" class="text-xs brand-text font-bold">Buscar</button>
     </div>
-    <span id="resultCount" class="text-xs text-gray-400 ml-auto"></span>
+    <span id="resultCount" class="text-xs font-medium text-gray-400 ml-auto"></span>
   </div>
 </section>
 
 <!-- ── GRID ───────────────────────────────────────────────────────────────────── -->
-<main class="max-w-7xl mx-auto px-4 py-8">
-  <div id="propGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+  <div id="propGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
   <div id="emptyState" class="hidden text-center py-20">
     <svg class="w-14 h-14 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg>
     <p class="text-gray-400 font-medium">No hay propiedades con esos filtros</p>
     <button onclick="clearFilters()" class="mt-4 text-sm brand-text font-semibold hover:underline">Limpiar filtros</button>
   </div>
-  <!-- Pagination -->
-  <div id="pagination" class="hidden flex items-center justify-center gap-3 mt-10">
-    <button id="prevPage" onclick="changePage(-1)" class="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition disabled:opacity-30">← Anterior</button>
-    <span id="pageInfo" class="text-sm text-gray-500"></span>
-    <button id="nextPage" onclick="changePage(+1)" class="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition disabled:opacity-30">Siguiente →</button>
+  <div id="pagination" class="hidden flex items-center justify-center gap-3 mt-12">
+    <button id="prevPage" onclick="changePage(-1)" class="px-4 py-2 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition disabled:opacity-30">← Anterior</button>
+    <span id="pageInfo" class="text-sm font-medium text-gray-500"></span>
+    <button id="nextPage" onclick="changePage(+1)" class="px-4 py-2 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition disabled:opacity-30">Siguiente →</button>
   </div>
 </main>
 
 <!-- ── CONTACT SECTION ────────────────────────────────────────────────────────── -->
-<section id="contact" class="py-16 px-4 bg-white border-t border-gray-100">
+<section id="contact" class="py-16 sm:py-20 px-4 bg-white border-t border-gray-100">
   <div class="max-w-lg mx-auto">
-    <h2 class="text-2xl font-bold text-gray-900 mb-1 text-center">¿Necesitás ayuda?</h2>
-    <p class="text-gray-500 text-center mb-8">Dejanos tus datos y te contactamos a la brevedad.</p>
-    <form id="contactForm" class="space-y-4">
-      <input id="cName"  type="text"  placeholder="Tu nombre *" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent" style="--tw-ring-color:var(--primary)"/>
-      <input id="cPhone" type="tel"   placeholder="Teléfono / WhatsApp *" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2"/>
-      <input id="cEmail" type="email" placeholder="Email (opcional)" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2"/>
-      <textarea id="cMsg" rows="3"    placeholder="¿Qué estás buscando?" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 resize-none"></textarea>
-      <button type="submit" id="contactBtn" class="w-full brand-bg text-white font-semibold py-3.5 rounded-xl hover:opacity-90 transition">Enviar consulta</button>
-      <div id="contactSuccess" class="hidden text-center text-sm text-green-600 font-medium py-2">✅ ¡Consulta enviada! Te contactamos pronto.</div>
+    <div class="text-center mb-8">
+      <div class="w-12 h-12 rounded-2xl brand-grad mx-auto mb-4 flex items-center justify-center text-white text-xl shadow-sm">✉️</div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1">¿Necesitás ayuda?</h2>
+      <p class="text-gray-500">Dejanos tus datos y un asesor te contacta a la brevedad.</p>
+    </div>
+    <form id="contactForm" class="space-y-3.5">
+      <input id="cName"  type="text"  placeholder="Tu nombre *" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent" style="--tw-ring-color:var(--primary)"/>
+      <input id="cPhone" type="tel"   placeholder="Teléfono / WhatsApp *" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:var(--primary)"/>
+      <input id="cEmail" type="email" placeholder="Email (opcional)" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:var(--primary)"/>
+      <textarea id="cMsg" rows="3"    placeholder="¿Qué estás buscando?" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 resize-none" style="--tw-ring-color:var(--primary)"></textarea>
+      <button type="submit" id="contactBtn" class="w-full brand-grad text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition shadow-sm">Enviar consulta</button>
+      <div id="contactSuccess" class="hidden text-center text-sm text-green-600 font-semibold py-2">✅ ¡Consulta enviada! Te contactamos pronto.</div>
       <div id="contactError"   class="hidden text-center text-sm text-red-500 py-2"></div>
     </form>
   </div>
 </section>
 
 <!-- ── FOOTER ─────────────────────────────────────────────────────────────────── -->
-<footer class="bg-gray-900 text-gray-400 py-8 px-4 text-center">
-  <p id="footerAgency" class="font-semibold text-white mb-1"></p>
-  <p id="footerContact" class="text-sm mb-3"></p>
-  <p class="text-xs">Powered by <a href="/landing" class="text-indigo-400 hover:underline">AgentPro</a></p>
+<footer class="bg-gray-900 text-gray-400 py-10 px-4 text-center">
+  <p id="footerAgency" class="font-bold text-white text-lg mb-1"></p>
+  <p id="footerContact" class="text-sm mb-4"></p>
+  <p class="text-xs text-gray-500">Powered by <a href="/landing" class="text-indigo-400 hover:underline font-medium">AgentPro</a></p>
 </footer>
+
+<!-- ── FLOATING WHATSAPP ──────────────────────────────────────────────────────── -->
+<a id="waFloat" href="#" target="_blank" rel="noopener"
+   class="hidden fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#1ebe5a] text-white flex items-center justify-center wa-float transition"
+   title="Escribinos por WhatsApp" aria-label="WhatsApp">
+  <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.89.518 3.659 1.42 5.18L2 22l4.92-1.4A9.952 9.952 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+</a>
 
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
@@ -126,6 +155,15 @@ const API    = location.origin;
 let portal   = {};
 let filters  = { operation: '', type: '', zone: '', page: 1 };
 let totalPages = 1;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+/** Normalize a phone string into a wa.me-compatible international number. */
+function waNumber(raw) { return (raw || '').replace(/\D/g, '').replace(/^0+/, ''); }
+function waLink(raw, text) {
+  const n = waNumber(raw);
+  if (!n) return '';
+  return `https://wa.me/${n}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 async function init() {
@@ -162,30 +200,53 @@ async function loadListing() {
 // ── Branding ────────────────────────────────────────────────────────────────
 function applyBranding(p) {
   document.documentElement.style.setProperty('--primary', p.primaryColor || '#6366F1');
-  document.title = p.agencyName + ' — Propiedades';
+  document.documentElement.style.setProperty('--primary-dark', shade(p.primaryColor || '#6366F1', -18));
+  document.title = (p.agencyName || 'Portal') + ' — Propiedades';
   document.getElementById('pageDesc').content    = p.tagline || 'Propiedades en venta y alquiler';
-  document.getElementById('navAgencyName').textContent = p.agencyName;
+  document.getElementById('navAgencyName').textContent = p.agencyName || '';
   document.getElementById('navLogoImg').textContent    = (p.agencyName||'A')[0].toUpperCase();
-  document.getElementById('heroTitle').textContent     = p.agencyName;
-  document.getElementById('heroTagline').textContent   = p.tagline || '';
-  document.getElementById('footerAgency').textContent  = p.agencyName;
-  document.getElementById('footerContact').textContent = [p.whatsapp, p.email].filter(Boolean).join(' · ');
-  if (p.whatsapp) {
-    const wa = document.getElementById('navWhatsApp');
-    wa.href = `https://wa.me/${p.whatsapp.replace(/\D/g,'')}`;
-    wa.classList.remove('hidden');
+  document.getElementById('heroTitle').textContent     = p.agencyName || 'Nuestras Propiedades';
+  document.getElementById('heroTagline').textContent   = p.tagline || 'Encontrá la propiedad ideal con nuestro equipo de asesores.';
+  document.getElementById('footerAgency').textContent  = p.agencyName || '';
+  document.getElementById('footerContact').textContent = [p.whatsapp, p.email].filter(Boolean).join('  ·  ');
+
+  // WhatsApp links (nav + floating button)
+  const link = waLink(p.whatsapp, `Hola ${p.agencyName || ''}, vi su portal de propiedades y quiero más información.`);
+  if (link) {
+    const nav = document.getElementById('navWhatsApp');
+    nav.href = link; nav.classList.remove('hidden');
+    const flo = document.getElementById('waFloat');
+    flo.href = link; flo.classList.remove('hidden');
   }
+
+  // Logo image
   if (p.logoUrl) {
     const img = document.createElement('img');
-    img.src = p.logoUrl; img.className = 'w-8 h-8 rounded-xl object-cover';
+    img.src = p.logoUrl; img.className = 'w-9 h-9 rounded-xl object-cover';
+    img.onerror = () => img.replaceWith(Object.assign(document.createElement('div'), { className:'w-9 h-9 rounded-xl brand-grad flex items-center justify-center text-white font-extrabold', textContent:(p.agencyName||'A')[0].toUpperCase() }));
     document.getElementById('navLogoImg').replaceWith(img);
+    const hl = document.getElementById('heroLogo');
+    hl.innerHTML = `<img src="${p.logoUrl}" class="w-full h-full object-cover"/>`;
+    hl.classList.remove('hidden'); hl.classList.add('flex');
   }
+}
+
+/** Lighten/darken a hex color by percent (-100..100) */
+function shade(hex, pct) {
+  const n = parseInt(hex.replace('#',''), 16);
+  if (isNaN(n)) return hex;
+  let r = (n>>16)&255, g = (n>>8)&255, b = n&255;
+  const f = pct/100;
+  r = Math.round(r + (f<0 ? r : 255-r)*f);
+  g = Math.round(g + (f<0 ? g : 255-g)*f);
+  b = Math.round(b + (f<0 ? b : 255-b)*f);
+  return '#' + [r,g,b].map(x => Math.max(0,Math.min(255,x)).toString(16).padStart(2,'0')).join('');
 }
 
 // ── Render ──────────────────────────────────────────────────────────────────
 const TYPE_LABELS = { house:'Casa', apartment:'Depto', land:'Terreno', commercial:'Comercial', office:'Oficina', warehouse:'Depósito' };
 const OP_LABELS   = { sale:'Venta', rent:'Alquiler' };
-const OP_COLORS   = { sale:'bg-blue-100 text-blue-700', rent:'bg-green-100 text-green-700' };
+const OP_COLORS   = { sale:'bg-blue-600', rent:'bg-emerald-500' };
 
 function formatPrice(price, currency) {
   if (!price) return 'Consultar';
@@ -200,36 +261,38 @@ function renderProperties(props, pagination) {
   const count = document.getElementById('resultCount');
 
   count.textContent = `${pagination.total} propiedad${pagination.total !== 1 ? 'es' : ''}`;
+  document.getElementById('heroCount').textContent = pagination.total;
 
   if (!props.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); pag.classList.add('hidden'); return; }
   empty.classList.add('hidden');
 
-  grid.innerHTML = props.map(p => {
+  grid.innerHTML = props.map((p, i) => {
     const photo    = p.photos?.[0] || '';
-    const opBadge  = OP_COLORS[p.operation] || 'bg-gray-100 text-gray-500';
+    const opBg     = OP_COLORS[p.operation] || 'bg-gray-500';
     const opLabel  = OP_LABELS[p.operation] || p.operation;
     const typeLabel= TYPE_LABELS[p.type] || p.type;
     return `
-    <a href="/portal/${slug}/propiedad/${p._id}" class="block card-hover bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-      <div class="relative h-44 overflow-hidden ${photo ? '' : 'photo-placeholder'}">
-        ${photo ? `<img src="${photo}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy" onerror="this.parentElement.className='h-44 photo-placeholder'"/>` : '<div class="h-44 photo-placeholder flex items-center justify-center"><svg class="w-10 h-10 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg></div>'}
-        <span class="absolute top-2.5 left-2.5 text-xs font-bold px-2.5 py-1 rounded-full ${opBadge}">${opLabel}</span>
+    <a href="/portal/${slug}/propiedad/${p._id}" class="group block card-hover bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm fade-up" style="animation-delay:${i*40}ms">
+      <div class="relative h-52 overflow-hidden ${photo ? '' : 'photo-placeholder'}">
+        ${photo ? `<img src="${photo}" alt="${p.title}" class="card-img w-full h-full object-cover" loading="lazy" onerror="this.parentElement.className='relative h-52 photo-placeholder';this.remove()"/>` : '<div class="h-52 photo-placeholder flex items-center justify-center"><svg class="w-10 h-10 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg></div>'}
+        <span class="absolute top-3 left-3 text-xs font-bold px-3 py-1 rounded-full text-white ${opBg} shadow-sm">${opLabel}</span>
+        <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent"></div>
+        <p class="absolute bottom-3 left-3 text-lg font-extrabold text-white drop-shadow">${formatPrice(p.price, p.currency)}</p>
       </div>
       <div class="p-4">
-        <p class="text-xs font-medium text-gray-400 mb-1">${typeLabel}${p.zone ? ' · ' + p.zone : ''}</p>
-        <h3 class="font-semibold text-gray-900 text-sm leading-tight mb-2 line-clamp-2">${p.title}</h3>
-        <p class="text-base font-bold brand-text mb-3">${formatPrice(p.price, p.currency)}</p>
-        <div class="flex items-center gap-3 text-xs text-gray-400">
-          ${p.beds    ? `<span>🛏 ${p.beds}</span>` : ''}
-          ${p.baths   ? `<span>🚿 ${p.baths}</span>` : ''}
-          ${p.area    ? `<span>📐 ${p.area}m²</span>` : ''}
-          ${p.parking ? `<span>🚗 ${p.parking}</span>` : ''}
+        <p class="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">${typeLabel}${p.zone ? ' · ' + p.zone : ''}</p>
+        <h3 class="font-bold text-gray-900 text-sm leading-snug mb-3 line-clamp-2 group-hover:text-[color:var(--primary)] transition">${p.title}</h3>
+        <div class="flex items-center gap-3 text-xs text-gray-500 pt-3 border-t border-gray-100">
+          ${p.beds    ? `<span class="flex items-center gap-1">🛏 ${p.beds}</span>` : ''}
+          ${p.baths   ? `<span class="flex items-center gap-1">🚿 ${p.baths}</span>` : ''}
+          ${p.area    ? `<span class="flex items-center gap-1">📐 ${p.area}m²</span>` : ''}
+          ${p.parking ? `<span class="flex items-center gap-1">🚗 ${p.parking}</span>` : ''}
+          <span class="ml-auto brand-text font-bold group-hover:translate-x-0.5 transition">Ver →</span>
         </div>
       </div>
     </a>`;
   }).join('');
 
-  // Pagination
   if (pagination.pages > 1) {
     pag.classList.remove('hidden');
     document.getElementById('pageInfo').textContent = `Página ${pagination.page} de ${pagination.pages}`;
@@ -243,7 +306,7 @@ function renderProperties(props, pagination) {
 function renderSkeletons() {
   document.getElementById('propGrid').innerHTML = Array(8).fill(`
     <div class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-      <div class="skeleton h-44 w-full"></div>
+      <div class="skeleton h-52 w-full"></div>
       <div class="p-4 space-y-2">
         <div class="skeleton h-3 w-1/3 rounded"></div>
         <div class="skeleton h-4 w-4/5 rounded"></div>
@@ -255,16 +318,16 @@ function renderSkeletons() {
 // ── Filters ────────────────────────────────────────────────────────────────
 function setFilter(key, val) {
   filters[key] = val; filters.page = 1;
-  // Update chip styles for operation
   if (key === 'operation') {
     ['fAll','fSale','fRent'].forEach(id => {
       const btn = document.getElementById(id);
-      btn.classList.remove('active','brand-bg','text-white');
-      btn.classList.add('text-gray-600','border-gray-200');
+      btn.classList.remove('brand-bg','text-white');
+      btn.classList.add('text-gray-600','border','border-gray-200');
     });
     const active = val === 'sale' ? 'fSale' : val === 'rent' ? 'fRent' : 'fAll';
-    document.getElementById(active).classList.add('active','brand-bg','text-white');
-    document.getElementById(active).classList.remove('text-gray-600');
+    const ab = document.getElementById(active);
+    ab.classList.add('brand-bg','text-white');
+    ab.classList.remove('text-gray-600','border','border-gray-200');
   }
   loadListing();
 }
