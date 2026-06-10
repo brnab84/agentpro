@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.13.1'; // chore: import diagnostics (method/html size/headless status) to debug ML+Encuentra24
+export const APP_VERSION = '3.14.0'; // feat: stealth headless + DOM gallery extraction (fix ML bot-block + Encuentra24 junk images)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

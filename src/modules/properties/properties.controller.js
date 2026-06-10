@@ -17,7 +17,7 @@ const MIN_HTML_LENGTH     = 300;
 const BOT_DETECT_SLICE    = 3_000;
 const FETCH_TIMEOUT_MS    = 25_000;
 
-const SKIP_PHOTO_PATTERN = /logo|icon|avatar|sprite|pixel|banner|ad[_-]|tracking|placeholder|blank|button|flag|star|heart|thumb_up|checkmark|loading|default-user|no-image|empty|favicon|captcha|recaptcha/i;
+const SKIP_PHOTO_PATTERN = /logo|icon|avatar|sprite|pixel|banner|ad[_-]|tracking|placeholder|blank|button|flag|star|heart|thumb_up|checkmark|check[_-]|verified|badge|loading|spinner|default-user|no-image|empty|favicon|captcha|recaptcha|whatsapp|facebook|instagram|googlelogo|\/svg\/|\.svg(\?|$)/i;
 
 const BOT_BLOCK_PATTERN = /challenge-platform|cf-browser-verification|just a moment|enable javascript and cookies|checking your browser/i;
 
@@ -392,18 +392,21 @@ export const importFromUrl = asyncHandler(async (req, res) => {
   const { url } = req.body;
   if (!url) throw new AppError('url is required', 400);
 
-  const headers           = buildFetchHeaders(url);
-  const { html, method }  = await fetchHtml(url, headers);
+  const headers = buildFetchHeaders(url);
+  const { html, method, renderedImages } = await fetchHtml(url, headers);
 
   validateHtmlContent(html, url);
 
   const photoSet      = new Set();
+  // Gallery images pulled straight from the rendered DOM take priority.
+  (renderedImages || []).filter(isValidPhoto).forEach(p => photoSet.add(p));
   const structured    = await extractStructuredData(html, url, photoSet);
   const strippedText  = stripHtmlForClaude(html);
   const aiData        = await extractWithClaude(strippedText, structured);
 
   const merged   = mergeExtractions(aiData, structured);
-  const photos   = buildFinalPhotoList(structured.photos || [], photoSet, aiData.photos || []);
+  const galleryFirst = [...(renderedImages || []).filter(isValidPhoto), ...(structured.photos || [])];
+  const photos   = buildFinalPhotoList(galleryFirst, photoSet, aiData.photos || []);
   delete merged.photos;
 
   const fieldCount = Object.values(merged).filter(v => v != null && v !== '' && !(Array.isArray(v) && !v.length)).length;
@@ -456,15 +459,15 @@ async function fetchHtmlViaProvider(url) {
   return await response.text();
 }
 
-/** Returns { html, method } where method is headless | provider | direct. */
+/** Returns { html, method, renderedImages } where method is headless | provider | direct. */
 async function fetchHtml(url, headers) {
-  // 1) Self-hosted headless Chromium (renders JS galleries, no third party)
+  // 1) Self-hosted headless Chromium with stealth (renders JS galleries)
   if (env.useHeadless) {
     try {
-      const rendered = await renderPageHtml(url);
-      if (rendered && rendered.length > MIN_HTML_LENGTH) {
-        console.log('import-url: rendered with headless Chromium', rendered.length, 'bytes');
-        return { html: rendered, method: 'headless' };
+      const { html, images } = await renderPageHtml(url);
+      if (html && html.length > MIN_HTML_LENGTH) {
+        console.log(`import-url: headless rendered ${html.length}b, ${images.length} gallery imgs`);
+        return { html, method: 'headless', renderedImages: images || [] };
       }
     } catch (err) {
       console.warn('import-url: headless render error, continuing:', err.message);
@@ -474,7 +477,7 @@ async function fetchHtml(url, headers) {
   if (env.scraperApiKey) {
     try {
       const html = await fetchHtmlViaProvider(url);
-      if (html && html.length > MIN_HTML_LENGTH) return { html, method: 'provider' };
+      if (html && html.length > MIN_HTML_LENGTH) return { html, method: 'provider', renderedImages: [] };
       console.warn('import-url: provider returned little/no HTML, falling back to direct fetch');
     } catch (err) {
       console.warn('import-url: scraping provider failed, falling back to direct fetch:', err.message);
@@ -488,7 +491,7 @@ async function fetchHtml(url, headers) {
       redirect: 'follow',
     });
     if (!response.ok) console.warn(`import-url: HTTP ${response.status} for ${url} (proceeding anyway)`);
-    return { html: await response.text(), method: 'direct' };
+    return { html: await response.text(), method: 'direct', renderedImages: [] };
   } catch (err) {
     throw new AppError(`No se pudo acceder a la URL: ${err.message}`, 422);
   }
