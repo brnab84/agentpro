@@ -5,6 +5,13 @@ const tenantSchema = new mongoose.Schema(
     name:   { type: String, required: true, trim: true },
     plan:   { type: String, enum: ['free', 'pro', 'business'], default: 'free' },
     status: { type: String, enum: ['active', 'suspended'], default: 'active' },
+    // ── Billing (Stripe) ─────────────────────────────────────────────────────
+    billing: {
+      stripeCustomerId:     { type: String, trim: true },
+      stripeSubscriptionId: { type: String, trim: true },
+      subscriptionStatus:   { type: String, trim: true, default: '' }, // active, past_due, canceled, trialing…
+      currentPeriodEnd:     { type: Date },
+    },
     channels: {
       whatsappPhoneNumberId: { type: String, trim: true },
       instagramPageId:       { type: String, trim: true },

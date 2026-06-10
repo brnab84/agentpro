@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '2.10.0'; // minor: configurable plan pricing (admin) + public /api/plans + landing sync
+export const APP_VERSION = '3.0.0'; // major: monetization — Stripe subscriptions, billing UI, plan-limit enforcement
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
@@ -39,4 +39,8 @@ export const env = {
   // Super-admin panel — comma-separated list of authorized emails
   adminEmails:          (process.env.ADMIN_EMAILS || '')
                           .split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
+
+  // Billing — Stripe
+  stripeSecretKey:      process.env.STRIPE_SECRET_KEY || '',
+  stripeWebhookSecret:  process.env.STRIPE_WEBHOOK_SECRET || '',
 };

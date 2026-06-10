@@ -1438,6 +1438,45 @@
           </div>
         </div>
 
+        <!-- Plan y facturación -->
+        <div id="billingSection" class="hidden card p-6 max-w-xl mb-6">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#ECFDF5">
+              <svg class="w-6 h-6" fill="none" stroke="#059669" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">Plan y facturación</p>
+              <p class="text-xs text-gray-400">Tu suscripción y límites de uso</p>
+            </div>
+            <span id="billingPlanBadge" class="ml-auto text-xs font-bold uppercase px-3 py-1 rounded-full bg-gray-100 text-gray-600">—</span>
+          </div>
+
+          <div id="billingCurrent" class="rounded-xl border border-gray-100 p-4 mb-4 bg-gray-50/60">
+            <div class="flex items-end justify-between mb-1">
+              <p id="billingPlanName" class="font-bold text-gray-900">Plan —</p>
+              <p id="billingPrice" class="text-sm font-semibold text-gray-700"></p>
+            </div>
+            <p id="billingStatus" class="text-xs text-gray-400"></p>
+          </div>
+
+          <!-- Usage meters -->
+          <div class="space-y-3 mb-4">
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span class="text-gray-500 font-medium">Propiedades</span><span id="usePropsTxt" class="text-gray-400"></span></div>
+              <div class="h-2 rounded-full bg-gray-100 overflow-hidden"><div id="usePropsBar" class="h-full bg-indigo-500" style="width:0%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span class="text-gray-500 font-medium">Usuarios</span><span id="useAgentsTxt" class="text-gray-400"></span></div>
+              <div class="h-2 rounded-full bg-gray-100 overflow-hidden"><div id="useAgentsBar" class="h-full bg-indigo-500" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <!-- Upgrade buttons -->
+          <div id="billingUpgrade" class="flex flex-wrap gap-2"></div>
+          <button id="billingManageBtn" onclick="openBillingPortal()" class="hidden mt-2 text-sm font-medium text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition">Gestionar suscripción</button>
+          <p id="billingDisabledNote" class="hidden text-xs text-amber-600 mt-2">⚠️ La facturación todavía no está configurada (falta la clave de Stripe). Mostramos tus límites de uso igualmente.</p>
+        </div>
+
         <!-- Mi Portal card -->
         <div id="portalConfigSection" class="hidden card p-6 max-w-xl mb-6">
           <div class="flex items-center gap-3 mb-5">
@@ -2410,7 +2449,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '2.10.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.0.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -4101,8 +4140,10 @@ async function loadTeam() {
   const isOwner = currentUser?.role === 'owner';
   document.getElementById('inviteBtn').classList.toggle('hidden', !isOwner);
 
-  // Show portal & channel config sections for owners
+  // Show portal, billing & channel config sections for owners
   document.getElementById('portalConfigSection').classList.toggle('hidden', !isOwner);
+  document.getElementById('billingSection').classList.toggle('hidden', !isOwner);
+  if (isOwner) loadBilling();
   const cfgSection = document.getElementById('channelConfigSection');
   if (isOwner) {
     cfgSection.classList.remove('hidden');
@@ -6272,6 +6313,80 @@ async function togglePortalPublish(id, published) {
   }
 }
 
+// ── Billing (owner) ─────────────────────────────────────────────────────────
+const BILLING_PLAN_BADGE = { free:'bg-gray-100 text-gray-600', pro:'bg-indigo-100 text-indigo-700', business:'bg-amber-100 text-amber-700' };
+const SUB_STATUS_LABEL = { active:'Suscripción activa', trialing:'Período de prueba', past_due:'Pago pendiente', canceled:'Cancelada', '':'' };
+
+async function loadBilling() {
+  try {
+    const [status, plans] = await Promise.all([
+      api('GET', '/api/billing/status'),
+      api('GET', '/api/plans').then(r => r.plans).catch(() => []),
+    ]);
+    renderBilling(status, plans);
+  } catch (err) { /* non-critical */ }
+}
+
+function fmtMoney(amount, currency) {
+  return `${currency && currency !== 'USD' ? currency + ' ' : '$'}${Number(amount||0).toLocaleString('es')}`;
+}
+
+function renderBilling(s, plans) {
+  document.getElementById('billingPlanBadge').textContent = s.plan;
+  document.getElementById('billingPlanBadge').className = `ml-auto text-xs font-bold uppercase px-3 py-1 rounded-full ${BILLING_PLAN_BADGE[s.plan]||BILLING_PLAN_BADGE.free}`;
+  document.getElementById('billingPlanName').textContent = 'Plan ' + (s.planLabel || s.plan);
+  document.getElementById('billingPrice').textContent = s.price ? `${fmtMoney(s.price, s.currency)}${s.interval==='year'?'/año':'/mes'}` : 'Gratis';
+  const statusTxt = SUB_STATUS_LABEL[s.subscriptionStatus] ?? s.subscriptionStatus;
+  const renew = s.currentPeriodEnd ? ` · renueva el ${new Date(s.currentPeriodEnd).toLocaleDateString('es')}` : '';
+  document.getElementById('billingStatus').textContent = statusTxt ? statusTxt + renew : (s.plan === 'free' ? 'Sin suscripción' : '');
+
+  // Usage meters
+  const meter = (u, barId, txtId) => {
+    const bar = document.getElementById(barId), txt = document.getElementById(txtId);
+    if (u.limit < 0) { txt.textContent = `${u.used} · ilimitado`; bar.style.width = '12%'; bar.className = 'h-full bg-green-400'; return; }
+    const pct = u.limit ? Math.min(100, Math.round(u.used / u.limit * 100)) : 0;
+    txt.textContent = `${u.used} / ${u.limit}`;
+    bar.style.width = pct + '%';
+    bar.className = `h-full ${pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-400' : 'bg-indigo-500'}`;
+  };
+  if (s.usage) { meter(s.usage.properties, 'usePropsBar', 'usePropsTxt'); meter(s.usage.agents, 'useAgentsBar', 'useAgentsTxt'); }
+
+  // Upgrade buttons (paid plans different from current)
+  const wrap = document.getElementById('billingUpgrade');
+  const paid = (plans || []).filter(p => p.key !== 'free' && p.key !== s.plan);
+  if (s.enabled && paid.length) {
+    wrap.innerHTML = paid.map(p =>
+      `<button onclick="startCheckout('${p.key}')" class="gradient-bg text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 transition">
+        ${s.plan === 'business' && p.key === 'pro' ? 'Cambiar a' : 'Mejorar a'} ${p.label} · ${fmtMoney(p.price, p.currency)}${p.interval==='year'?'/año':'/mes'}
+      </button>`).join('');
+  } else {
+    wrap.innerHTML = '';
+  }
+  document.getElementById('billingManageBtn').classList.toggle('hidden', !(s.enabled && s.hasCustomer));
+  document.getElementById('billingDisabledNote').classList.toggle('hidden', s.enabled);
+}
+
+async function startCheckout(plan) {
+  try {
+    const { url } = await api('POST', '/api/billing/checkout', { plan });
+    if (url) window.location.href = url;
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+}
+
+async function openBillingPortal() {
+  try {
+    const { url } = await api('POST', '/api/billing/portal', {});
+    if (url) window.location.href = url;
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+}
+
+// Handle return from Stripe Checkout
+(function checkBillingRedirect() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('billing') === 'success') { setTimeout(() => showToast('✅ ¡Suscripción activada! Puede tardar unos segundos en reflejarse.'), 600); window.history.replaceState({}, '', window.location.pathname); }
+  if (p.get('billing') === 'cancel')  { window.history.replaceState({}, '', window.location.pathname); }
+})();
+
 // ── Admin panel ───────────────────────────────────────────────────────────────
 let _adminTenants = [];
 const PLAN_BADGE = {
@@ -6318,6 +6433,19 @@ function renderAdminPricing() {
           <option value="year" ${p.interval==='year'?'selected':''}>/año</option>
         </select>
       </div>
+      <div class="grid grid-cols-2 gap-2 mt-3">
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Máx. propiedades <span class="htip" title="Límite de propiedades para este plan. Usá -1 para ilimitado.">?</span></label>
+          <input data-plan="${p.key}" data-field="maxProperties" type="number" step="1" value="${p.maxProperties ?? -1}" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Máx. usuarios <span class="htip" title="Límite de usuarios/agentes. Usá -1 para ilimitado.">?</span></label>
+          <input data-plan="${p.key}" data-field="maxAgents" type="number" step="1" value="${p.maxAgents ?? -1}" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+      </div>
+      ${p.key !== 'free' ? `
+      <label class="text-xs text-gray-500 font-medium mt-3 block">Stripe Price ID <span class="htip" title="El ID del precio creado en Stripe (Productos → tu plan → API ID), empieza con price_. Necesario para cobrar este plan.">?</span></label>
+      <input data-plan="${p.key}" data-field="stripePriceId" type="text" value="${(p.stripePriceId||'').replace(/"/g,'&quot;')}" placeholder="price_..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />` : ''}
     </div>`).join('');
 }
 
@@ -6330,6 +6458,9 @@ async function saveAdminPricing() {
       currency: get('currency')?.value.trim() || 'USD',
       price: Number(get('price')?.value) || 0,
       interval: get('interval')?.value || 'month',
+      maxProperties: get('maxProperties') ? Number(get('maxProperties').value) : (p.maxProperties ?? -1),
+      maxAgents: get('maxAgents') ? Number(get('maxAgents').value) : (p.maxAgents ?? -1),
+      stripePriceId: get('stripePriceId') ? get('stripePriceId').value.trim() : (p.stripePriceId || ''),
     };
   });
   try {

@@ -2,11 +2,13 @@ import bcrypt from 'bcryptjs';
 import { AppError } from '../../utils/AppError.js';
 import { User } from '../../models/User.js';
 import { Tenant } from '../../models/Tenant.js';
+import { assertCanAddAgent } from '../billing/limits.service.js';
 
 export const listAgents = (tenantId) =>
   User.find({ tenantId }).select('-passwordHash').sort({ createdAt: 1 });
 
 export async function inviteAgent(tenantId, { name, email, password }) {
+  await assertCanAddAgent(tenantId);
   const exists = await User.findOne({ tenantId, email });
   if (exists) throw new AppError('Email already in use for this tenant', 409);
   const passwordHash = await bcrypt.hash(password, 10);

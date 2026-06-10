@@ -8,6 +8,10 @@ const planSchema = new mongoose.Schema(
     price:    { type: Number, min: 0, default: 0 },     // per billing period
     currency: { type: String, trim: true, default: 'USD' },
     interval: { type: String, enum: ['month', 'year'], default: 'month' },
+    stripePriceId: { type: String, trim: true, default: '' }, // Stripe Price id (price_...)
+    // Limits — use -1 for unlimited
+    maxProperties: { type: Number, default: -1 },
+    maxAgents:     { type: Number, default: -1 },
   },
   { _id: false },
 );
@@ -18,9 +22,9 @@ const settingsSchema = new mongoose.Schema(
     plans: {
       type: [planSchema],
       default: () => ([
-        { key: 'free',     label: 'Free',     price: 0,  currency: 'USD', interval: 'month' },
-        { key: 'pro',      label: 'Pro',      price: 29, currency: 'USD', interval: 'month' },
-        { key: 'business', label: 'Business', price: 79, currency: 'USD', interval: 'month' },
+        { key: 'free',     label: 'Free',     price: 0,  currency: 'USD', interval: 'month', maxProperties: 15,  maxAgents: 1 },
+        { key: 'pro',      label: 'Pro',      price: 29, currency: 'USD', interval: 'month', maxProperties: 150, maxAgents: 5 },
+        { key: 'business', label: 'Business', price: 79, currency: 'USD', interval: 'month', maxProperties: -1,  maxAgents: -1 },
       ]),
     },
   },

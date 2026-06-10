@@ -38,6 +38,9 @@ export async function updateSettings({ plans }) {
     if (incoming.interval !== undefined && ['month', 'year'].includes(incoming.interval)) {
       target.interval = incoming.interval;
     }
+    if (incoming.stripePriceId !== undefined) target.stripePriceId = String(incoming.stripePriceId).trim();
+    if (incoming.maxProperties !== undefined) target.maxProperties = Number(incoming.maxProperties);
+    if (incoming.maxAgents     !== undefined) target.maxAgents     = Number(incoming.maxAgents);
   }
   settings.plans = VALID_PLANS.map(k => byKey[k]).filter(Boolean);
   await settings.save();
