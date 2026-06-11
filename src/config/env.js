@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.14.0'; // feat: stealth headless + DOM gallery extraction (fix ML bot-block + Encuentra24 junk images)
+export const APP_VERSION = '3.14.1'; // fix: Encuentra24 gallery — accept extension-less CDN image URLs (photos.encuentra24.com)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

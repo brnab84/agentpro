@@ -8,8 +8,8 @@ import * as service from './properties.service.js';
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
-const MAX_PHOTOS          = 12;
-const MAX_PHOTOS_HARVEST  = 15;
+const MAX_PHOTOS          = 20;
+const MAX_PHOTOS_HARVEST  = 30;
 const MAX_FEATURES        = 10;
 const MAX_DESC_LENGTH     = 600;
 const MAX_CLAUDE_TEXT     = 12_000;
@@ -144,6 +144,12 @@ function extractPhotosFromHtml(html) {
   // Bare image URLs anywhere in scripts/JSON
   for (const match of html.matchAll(/"(https?:\/\/[^"]{15,}\.(jpg|jpeg|png|webp|avif)(?:\?[^"]{0,120})?)"/gi)) {
     photos.add(match[1].replace(/\\\//g, '/'));
+  }
+
+  // Image-CDN URLs WITHOUT a file extension (Encuentra24, MercadoLibre static,
+  // Cloudinary). These are real photos served via transform URLs.
+  for (const match of html.matchAll(/https?:\/\/(?:photos\.encuentra24\.com|[a-z0-9.-]*mlstatic\.com|res\.cloudinary\.com)\/[^"'\s\\)<>]+/gi)) {
+    photos.add(match[0].replace(/\\\//g, '/'));
   }
 
   return [...photos].filter(isValidPhoto).slice(0, MAX_PHOTOS_HARVEST);
@@ -617,9 +623,27 @@ function mergeExtractions(aiData, structuredData) {
   return merged;
 }
 
+/** A stable key per actual photo, so the same image at different CDN transform
+ *  sizes (common on Encuentra24) collapses to one. */
+function photoKey(url) {
+  const enc = url.match(/photos\.encuentra24\.com\/[^?]*\/(\d+_[a-z0-9]+)/i);
+  if (enc) return 'e24:' + enc[1];
+  const ml = url.match(/(?:mlstatic\.com)\/([A-Z]?_?[\w-]+?)(?:-[A-Z])?\.(?:jpg|jpeg|png|webp)/i);
+  if (ml) return 'ml:' + ml[1];
+  return url.split('?')[0];
+}
+
 function buildFinalPhotoList(structuredPhotos, photoSet, aiPhotos) {
   const validAiPhotos = aiPhotos.filter(url => typeof url === 'string' && url.startsWith('http'));
-  return [...new Set([...structuredPhotos, ...photoSet, ...validAiPhotos])]
-    .filter(isValidPhoto)
-    .slice(0, MAX_PHOTOS);
+  const all = [...structuredPhotos, ...photoSet, ...validAiPhotos].filter(isValidPhoto);
+  const seen = new Set();
+  const out = [];
+  for (const url of all) {
+    const key = photoKey(url);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(url);
+    if (out.length >= MAX_PHOTOS) break;
+  }
+  return out;
 }

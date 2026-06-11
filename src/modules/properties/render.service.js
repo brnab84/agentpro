@@ -91,8 +91,12 @@ export async function renderPageHtml(url) {
     const images = await page.evaluate(() => {
       const out = new Set();
       const BAD = /(logo|sprite|icon|favicon|placeholder|avatar|flag|badge|banner|pixel|loading|spinner|whatsapp|facebook|instagram|googlelogo)/i;
+      // Accept normal image extensions OR known image-CDN hosts that serve
+      // extension-less URLs (Encuentra24, MercadoLibre static, Cloudinary).
+      const CDN = /(photos\.encuentra24\.com|mlstatic\.com|res\.cloudinary\.com|\/f_auto\/|\/image\/upload\/)/i;
       const looksImg = (u) => typeof u === 'string' && /^https?:\/\//.test(u) &&
-        /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u) && !BAD.test(u) && !u.startsWith('data:');
+        !u.startsWith('data:') && !BAD.test(u) &&
+        (/\.(jpe?g|png|webp|avif)(\?|$)/i.test(u) || CDN.test(u));
 
       for (const img of document.querySelectorAll('img')) {
         const cands = [img.currentSrc, img.src, img.dataset.src, img.dataset.lazy,
@@ -101,8 +105,8 @@ export async function renderPageHtml(url) {
         const big = (img.naturalWidth || img.width || 0) >= 350 || (img.naturalHeight || img.height || 0) >= 250;
         for (const u of cands) {
           if (!looksImg(u)) continue;
-          // Keep loaded images that are reasonably large, or any data-src candidate.
-          if (big || u === img.dataset.src || u === img.dataset.lazy || u === img.dataset.original) out.add(u);
+          // Keep: large loaded images, lazy-src candidates, or known image-CDN URLs.
+          if (big || CDN.test(u) || u === img.dataset.src || u === img.dataset.lazy || u === img.dataset.original) out.add(u);
         }
       }
       // CSS background images (some carousels use them)
