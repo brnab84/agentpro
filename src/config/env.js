@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.19.0'; // feat: admin connection status — lastSeen tracking + green/yellow/red dot per account
+export const APP_VERSION = '3.19.1'; // chore: admin connection cell shows exact date/time (hour), not just relative
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
