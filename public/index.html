@@ -20,6 +20,12 @@
       cursor: help; vertical-align: middle; user-select: none;
     }
     .htip:hover { background: #C7D2FE; }
+    /* Bookmarklet drag button — gentle attention pulse */
+    @keyframes bmPulse { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-4px) } }
+    .bm-drag { animation: bmPulse 1.6s ease-in-out infinite }
+    .bm-drag:active { cursor: grabbing }
+    @keyframes bmBlink { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+    .bm-target { animation: bmBlink 1.6s ease-in-out infinite }
     /* Loading shimmer — overlay a div while its data loads */
     @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
     .is-loading { position: relative; pointer-events: none; min-height: 160px; }
@@ -2343,32 +2349,63 @@
       </h3>
       <button onclick="closeBookmarkletModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
-    <div class="px-6 py-5 overflow-y-auto text-sm text-gray-600 space-y-4">
-      <p>Para sitios que bloquean la importación automática (MercadoLibre, ZonaProp), importá <b>desde tu propio navegador</b> — así nunca te bloquean. Es gratis y funciona en cualquier portal.</p>
-
-      <div class="rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 p-4 text-center">
-        <p class="text-xs text-gray-500 mb-2">1) Arrastrá este botón a tu <b>barra de marcadores</b>:</p>
-        <a id="bookmarkletLink" href="#" onclick="return false" draggable="true"
-           class="inline-flex items-center gap-2 gradient-bg text-white font-semibold px-5 py-2.5 rounded-xl cursor-move select-none shadow">
-          📥 Importar a AgentPro
-        </a>
-        <p class="text-[11px] text-gray-400 mt-2">(si no ves la barra de marcadores: Ctrl+Shift+B)</p>
+    <div class="px-6 py-5 overflow-y-auto text-sm text-gray-600 space-y-5">
+      <!-- Qué es -->
+      <div class="rounded-xl p-3.5" style="background:#EEF2FF;border:1px solid #C7D2FE">
+        <p class="text-indigo-900"><b>¿Qué es esto?</b> Un <b>botón mágico</b> que guardás una sola vez en tu navegador. Después, cuando estés viendo una propiedad en <b>MercadoLibre, ZonaProp o cualquier web</b>, lo tocás y la propiedad <b>se copia sola</b> a tu CRM, con fotos incluidas. 🪄</p>
       </div>
 
-      <div class="text-xs text-gray-600 space-y-1.5">
-        <p><b>2)</b> Abrí la propiedad en MercadoLibre / ZonaProp / el sitio que sea.</p>
-        <p><b>3)</b> Hacé clic en el marcador <b>"Importar a AgentPro"</b>.</p>
-        <p><b>4)</b> Listo: aparece en tu lista de Propiedades con las fotos. ✅</p>
-      </div>
-
-      <div class="rounded-lg bg-gray-50 border border-gray-100 p-3 flex items-center justify-between gap-2">
-        <div class="min-w-0">
-          <p class="text-[11px] text-gray-400">Tu clave de importación (privada)</p>
-          <p id="bmKey" class="text-xs font-mono text-gray-600 truncate">—</p>
+      <!-- PASO 1 -->
+      <div>
+        <p class="font-bold text-gray-900 mb-2 flex items-center gap-2"><span class="w-6 h-6 rounded-full gradient-bg text-white flex items-center justify-center text-xs font-bold">1</span> Guardá el botón en tu navegador (una sola vez)</p>
+        <!-- Mini navegador con la barra de favoritos resaltada -->
+        <div class="rounded-xl border border-gray-200 overflow-hidden mb-3" style="background:#fff">
+          <div style="background:#f1f3f4;padding:7px 10px;display:flex;align-items:center;gap:6px">
+            <span style="width:9px;height:9px;border-radius:50%;background:#ec6a5e;display:inline-block"></span>
+            <span style="width:9px;height:9px;border-radius:50%;background:#f4bf4f;display:inline-block"></span>
+            <span style="width:9px;height:9px;border-radius:50%;background:#61c554;display:inline-block"></span>
+            <span style="flex:1;background:#fff;border-radius:12px;height:18px;margin-left:8px"></span>
+          </div>
+          <!-- Barra de favoritos -->
+          <div style="background:#fff;border-top:1px solid #e5e7eb;padding:6px 10px;display:flex;align-items:center;gap:10px;position:relative">
+            <span style="font-size:11px;color:#9ca3af">⭐ Tus favoritos</span>
+            <span style="font-size:11px;color:#c7c7c7">·  ·  ·</span>
+            <span class="bm-target" style="font-size:11px;color:#4f46e5;border:1px dashed #818cf8;border-radius:6px;padding:2px 8px;background:#EEF2FF">📥 acá ↙</span>
+          </div>
         </div>
-        <button onclick="regenerateBookmarklet()" class="text-xs text-indigo-500 hover:text-indigo-700 font-medium flex-shrink-0" title="Generar una clave nueva (invalida la anterior)">Regenerar</button>
+        <p class="text-xs text-gray-500 mb-2 text-center">👇 Arrastrá <b>este botón</b> hasta la barra de favoritos del dibujo de arriba:</p>
+        <div class="text-center">
+          <a id="bookmarkletLink" href="#" onclick="return false" draggable="true"
+             class="bm-drag inline-flex items-center gap-2 gradient-bg text-white font-bold px-6 py-3 rounded-xl cursor-grab select-none shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Importar a AgentPro
+          </a>
+        </div>
+        <details class="mt-3">
+          <summary class="text-xs text-indigo-500 cursor-pointer font-medium">¿No ves la barra de favoritos?</summary>
+          <p class="text-xs text-gray-500 mt-1.5 pl-1">Presioná <b>Ctrl+Shift+B</b> (Windows) o <b>⌘+Shift+B</b> (Mac) para mostrarla. Es la barra fina que aparece justo debajo de donde escribís la dirección web.</p>
+        </details>
       </div>
-      <p class="text-[11px] text-gray-400">Si regenerás la clave, tenés que volver a arrastrar el botón (el viejo deja de funcionar).</p>
+
+      <!-- PASOS 2-3-4 -->
+      <div class="space-y-2.5">
+        <p class="flex items-start gap-2.5"><span class="w-6 h-6 rounded-full gradient-bg text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</span> <span>Andá a la propiedad en <b>MercadoLibre / ZonaProp</b> (abrí el aviso como lo verías normalmente).</span></p>
+        <p class="flex items-start gap-2.5"><span class="w-6 h-6 rounded-full gradient-bg text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</span> <span>Hacé <b>clic en el favorito</b> "📥 Importar a AgentPro" que guardaste.</span></p>
+        <p class="flex items-start gap-2.5"><span class="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">✓</span> <span>Aparece un cartelito <b>"Importando…"</b> y la propiedad entra a tu lista de <b>Propiedades</b> con las fotos. 🎉</span></p>
+      </div>
+
+      <!-- Clave -->
+      <details>
+        <summary class="text-xs text-gray-400 cursor-pointer">Opciones avanzadas (clave de importación)</summary>
+        <div class="rounded-lg bg-gray-50 border border-gray-100 p-3 flex items-center justify-between gap-2 mt-2">
+          <div class="min-w-0">
+            <p class="text-[11px] text-gray-400">Tu clave privada (ya está dentro del botón)</p>
+            <p id="bmKey" class="text-xs font-mono text-gray-600 truncate">—</p>
+          </div>
+          <button onclick="regenerateBookmarklet()" class="text-xs text-indigo-500 hover:text-indigo-700 font-medium flex-shrink-0" title="Generar una clave nueva (invalida la anterior)">Regenerar</button>
+        </div>
+        <p class="text-[11px] text-gray-400 mt-1">Si regenerás la clave, el botón viejo deja de funcionar y tenés que arrastrarlo de nuevo.</p>
+      </details>
     </div>
     <div class="px-6 py-4 border-t border-gray-100 flex-shrink-0 flex justify-end">
       <button onclick="closeBookmarkletModal()" class="gradient-bg text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition">Entendido</button>
@@ -2667,7 +2704,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.15.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.15.1'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
