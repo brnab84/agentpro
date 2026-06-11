@@ -26,6 +26,13 @@
     .bm-drag:active { cursor: grabbing }
     @keyframes bmBlink { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
     .bm-target { animation: bmBlink 1.6s ease-in-out infinite }
+    /* Animated "drag the button up into the bar" demo */
+    .bm-demo { position: relative; height: 92px; border-radius: 10px; background: #fff; border: 1px solid #e5e7eb; overflow: hidden }
+    .bm-demo-bar { position: absolute; top: 0; left: 0; right: 0; height: 26px; background: #f1f3f4; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; padding: 0 10px; font-size: 11px; color: #9ca3af; gap: 8px }
+    .bm-demo-btn { position: absolute; left: 50%; font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg,#6366F1,#8b5cf6); padding: 3px 10px; border-radius: 8px; white-space: nowrap; animation: bmDragMove 3s ease-in-out infinite }
+    .bm-demo-cursor { position: absolute; left: 50%; font-size: 16px; animation: bmCursorMove 3s ease-in-out infinite }
+    @keyframes bmDragMove { 0%,15% { top: 56px; transform: translateX(-50%) scale(1); opacity: 1 } 70% { top: 6px; transform: translateX(-50%) scale(.92); opacity: 1 } 80%,100% { top: 4px; transform: translateX(-50%) scale(.6); opacity: 0 } }
+    @keyframes bmCursorMove { 0%,15% { top: 66px; transform: translateX(6px) } 70%,100% { top: 14px; transform: translateX(6px) } }
     /* Loading shimmer — overlay a div while its data loads */
     @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
     .is-loading { position: relative; pointer-events: none; min-height: 160px; }
@@ -2373,7 +2380,15 @@
             <span class="bm-target" style="font-size:11px;color:#4f46e5;border:1px dashed #818cf8;border-radius:6px;padding:2px 8px;background:#EEF2FF">📥 acá ↙</span>
           </div>
         </div>
-        <p class="text-xs text-gray-500 mb-2 text-center">👇 Arrastrá <b>este botón</b> hasta la barra de favoritos del dibujo de arriba:</p>
+        <!-- Animación: así se arrastra -->
+        <p class="text-[11px] text-gray-400 text-center mb-1">Así se hace (mirá la animación):</p>
+        <div class="bm-demo mb-3">
+          <div class="bm-demo-bar">⭐ Favoritos</div>
+          <div class="bm-demo-btn">📥 Importar a AgentPro</div>
+          <div class="bm-demo-cursor">👆</div>
+        </div>
+
+        <p class="text-xs text-gray-500 mb-2 text-center">👇 Ahora <b>arrastrá ESTE botón</b> a tu barra de favoritos:</p>
         <div class="text-center">
           <a id="bookmarkletLink" href="#" onclick="return false" draggable="true"
              class="bm-drag inline-flex items-center gap-2 gradient-bg text-white font-bold px-6 py-3 rounded-xl cursor-grab select-none shadow-lg">
@@ -2384,6 +2399,15 @@
         <details class="mt-3">
           <summary class="text-xs text-indigo-500 cursor-pointer font-medium">¿No ves la barra de favoritos?</summary>
           <p class="text-xs text-gray-500 mt-1.5 pl-1">Presioná <b>Ctrl+Shift+B</b> (Windows) o <b>⌘+Shift+B</b> (Mac) para mostrarla. Es la barra fina que aparece justo debajo de donde escribís la dirección web.</p>
+        </details>
+        <details class="mt-2">
+          <summary class="text-xs text-indigo-500 cursor-pointer font-medium">¿No te deja arrastrarlo? Hacelo a mano</summary>
+          <div class="text-xs text-gray-500 mt-1.5 pl-1 space-y-1.5">
+            <p>1) Tocá <b>"Copiar código"</b>:</p>
+            <button type="button" onclick="copyBookmarkletCode()" class="text-xs gradient-bg text-white font-medium px-3 py-1.5 rounded-lg">📋 Copiar código</button>
+            <p>2) En tu navegador, creá un <b>marcador nuevo</b> (Ctrl+D), borrá lo que diga en el campo <b>URL/dirección</b> y <b>pegá</b> el código.</p>
+            <p>3) Ponele de nombre <b>"Importar a AgentPro"</b> y guardá.</p>
+          </div>
         </details>
       </div>
 
@@ -2704,7 +2728,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.15.1'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.15.2'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -3870,22 +3894,30 @@ function buildBookmarklet(key, origin) {
   return code;
 }
 
+let _bmCode = '';
 async function openBookmarkletModal() {
   try {
     const { importKey } = await api('GET', '/api/properties/import-key');
     document.getElementById('bmKey').textContent = importKey;
-    const link = document.getElementById('bookmarkletLink');
-    link.href = buildBookmarklet(importKey, window.location.origin);
+    _bmCode = buildBookmarklet(importKey, window.location.origin);
+    document.getElementById('bookmarkletLink').href = _bmCode;
     document.getElementById('bookmarkletModal').classList.remove('hidden');
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
 }
 function closeBookmarkletModal() { document.getElementById('bookmarkletModal').classList.add('hidden'); }
+function copyBookmarkletCode() {
+  if (!_bmCode) return;
+  navigator.clipboard.writeText(_bmCode)
+    .then(() => showToast('¡Código copiado! Pegalo en la URL de un marcador nuevo'))
+    .catch(() => showToast('No se pudo copiar', 'error'));
+}
 async function regenerateBookmarklet() {
   if (!confirm('¿Generar una clave nueva? El botón anterior dejará de funcionar y tendrás que arrastrarlo de nuevo.')) return;
   try {
     const { importKey } = await api('POST', '/api/properties/import-key/regenerate', {});
     document.getElementById('bmKey').textContent = importKey;
-    document.getElementById('bookmarkletLink').href = buildBookmarklet(importKey, window.location.origin);
+    _bmCode = buildBookmarklet(importKey, window.location.origin);
+    document.getElementById('bookmarkletLink').href = _bmCode;
     showToast('Clave regenerada — arrastrá el botón de nuevo');
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
 }

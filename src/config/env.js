@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.15.1'; // chore: visual step-by-step guide for the browser bookmarklet importer
+export const APP_VERSION = '3.15.2'; // chore: animated drag demo + copy-code fallback for the bookmarklet importer
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
