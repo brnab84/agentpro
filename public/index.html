@@ -11,7 +11,22 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236366F1'/%3E%3Cstop offset='100%25' stop-color='%238B5CF6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M32 14 L50 30 L46 30 L46 50 L18 50 L18 30 L14 30 Z' fill='white' opacity='0.95'/%3E%3Crect x='27' y='37' width='10' height='13' rx='2' fill='%236366F1'/%3E%3Ccircle cx='46' cy='18' r='7' fill='%23F59E0B'/%3E%3Cpath d='M46 13 L47.2 16.8 L51 18 L47.2 19.2 L46 23 L44.8 19.2 L41 18 L44.8 16.8 Z' fill='white'/%3E%3C/svg%3E"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Playfair+Display:wght@700;800&family=Poppins:wght@600;700&display=swap" rel="stylesheet"/>
   <style>
+    /* Hero font + entrance-animation options (shared with the public portal) */
+    .hf-serif{font-family:'Playfair Display',Georgia,serif}
+    .hf-display{font-family:'Oswald','Arial Narrow',sans-serif;letter-spacing:.5px;text-transform:uppercase}
+    .hf-rounded{font-family:'Poppins',system-ui,sans-serif}
+    .hf-mono{font-family:'Courier New',monospace}
+    @keyframes haFade{from{opacity:0}to{opacity:1}}
+    @keyframes haSlide{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes haZoom{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+    @keyframes haType{from{width:0}to{width:100%}}
+    @keyframes haCaret{50%{border-color:transparent}}
+    .ha-fade{animation:haFade 1s ease both}
+    .ha-slide{animation:haSlide .8s ease both}
+    .ha-zoom{animation:haZoom .8s cubic-bezier(.2,.8,.2,1) both}
+    .ha-typewriter{display:inline-block;overflow:hidden;white-space:nowrap;border-right:3px solid currentColor;max-width:100%;animation:haType 2s steps(28,end) both,haCaret .7s step-end infinite}
     /* Help tooltip icon (?) — shows native tooltip on hover */
     .htip {
       display: inline-flex; align-items: center; justify-content: center;
@@ -1628,8 +1643,59 @@
                 </div>
               </div>
               <div>
-                <label class="text-xs text-gray-500 font-medium">Logo (URL, opcional) <span class="htip" title="Link a la imagen de tu logo (PNG/JPG). Aparece en el encabezado del portal. Si lo dejás vacío, usamos la inicial de tu agencia.">?</span></label>
-                <input id="portalLogo" type="url" placeholder="https://...logo.png" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                <label class="text-xs text-gray-500 font-medium">Logo (URL, opcional) <span class="htip" title="Link a la imagen de tu logo (PNG/JPG). Tiene prioridad sobre el emoji. Si dejás todo vacío, usamos la inicial de tu agencia.">?</span></label>
+                <input id="portalLogo" type="url" placeholder="https://...logo.png" oninput="updateLogoPreview()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+            </div>
+
+            <!-- Logo: emoji / upload -->
+            <div>
+              <label class="text-xs text-gray-500 font-medium">Ícono / logo de la agencia <span class="htip" title="Elegí un emoji inmobiliario, subí una imagen o pegá una URL arriba. Es el ícono redondo del encabezado del portal.">?</span></label>
+              <div class="flex items-center gap-3 mt-1.5">
+                <!-- Live preview -->
+                <div id="logoPreview" class="w-11 h-11 rounded-xl gradient-bg flex items-center justify-center text-white font-bold text-lg overflow-hidden flex-shrink-0">C</div>
+                <div class="flex-1">
+                  <div id="emojiPicker" class="flex flex-wrap gap-1.5"></div>
+                  <div class="flex gap-2 mt-2">
+                    <button type="button" onclick="document.getElementById('portalLogoFile').click()" class="text-xs font-medium px-3 py-1.5 rounded-lg gradient-bg text-white hover:opacity-90 transition flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                      Subir imagen
+                    </button>
+                    <button type="button" onclick="clearLogo()" class="text-xs text-gray-400 hover:text-gray-600 px-2">Quitar</button>
+                    <input id="portalLogoFile" type="file" accept="image/*" class="hidden" onchange="uploadLogo(this)" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hero personalization: font + animation -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Tipografía del título <span class="htip" title="La fuente del nombre grande en la portada del portal.">?</span></label>
+                <select id="portalHeroFont" onchange="applyHeroPreview()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                  <option value="">Moderna (default)</option>
+                  <option value="display">Display / impacto</option>
+                  <option value="serif">Elegante (serif)</option>
+                  <option value="rounded">Redondeada / amigable</option>
+                  <option value="mono">Monoespaciada</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Animación de entrada <span class="htip" title="Efecto del título al cargar la portada del portal.">?</span></label>
+                <select id="portalHeroAnim" onchange="applyHeroPreview()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                  <option value="">Sin animación</option>
+                  <option value="fade">Aparecer (fade)</option>
+                  <option value="slide">Subir (slide-up)</option>
+                  <option value="zoom">Zoom in</option>
+                  <option value="typewriter">Máquina de escribir</option>
+                </select>
+              </div>
+            </div>
+            <!-- Hero live preview -->
+            <div id="heroPreviewBox" class="rounded-xl overflow-hidden border border-gray-200" style="background:linear-gradient(135deg,var(--accent,#6366F1),#7c3aed)">
+              <div class="py-6 px-4 text-center text-white">
+                <p id="heroPreviewTitle" class="text-2xl font-extrabold">Tu Agencia</p>
+                <p class="text-white/80 text-xs mt-1">Vista previa del título de la portada</p>
               </div>
             </div>
 
@@ -2728,7 +2794,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.16.2'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.17.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6647,6 +6713,66 @@ function openMyPortal() {
   window.open(`${window.location.origin}/portal/${_portalSlug}`, '_blank');
 }
 
+// ── Portal logo (emoji / upload) + hero personalization ───────────────────────
+let _portalLogoEmoji = '';
+const LOGO_EMOJIS = ['🏠','🏡','🏢','🏬','🏘️','🏰','🏯','🔑','🗝️','🏗️','🌇','🏙️','🛋️','📍','⭐','💎'];
+
+function renderEmojiPicker() {
+  const wrap = document.getElementById('emojiPicker');
+  if (!wrap) return;
+  wrap.innerHTML = LOGO_EMOJIS.map(e =>
+    `<button type="button" onclick="selectEmoji('${e}')" class="w-7 h-7 rounded-lg text-base leading-none hover:bg-gray-100 transition ${_portalLogoEmoji===e?'ring-2 ring-indigo-400 bg-indigo-50':''}">${e}</button>`
+  ).join('');
+}
+
+function selectEmoji(e) {
+  _portalLogoEmoji = (_portalLogoEmoji === e) ? '' : e;
+  if (_portalLogoEmoji) document.getElementById('portalLogo').value = ''; // image overrides emoji; clear it
+  renderEmojiPicker();
+  updateLogoPreview();
+}
+
+function clearLogo() {
+  _portalLogoEmoji = '';
+  document.getElementById('portalLogo').value = '';
+  renderEmojiPicker();
+  updateLogoPreview();
+}
+
+function updateLogoPreview() {
+  const box = document.getElementById('logoPreview');
+  if (!box) return;
+  const url = document.getElementById('portalLogo').value.trim();
+  const name = (document.getElementById('portalAgencyName').value.trim() || 'A')[0].toUpperCase();
+  if (url)               box.innerHTML = `<img src="${url}" class="w-full h-full object-cover" onerror="this.replaceWith(document.createTextNode('${name}'))"/>`;
+  else if (_portalLogoEmoji) box.innerHTML = `<span style="font-size:22px">${_portalLogoEmoji}</span>`;
+  else                   box.textContent = name;
+}
+
+async function uploadLogo(input) {
+  const file = input.files?.[0]; input.value = '';
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    const dataUri = await compressImageFile(file, 256, 0.85);
+    document.getElementById('portalLogo').value = dataUri;
+    _portalLogoEmoji = '';
+    renderEmojiPicker();
+    updateLogoPreview();
+  } catch (err) { showToast('Error al procesar imagen: ' + err.message, 'error'); }
+}
+
+function applyHeroPreview() {
+  const t = document.getElementById('heroPreviewTitle');
+  if (!t) return;
+  const font = document.getElementById('portalHeroFont').value;
+  const anim = document.getElementById('portalHeroAnim').value;
+  t.textContent = document.getElementById('portalAgencyName').value.trim() || 'Tu Agencia';
+  t.className = 'text-2xl font-extrabold ' + (font ? 'hf-' + font : '');
+  // restart animation
+  t.classList.remove('ha-fade','ha-slide','ha-zoom','ha-typewriter');
+  if (anim) { void t.offsetWidth; t.classList.add('ha-' + anim); }
+}
+
 async function loadPortalConfig() {
   try {
     const cfg = await api('GET', '/api/portal/config/me');
@@ -6659,6 +6785,12 @@ async function loadPortalConfig() {
     document.getElementById('portalEmail').value       = cfg.portal?.email || '';
     document.getElementById('portalColor').value       = cfg.portal?.primaryColor || '#6366F1';
     document.getElementById('portalLogo').value        = cfg.portal?.logoUrl || '';
+    _portalLogoEmoji = cfg.portal?.logoEmoji || '';
+    document.getElementById('portalHeroFont').value = cfg.portal?.heroFont || '';
+    document.getElementById('portalHeroAnim').value = cfg.portal?.heroAnimation || '';
+    renderEmojiPicker();
+    updateLogoPreview();
+    applyHeroPreview();
     _portalHeroImages = Array.isArray(cfg.portal?.heroImages) ? [...cfg.portal.heroImages] : [];
     renderHeroThumbs();
     // SEO
@@ -6714,6 +6846,9 @@ async function savePortalConfig(e) {
       whatsapp:     document.getElementById('portalWhatsapp').value.trim(),
       email:        document.getElementById('portalEmail').value.trim(),
       logoUrl:      document.getElementById('portalLogo').value.trim(),
+      logoEmoji:    _portalLogoEmoji,
+      heroFont:     document.getElementById('portalHeroFont').value,
+      heroAnimation:document.getElementById('portalHeroAnim').value,
       heroImages:   _portalHeroImages,
       seo: {
         metaTitle:       document.getElementById('portalMetaTitle').value.trim(),

@@ -29,7 +29,10 @@ const tenantSchema = new mongoose.Schema(
       whatsapp:     { type: String, trim: true },
       email:        { type: String, trim: true },
       logoUrl:      { type: String, trim: true },
+      logoEmoji:    { type: String, trim: true }, // emoji/icon used as logo when no image
       heroImages:   { type: [String], default: [] },
+      heroFont:     { type: String, trim: true, default: '' },     // '', serif, display, rounded, mono
+      heroAnimation:{ type: String, trim: true, default: '' },     // '', fade, slide, zoom, typewriter
       seo: {
         metaTitle:       { type: String, trim: true },
         metaDescription: { type: String, trim: true },

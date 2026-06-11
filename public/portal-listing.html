@@ -12,11 +12,25 @@
   <!--SEO_HEAD-->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236366F1'/%3E%3Cpath d='M32 14 L50 30 L46 30 L46 50 L18 50 L18 30 L14 30 Z' fill='white'/%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Oswald:wght@600;700&family=Playfair+Display:wght@700;800&family=Poppins:wght@600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html { scroll-behavior:smooth }
     body { font-family:'Plus Jakarta Sans', system-ui, sans-serif }
+    /* Hero font + entrance-animation options (set from Mi Portal) */
+    .hf-serif{font-family:'Playfair Display',Georgia,serif}
+    .hf-display{font-family:'Oswald','Arial Narrow',sans-serif;letter-spacing:.5px;text-transform:uppercase}
+    .hf-rounded{font-family:'Poppins',system-ui,sans-serif}
+    .hf-mono{font-family:'Courier New',monospace}
+    @keyframes haFade{from{opacity:0}to{opacity:1}}
+    @keyframes haSlide{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes haZoom{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+    @keyframes haType{from{width:0}to{width:100%}}
+    @keyframes haCaret{50%{border-color:transparent}}
+    .ha-fade{animation:haFade 1s ease both}
+    .ha-slide{animation:haSlide .8s ease both}
+    .ha-zoom{animation:haZoom .8s cubic-bezier(.2,.8,.2,1) both}
+    .ha-typewriter{display:inline-block;overflow:hidden;white-space:nowrap;border-right:3px solid currentColor;max-width:100%;animation:haType 2s steps(28,end) both,haCaret .7s step-end infinite}
     :root { --primary: #6366F1; --primary-dark: #4F46E5 }
     .brand-bg   { background: var(--primary) }
     .brand-text { color: var(--primary) }
@@ -295,16 +309,23 @@ function applyBranding(p) {
     flo.href = link; flo.classList.remove('hidden');
   }
 
-  // Logo image
+  // Logo: image > emoji > initial
+  const navLogo = document.getElementById('navLogoImg');
+  const hl = document.getElementById('heroLogo');
   if (p.logoUrl) {
-    const img = document.createElement('img');
-    img.src = p.logoUrl; img.className = 'w-9 h-9 rounded-xl object-cover';
-    img.onerror = () => img.replaceWith(Object.assign(document.createElement('div'), { className:'w-9 h-9 rounded-xl brand-grad flex items-center justify-center text-white font-extrabold', textContent:(p.agencyName||'A')[0].toUpperCase() }));
-    document.getElementById('navLogoImg').replaceWith(img);
-    const hl = document.getElementById('heroLogo');
+    navLogo.innerHTML = `<img src="${p.logoUrl}" class="w-full h-full object-cover rounded-xl"/>`;
     hl.innerHTML = `<img src="${p.logoUrl}" class="w-full h-full object-cover"/>`;
     hl.classList.remove('hidden'); hl.classList.add('flex');
+  } else if (p.logoEmoji) {
+    navLogo.textContent = p.logoEmoji;
+    hl.innerHTML = `<span style="font-size:34px">${p.logoEmoji}</span>`;
+    hl.classList.remove('hidden'); hl.classList.add('flex');
   }
+
+  // Hero font + entrance animation
+  const title = document.getElementById('heroTitle');
+  if (p.heroFont)      title.classList.add('hf-' + p.heroFont);
+  if (p.heroAnimation) { void title.offsetWidth; title.classList.add('ha-' + p.heroAnimation); }
 }
 
 // ── Hero carousel ─────────────────────────────────────────────────────────────

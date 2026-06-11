@@ -286,12 +286,10 @@ function applyBranding(p) {
   document.getElementById('agencyPhone').textContent = p.whatsapp ? '📱 ' + p.whatsapp : '';
   const fa = document.getElementById('footerAgency'); if (fa) fa.textContent = p.agencyName || '';
 
-  // Logo
-  if (p.logoUrl) {
-    const img = document.createElement('img');
-    img.src = p.logoUrl; img.className = 'w-8 h-8 rounded-lg object-cover flex-shrink-0';
-    document.getElementById('navLogoImg').replaceWith(img);
-  }
+  // Logo: image > emoji > initial
+  const navLogo = document.getElementById('navLogoImg');
+  if (p.logoUrl)        navLogo.innerHTML = `<img src="${p.logoUrl}" class="w-full h-full object-cover rounded-lg"/>`;
+  else if (p.logoEmoji) navLogo.textContent = p.logoEmoji;
 
   // Nav WhatsApp (generic, no property text yet — refined in renderProperty)
   const generic = waLink(p.whatsapp, `Hola ${p.agencyName || ''}, quiero más información.`);

@@ -125,7 +125,10 @@ Qué es: gestión del equipo y configuración general (la mayoría solo para el 
 ### Mi Portal Público (dentro de Equipo)
 Tu página pública para mostrar propiedades, con su propio link.
 1. Completá Nombre de la agencia y **Slug (URL)** (solo letras, números y guiones) → tu link queda `tudominio/portal/tu-slug`.
-2. Tagline (frase corta), WhatsApp de contacto (formato internacional, ej +50760000000), Email, Color principal y Logo (URL).
+2. Tagline (frase corta), WhatsApp de contacto (formato internacional, ej +50760000000), Email, Color principal y Logo.
+   - **Logo / ícono de la agencia**: podés elegir un emoji inmobiliario (🏠🏢🔑…), subir una imagen o pegar una URL. Prioridad: imagen/URL > emoji > inicial del nombre.
+   - **Tipografía del título**: elegís la fuente del nombre grande de la portada (Moderna, Display/impacto, Elegante serif, Redondeada, Monoespaciada).
+   - **Animación de entrada**: efecto del título al cargar (Aparecer, Subir, Zoom, Máquina de escribir). Hay una vista previa en vivo en la misma pantalla.
 3. Imágenes de portada (carrusel): subí fotos con "Subir" o pegá URLs. Si no agregás ninguna, se usan imágenes por defecto.
 4. Activá el toggle **Activo** y tocá **Guardar portal**. Si está apagado, el portal muestra "no disponible".
 5. Copiá tu link con el botón "Copiar".
