@@ -121,7 +121,7 @@ export async function getOverview() {
 export async function listTenants() {
   const [tenants, userAgg, propAgg, leadAgg, owners, prices] = await Promise.all([
     Tenant.find().sort({ createdAt: -1 }).lean(),
-    User.aggregate([{ $group: { _id: '$tenantId', count: { $sum: 1 }, lastLogin: { $max: '$lastLoginAt' }, logins: { $sum: '$loginCount' } } }]),
+    User.aggregate([{ $group: { _id: '$tenantId', count: { $sum: 1 }, lastLogin: { $max: '$lastLoginAt' }, lastSeen: { $max: '$lastSeenAt' }, logins: { $sum: '$loginCount' } } }]),
     Property.aggregate([{ $group: { _id: '$tenantId', count: { $sum: 1 } } }]),
     Lead.aggregate([{ $group: { _id: '$tenantId', count: { $sum: 1 } } }]),
     User.find({ role: 'owner' }).select('tenantId email name').lean(),
@@ -148,6 +148,7 @@ export async function listTenants() {
       leads: l[id]?.count || 0,
       logins: u[id]?.logins || 0,
       lastLogin: u[id]?.lastLogin || null,
+      lastSeen: u[id]?.lastSeen || null,
       portalActive: !!t.portal?.active,
       portalSlug: t.slug || '',
       mrr: prices[t.plan || 'free'] || 0,

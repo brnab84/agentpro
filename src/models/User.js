@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     role:     { type: String, enum: ['owner', 'agent'], default: 'owner' },
     googleId: { type: String, trim: true }, // populated on Google OAuth sign-in
     lastLoginAt: { type: Date },
+    lastSeenAt:  { type: Date }, // last authenticated activity (for online status)
     loginCount:  { type: Number, default: 0 },
   },
   { timestamps: true },

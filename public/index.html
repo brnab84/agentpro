@@ -1936,6 +1936,7 @@
                   <th class="px-3 py-3 font-medium text-center">Props</th>
                   <th class="px-3 py-3 font-medium text-center">Leads</th>
                   <th class="px-3 py-3 font-medium">Alta</th>
+                  <th class="px-3 py-3 font-medium">Conexión <span class="htip" title="🟢 En línea (activo en los últimos 5 min). 🟡 Conectado sin actividad reciente (últimos 30 min). 🔴 Desconectado.">?</span></th>
                   <th class="px-3 py-3 font-medium">Último login</th>
                   <th class="px-3 py-3 font-medium">Estado <span class="htip" title="Activa: la cuenta funciona normal. Suspendida: el dueño y sus agentes NO pueden iniciar sesión (no borra datos). Hacé clic para alternar.">?</span></th>
                   <th class="px-3 py-3 font-medium">Acciones</th>
@@ -2794,7 +2795,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.18.1'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.19.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -7173,6 +7174,24 @@ function renderAdminOverview(o) {
   }).join('');
 }
 
+function relTime(d) {
+  const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+  if (s < 60) return 'recién';
+  const m = Math.floor(s / 60); if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m / 60); if (h < 24) return `hace ${h} h`;
+  const dd = Math.floor(h / 24); return `hace ${dd} d`;
+}
+/** Colored connection dot + last-activity time. */
+function connCell(lastSeen) {
+  if (!lastSeen) return '<span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span><span class="text-gray-400">Nunca</span></span>';
+  const min = (Date.now() - new Date(lastSeen).getTime()) / 60000;
+  let color, label;
+  if (min < 5)       { color = 'bg-green-500'; label = 'En línea'; }
+  else if (min < 30) { color = 'bg-amber-400'; label = 'Conectado sin actividad'; }
+  else               { color = 'bg-red-500';   label = 'Desconectado'; }
+  return `<span class="inline-flex items-center gap-1.5" title="${label}"><span class="w-2.5 h-2.5 rounded-full ${color}"></span><span class="text-gray-500">${relTime(lastSeen)}</span></span>`;
+}
+
 function renderAdminTenants() {
   const q = (document.getElementById('admSearch').value || '').toLowerCase().trim();
   const body = document.getElementById('admTenantsBody');
@@ -7205,6 +7224,7 @@ function renderAdminTenants() {
       <td class="px-3 py-3 text-center text-gray-600">${t.properties}</td>
       <td class="px-3 py-3 text-center text-gray-600">${t.leads}</td>
       <td class="px-3 py-3 text-gray-500 text-xs">${created}</td>
+      <td class="px-3 py-3 text-xs">${connCell(t.lastSeen)}</td>
       <td class="px-3 py-3 text-gray-500 text-xs">${last}</td>
       <td class="px-3 py-3">
         <button onclick="adminToggleStatus('${t.id}', ${suspended})" class="text-xs font-semibold px-2.5 py-1 rounded-full ${suspended?'bg-red-100 text-red-600':'bg-green-100 text-green-700'}">
