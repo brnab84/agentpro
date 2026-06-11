@@ -34,7 +34,7 @@ async function buildPropertyContext(tenantId) {
 
   const text = props.map((p, i) => {
     const parts = [
-      `${i + 1}.`,
+      `${i + 1}. [id:${p._id}]`,
       p.title,
       `— ${OP_LABELS[p.operation] || p.operation}`,
       `${TYPE_LABELS[p.type] || p.type}`,
@@ -57,6 +57,7 @@ Reglas:
 - Respondé en español, cálido, breve y útil (2 a 5 oraciones o una lista corta).
 - Basate ÚNICAMENTE en las PROPIEDADES DISPONIBLES de abajo. NO inventes propiedades, precios ni datos que no estén en la lista.
 - Ayudá a la persona a encontrar la mejor opción según lo que busca (operación, tipo, zona, presupuesto, ambientes).
+- Cuando recomiendes una propiedad de la lista, citála SIEMPRE con este formato exacto: [[Título de la propiedad|ID]] (usando el ID que figura entre corchetes [id:...] en la lista). El sistema lo convierte en un enlace clickeable. No muestres el ID crudo ni los corchetes [id:...].
 - Si no hay nada que encaje, decilo con sinceridad y ofrecé tomar sus datos para avisarle cuando entre algo.
 - Tu objetivo es entender qué busca y conseguir sus datos de contacto para que un asesor lo contacte.
 
