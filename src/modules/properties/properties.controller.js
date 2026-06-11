@@ -394,26 +394,30 @@ function parseNextData(nextData) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Import from URL — main endpoint
 // ─────────────────────────────────────────────────────────────────────────────
+/** Parse already-fetched HTML (+ optional browser-collected images) into a property. */
+async function parseHtmlToProperty(html, url, providedImages = []) {
+  const photoSet = new Set();
+  providedImages.filter(isValidPhoto).forEach(p => photoSet.add(p));
+  const structured   = await extractStructuredData(html, url, photoSet);
+  const strippedText = stripHtmlForClaude(html);
+  const aiData       = await extractWithClaude(strippedText, structured);
+
+  const merged       = mergeExtractions(aiData, structured);
+  const galleryFirst = [...providedImages.filter(isValidPhoto), ...(structured.photos || [])];
+  const photos       = buildFinalPhotoList(galleryFirst, photoSet, aiData.photos || []);
+  delete merged.photos;
+  return { merged, photos };
+}
+
 export const importFromUrl = asyncHandler(async (req, res) => {
   const { url } = req.body;
   if (!url) throw new AppError('url is required', 400);
 
   const headers = buildFetchHeaders(url);
   const { html, method, renderedImages } = await fetchHtml(url, headers);
-
   validateHtmlContent(html, url);
 
-  const photoSet      = new Set();
-  // Gallery images pulled straight from the rendered DOM take priority.
-  (renderedImages || []).filter(isValidPhoto).forEach(p => photoSet.add(p));
-  const structured    = await extractStructuredData(html, url, photoSet);
-  const strippedText  = stripHtmlForClaude(html);
-  const aiData        = await extractWithClaude(strippedText, structured);
-
-  const merged   = mergeExtractions(aiData, structured);
-  const galleryFirst = [...(renderedImages || []).filter(isValidPhoto), ...(structured.photos || [])];
-  const photos   = buildFinalPhotoList(galleryFirst, photoSet, aiData.photos || []);
-  delete merged.photos;
+  const { merged, photos } = await parseHtmlToProperty(html, url, renderedImages || []);
 
   const fieldCount = Object.values(merged).filter(v => v != null && v !== '' && !(Array.isArray(v) && !v.length)).length;
   console.log(`import-url: ${fieldCount} fields, ${photos.length} photos, method=${method}, html=${html.length}b — ${url}`);
@@ -423,6 +427,65 @@ export const importFromUrl = asyncHandler(async (req, res) => {
     _debug: { method, htmlBytes: html.length, fields: fieldCount, photos: photos.length, headless: headlessStatus() },
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Browser bookmarklet import — receives HTML from the user's own browser/IP,
+// so it bypasses datacenter-IP blocks (MercadoLibre, ZonaProp, etc.).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /api/properties/import-key — return (creating if needed) the tenant's import key. */
+export const getImportKey = asyncHandler(async (req, res) => {
+  const { Tenant } = await import('../../models/Tenant.js');
+  const tenant = await Tenant.findById(req.tenantId);
+  if (!tenant) throw new AppError('Cuenta no encontrada', 404);
+  if (!tenant.importKey) {
+    tenant.importKey = randomKey();
+    await tenant.save();
+  }
+  res.json({ importKey: tenant.importKey });
+});
+
+/** POST /api/properties/import-key/regenerate — issue a new import key. */
+export const regenerateImportKey = asyncHandler(async (req, res) => {
+  const { Tenant } = await import('../../models/Tenant.js');
+  const tenant = await Tenant.findById(req.tenantId);
+  if (!tenant) throw new AppError('Cuenta no encontrada', 404);
+  tenant.importKey = randomKey();
+  await tenant.save();
+  res.json({ importKey: tenant.importKey });
+});
+
+/** POST /api/properties/import-from-html?key=... — create a property from page HTML. */
+export const importFromHtml = asyncHandler(async (req, res) => {
+  const key = req.query.key || req.body?.key;
+  if (!key) throw new AppError('Falta la clave de importación', 401);
+
+  const { Tenant } = await import('../../models/Tenant.js');
+  const tenant = await Tenant.findOne({ importKey: String(key) });
+  if (!tenant) throw new AppError('Clave de importación inválida', 401);
+
+  const { url, html, images } = req.body || {};
+  if (!html || html.length < MIN_HTML_LENGTH) throw new AppError('No se recibió el contenido de la página', 400);
+
+  // Respect the plan's property limit.
+  const { assertCanAddProperty } = await import('../billing/limits.service.js');
+  await assertCanAddProperty(tenant._id);
+
+  const { merged, photos } = await parseHtmlToProperty(html, url || '', Array.isArray(images) ? images : []);
+  const data = { ...merged, photos, sourceUrl: url || '' };
+  if (!data.title) data.title = 'Propiedad importada';
+
+  const property = await service.create(tenant._id, data);
+  console.log(`import-from-html: created ${property._id}, ${photos.length} photos — ${url}`);
+  res.json({ ok: true, id: property._id, title: property.title, photos: photos.length });
+});
+
+function randomKey() {
+  const a = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let s = '';
+  for (let i = 0; i < 28; i++) s += a[Math.floor(Math.random() * a.length)];
+  return s;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Import helpers (private)

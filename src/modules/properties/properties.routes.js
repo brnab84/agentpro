@@ -6,9 +6,16 @@ import { createPropertySchema, updatePropertySchema } from './properties.schema.
 import * as controller from './properties.controller.js';
 
 const router = Router();
+
+// Public: browser bookmarklet posts the page HTML (from the user's own IP).
+// Auth is by per-tenant import key in the query string, not JWT.
+router.post('/import-from-html', controller.importFromHtml);
+
 router.use(auth, tenantScope);
 
 router.get('/', controller.list);
+router.get('/import-key', controller.getImportKey);
+router.post('/import-key/regenerate', controller.regenerateImportKey);
 router.post('/import-url', controller.importFromUrl);
 router.post('/', validate(createPropertySchema), controller.create);
 router.get('/:id', controller.getById);

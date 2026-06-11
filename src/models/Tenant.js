@@ -44,6 +44,8 @@ const tenantSchema = new mongoose.Schema(
       pageId:    { type: String, trim: true }, // Facebook Page id
       pageToken: { type: String, trim: true }, // Page access token (leads_retrieval)
     },
+    // Per-tenant key used by the browser-bookmarklet importer (write: properties)
+    importKey: { type: String, trim: true, index: true },
   },
   { timestamps: true },
 );

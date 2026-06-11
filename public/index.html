@@ -2333,6 +2333,49 @@
   </div>
 </div>
 
+<!-- ── BROWSER IMPORTER (bookmarklet) MODAL ──────────────────────────────────── -->
+<div id="bookmarkletModal" class="modal-overlay hidden fixed inset-0 z-[55] flex items-center justify-center p-4 sm:p-6">
+  <div class="card w-full max-w-lg fade-in flex flex-col" style="max-height:90vh">
+    <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 flex-shrink-0">
+      <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+        Importador de navegador
+      </h3>
+      <button onclick="closeBookmarkletModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="px-6 py-5 overflow-y-auto text-sm text-gray-600 space-y-4">
+      <p>Para sitios que bloquean la importación automática (MercadoLibre, ZonaProp), importá <b>desde tu propio navegador</b> — así nunca te bloquean. Es gratis y funciona en cualquier portal.</p>
+
+      <div class="rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 p-4 text-center">
+        <p class="text-xs text-gray-500 mb-2">1) Arrastrá este botón a tu <b>barra de marcadores</b>:</p>
+        <a id="bookmarkletLink" href="#" onclick="return false" draggable="true"
+           class="inline-flex items-center gap-2 gradient-bg text-white font-semibold px-5 py-2.5 rounded-xl cursor-move select-none shadow">
+          📥 Importar a AgentPro
+        </a>
+        <p class="text-[11px] text-gray-400 mt-2">(si no ves la barra de marcadores: Ctrl+Shift+B)</p>
+      </div>
+
+      <div class="text-xs text-gray-600 space-y-1.5">
+        <p><b>2)</b> Abrí la propiedad en MercadoLibre / ZonaProp / el sitio que sea.</p>
+        <p><b>3)</b> Hacé clic en el marcador <b>"Importar a AgentPro"</b>.</p>
+        <p><b>4)</b> Listo: aparece en tu lista de Propiedades con las fotos. ✅</p>
+      </div>
+
+      <div class="rounded-lg bg-gray-50 border border-gray-100 p-3 flex items-center justify-between gap-2">
+        <div class="min-w-0">
+          <p class="text-[11px] text-gray-400">Tu clave de importación (privada)</p>
+          <p id="bmKey" class="text-xs font-mono text-gray-600 truncate">—</p>
+        </div>
+        <button onclick="regenerateBookmarklet()" class="text-xs text-indigo-500 hover:text-indigo-700 font-medium flex-shrink-0" title="Generar una clave nueva (invalida la anterior)">Regenerar</button>
+      </div>
+      <p class="text-[11px] text-gray-400">Si regenerás la clave, tenés que volver a arrastrar el botón (el viejo deja de funcionar).</p>
+    </div>
+    <div class="px-6 py-4 border-t border-gray-100 flex-shrink-0 flex justify-end">
+      <button onclick="closeBookmarkletModal()" class="gradient-bg text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition">Entendido</button>
+    </div>
+  </div>
+</div>
+
 <div id="propertyModal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
   <div class="card w-full max-w-2xl fade-in flex flex-col" style="max-height:90vh">
     <!-- Header -->
@@ -2352,6 +2395,7 @@
         </button>
       </div>
       <p id="importError" class="text-xs text-red-500 mt-1 hidden"></p>
+      <p class="text-xs text-blue-500 mt-1.5">¿MercadoLibre o ZonaProp no traen las fotos? <button type="button" onclick="openBookmarkletModal()" class="font-semibold underline hover:text-blue-700">Importá desde tu navegador →</button></p>
     </div>
 
     <!-- Tabs -->
@@ -2623,7 +2667,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.14.1'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.15.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -3765,6 +3809,48 @@ async function importPropertyFromUrl() {
   } finally {
     btn.disabled = false; spinner.classList.add('hidden'); btnText.textContent = 'Importar';
   }
+}
+
+// ── Browser importer (bookmarklet) ────────────────────────────────────────────
+function buildBookmarklet(key, origin) {
+  // Runs inside the listing page (the user's own browser/IP). Collects gallery
+  // images + the full HTML and posts them to the CRM, which parses them.
+  const code =
+    "javascript:(function(){try{" +
+    "var K=" + JSON.stringify(key) + ",A=" + JSON.stringify(origin) + ";" +
+    "var S=new Set();document.querySelectorAll('img').forEach(function(i){" +
+    "var c=[i.currentSrc,i.src,i.getAttribute('data-src'),i.getAttribute('data-lazy'),i.getAttribute('data-original')];" +
+    "if(i.srcset)i.srcset.split(',').forEach(function(s){c.push(s.trim().split(' ')[0])});" +
+    "var big=(i.naturalWidth||i.width||0)>=350;" +
+    "c.forEach(function(u){if(u&&u.indexOf('http')===0&&(big||/encuentra24|mlstatic|cloudinary|f_auto/i.test(u)))S.add(u)})});" +
+    "var b=document.createElement('div');b.textContent='Importando a AgentPro...';" +
+    "b.style.cssText='position:fixed;top:12px;right:12px;z-index:2147483647;background:#111;color:#fff;padding:10px 14px;border-radius:10px;font:14px sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3)';" +
+    "document.body.appendChild(b);" +
+    "fetch(A+'/api/properties/import-from-html?key='+K,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:location.href,html:document.documentElement.outerHTML,images:[].slice.call(S).slice(0,40)})})" +
+    ".then(function(r){return r.json()}).then(function(d){b.textContent=d.error?('AgentPro: '+d.error):('\\u2705 Importado: '+(d.title||'propiedad')+' \\u00b7 '+(d.photos||0)+' fotos');setTimeout(function(){b.remove()},6000)})" +
+    ".catch(function(e){b.textContent='AgentPro error: '+e.message;setTimeout(function(){b.remove()},6000)})" +
+    "}catch(e){alert('AgentPro: '+e.message)}})();";
+  return code;
+}
+
+async function openBookmarkletModal() {
+  try {
+    const { importKey } = await api('GET', '/api/properties/import-key');
+    document.getElementById('bmKey').textContent = importKey;
+    const link = document.getElementById('bookmarkletLink');
+    link.href = buildBookmarklet(importKey, window.location.origin);
+    document.getElementById('bookmarkletModal').classList.remove('hidden');
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+}
+function closeBookmarkletModal() { document.getElementById('bookmarkletModal').classList.add('hidden'); }
+async function regenerateBookmarklet() {
+  if (!confirm('¿Generar una clave nueva? El botón anterior dejará de funcionar y tendrás que arrastrarlo de nuevo.')) return;
+  try {
+    const { importKey } = await api('POST', '/api/properties/import-key/regenerate', {});
+    document.getElementById('bmKey').textContent = importKey;
+    document.getElementById('bookmarkletLink').href = buildBookmarklet(importKey, window.location.origin);
+    showToast('Clave regenerada — arrastrá el botón de nuevo');
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
 }
 
 async function submitPropForm() {
