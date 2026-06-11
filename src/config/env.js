@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.16.0'; // feat: pro public portal — full filters (zone/price/beds/baths/sort) + similar listings
+export const APP_VERSION = '3.16.1'; // feat: ZonaProp-style photo mosaic on property page (1 big + 4 thumbs + "ver todas")
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

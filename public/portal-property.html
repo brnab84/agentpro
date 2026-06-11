@@ -20,10 +20,6 @@
     .brand-bg   { background: var(--primary) }
     .brand-text { color: var(--primary) }
     .brand-grad { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) }
-    .thumb { cursor:pointer; transition: opacity .15s, transform .15s; border: 2px solid transparent }
-    .thumb.active { border-color: var(--primary); opacity:1 }
-    .thumb:not(.active) { opacity:.6 }
-    .thumb:not(.active):hover { opacity:.95; transform: translateY(-1px) }
     .photo-placeholder { background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%) }
     .skeleton { animation: pulse 1.5s ease-in-out infinite; background: #e5e7eb; border-radius:8px }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
@@ -32,7 +28,16 @@
     .wa-float { box-shadow: 0 8px 24px rgba(37,211,102,.45); animation: wa-pop .4s ease }
     @keyframes wa-pop { 0%{transform:scale(0)} 70%{transform:scale(1.12)} 100%{transform:scale(1)} }
     .wa-float:hover { transform: scale(1.07) }
-    #mainPhoto { cursor: zoom-in }
+    /* ZonaProp-style photo mosaic */
+    .gallery-mosaic { display: grid; gap: 8px; height: clamp(300px, 46vh, 460px); grid-template-columns: 1fr; border-radius: 16px; overflow: hidden }
+    .gallery-mosaic img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease }
+    .gallery-mosaic > div:hover img { transform: scale(1.04) }
+    .gallery-mosaic .g-thumb { display: none }
+    @media (min-width: 768px) {
+      .gallery-mosaic { grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr }
+      .gallery-mosaic .g-big { grid-row: 1 / span 2 }
+      .gallery-mosaic .g-thumb { display: block }
+    }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen antialiased text-gray-900">
@@ -73,29 +78,11 @@
   <div id="content" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
     <!-- Left: photos + details -->
     <div class="lg:col-span-2">
-      <!-- Photo gallery -->
-      <div class="rounded-2xl overflow-hidden mb-3 relative bg-gray-100 group">
-        <img id="mainPhoto" src="" alt="" class="w-full object-cover" style="height:clamp(300px,52vh,560px)" onclick="openLightbox()" onerror="this.closest('.rounded-2xl').classList.add('photo-placeholder');this.style.display='none'"/>
-        <div id="noPhoto" class="hidden photo-placeholder flex items-center justify-center" style="height:clamp(300px,52vh,560px)">
-          <svg class="w-16 h-16 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg>
-        </div>
-        <!-- Nav arrows -->
-        <button id="navPrev" onclick="event.stopPropagation();stepPhoto(-1)" class="hidden absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white text-gray-800 shadow-lg items-center justify-center transition opacity-0 group-hover:opacity-100">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <button id="navNext" onclick="event.stopPropagation();stepPhoto(1)" class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white text-gray-800 shadow-lg items-center justify-center transition opacity-0 group-hover:opacity-100">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
-        </button>
-        <!-- Expand hint -->
-        <span class="hidden sm:flex absolute top-3 right-3 bg-black/50 text-white text-xs font-semibold px-2.5 py-1 rounded-full items-center gap-1 opacity-0 group-hover:opacity-100 transition pointer-events-none">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
-          Ampliar
-        </span>
-        <!-- Photo counter -->
-        <span id="photoCounter" class="hidden absolute bottom-3 right-3 bg-black/55 text-white text-xs font-semibold px-2.5 py-1 rounded-full"></span>
+      <!-- Photo gallery (ZonaProp-style mosaic; built by renderGallery) -->
+      <div id="gallery" class="mb-3"></div>
+      <div id="noPhoto" class="hidden photo-placeholder rounded-2xl flex items-center justify-center mb-3" style="height:clamp(300px,52vh,520px)">
+        <svg class="w-16 h-16 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg>
       </div>
-      <!-- Thumbnails -->
-      <div id="thumbs" class="flex gap-2 overflow-x-auto pb-1"></div>
 
       <!-- Title + badges -->
       <div class="mt-6 mb-4">
@@ -372,23 +359,10 @@ function renderProperty(p, portal) {
     document.getElementById('featSection').classList.remove('hidden');
   }
 
-  // Photos
+  // Photos — ZonaProp-style mosaic
   photos = p.photos || [];
-  if (photos.length) {
-    setPhoto(0);
-    document.getElementById('photoCounter').textContent = `1 / ${photos.length}`;
-    document.getElementById('photoCounter').classList.remove('hidden');
-    if (photos.length > 1) {
-      document.getElementById('navPrev').classList.add('flex');
-      document.getElementById('navNext').classList.add('flex');
-      document.getElementById('thumbs').innerHTML = photos.map((url, i) =>
-        `<img src="${url}" class="thumb ${i===0?'active':''} w-20 h-20 rounded-xl object-cover flex-shrink-0" onclick="setPhoto(${i})" loading="lazy"/>`
-      ).join('');
-    }
-  } else {
-    document.getElementById('mainPhoto').classList.add('hidden');
-    document.getElementById('noPhoto').classList.remove('hidden');
-  }
+  if (photos.length) renderGallery(photos);
+  else document.getElementById('noPhoto').classList.remove('hidden');
 
   // Location map (uses address/zone — no API key needed)
   const place = [p.address, p.zone].filter(Boolean).join(', ');
@@ -414,26 +388,42 @@ function renderProperty(p, portal) {
   }
 }
 
+/** Build the ZonaProp-style mosaic: 1 big + up to 4 thumbnails. */
+function renderGallery(ph) {
+  const cont = document.getElementById('gallery');
+  const tile = (i, cls, extra = '') =>
+    `<div class="${cls} relative rounded-xl overflow-hidden cursor-pointer" onclick="openLightbox(${i})">
+       <img src="${ph[i]}" loading="lazy" onerror="this.parentElement.classList.add('photo-placeholder');this.remove()"/>
+       ${extra}</div>`;
+  const tiles = [tile(0, 'g-big',
+    `<span class="absolute bottom-2 left-2 bg-black/55 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5">
+       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+       ${ph.length} ${ph.length === 1 ? 'foto' : 'fotos'}</span>`)];
+  for (let i = 1; i < Math.min(ph.length, 5); i++) {
+    const isLast = i === 4 && ph.length > 5;
+    const overlay = isLast
+      ? `<div class="absolute inset-0 bg-black/55 hover:bg-black/65 transition text-white flex flex-col items-center justify-center font-bold text-sm">
+           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+           Ver todas (${ph.length})</div>`
+      : '';
+    tiles.push(tile(i, 'g-thumb', overlay));
+  }
+  cont.innerHTML = `<div class="gallery-mosaic">${tiles.join('')}</div>`;
+}
+
 function setPhoto(idx) {
   if (!photos.length) return;
   currentPhotoIdx = (idx + photos.length) % photos.length;
-  document.getElementById('mainPhoto').src = photos[currentPhotoIdx];
-  document.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('active', i === currentPhotoIdx));
-  const counter = document.getElementById('photoCounter');
-  if (counter) counter.textContent = `${currentPhotoIdx + 1} / ${photos.length}`;
-  const lb = document.getElementById('lightboxImg');
-  if (lb && !document.getElementById('lightbox').classList.contains('hidden')) lb.src = photos[currentPhotoIdx];
+  document.getElementById('lightboxImg').src = photos[currentPhotoIdx];
   const lc = document.getElementById('lightboxCounter');
   if (lc) lc.textContent = `${currentPhotoIdx + 1} / ${photos.length}`;
-  // Active thumb into view
-  const activeThumb = document.querySelectorAll('.thumb')[currentPhotoIdx];
-  if (activeThumb) activeThumb.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
 }
 
 function stepPhoto(dir) { setPhoto(currentPhotoIdx + dir); }
 
-function openLightbox() {
+function openLightbox(idx) {
   if (!photos.length) return;
+  currentPhotoIdx = typeof idx === 'number' ? idx : currentPhotoIdx;
   const lb = document.getElementById('lightbox');
   document.getElementById('lightboxImg').src = photos[currentPhotoIdx];
   document.getElementById('lightboxCounter').textContent = `${currentPhotoIdx + 1} / ${photos.length}`;
