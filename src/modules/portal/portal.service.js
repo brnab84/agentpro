@@ -54,12 +54,26 @@ export async function getPortalListing(slug, filters = {}) {
 
   if (filters.operation) query.operation = filters.operation;
   if (filters.type)      query.type      = filters.type;
-  if (filters.zone)      query.zone      = new RegExp(filters.zone, 'i');
+  if (filters.zone)      query.$or = [
+    { zone:    new RegExp(escapeRegex(filters.zone), 'i') },
+    { address: new RegExp(escapeRegex(filters.zone), 'i') },
+    { title:   new RegExp(escapeRegex(filters.zone), 'i') },
+  ];
   if (filters.minPrice || filters.maxPrice) {
     query.price = {};
     if (filters.minPrice) query.price.$gte = Number(filters.minPrice);
     if (filters.maxPrice) query.price.$lte = Number(filters.maxPrice);
   }
+  if (filters.beds)  query.beds  = { $gte: Number(filters.beds) };
+  if (filters.baths) query.baths = { $gte: Number(filters.baths) };
+
+  // Sorting
+  const SORTS = {
+    recent:     { createdAt: -1 },
+    price_asc:  { price: 1 },
+    price_desc: { price: -1 },
+  };
+  const sort = SORTS[filters.sort] || SORTS.recent;
 
   const page  = Math.max(1, Number(filters.page) || 1);
   const skip  = (page - 1) * MAX_PROPERTIES_PER_PAGE;
@@ -67,18 +81,26 @@ export async function getPortalListing(slug, filters = {}) {
   const [properties, total] = await Promise.all([
     Property.find(query)
       .select(PUBLIC_PROPERTY_FIELDS.join(' '))
-      .sort({ createdAt: -1 })
+      .sort(sort)
       .skip(skip)
       .limit(MAX_PROPERTIES_PER_PAGE),
     Property.countDocuments(query),
   ]);
 
+  // Distinct zones for the filter dropdown (so the agency's barrios appear).
+  const zones = await Property.distinct('zone', {
+    tenantId: tenant._id, publishedOnPortal: true, status: 'available', zone: { $nin: [null, ''] },
+  });
+
   return {
     portal: buildPortalPublicConfig(tenant),
     properties,
+    zones: zones.sort(),
     pagination: { page, total, pages: Math.ceil(total / MAX_PROPERTIES_PER_PAGE) },
   };
 }
+
+function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 /** Return a single property detail */
 export async function getPropertyDetail(slug, propertyId) {
@@ -90,7 +112,24 @@ export async function getPropertyDetail(slug, propertyId) {
   }).select(PUBLIC_PROPERTY_FIELDS.join(' '));
 
   if (!property) throw new AppError('Propiedad no encontrada', 404);
-  return { portal: buildPortalPublicConfig(tenant), property };
+
+  // Similar listings: same operation, prefer same type/zone, exclude this one.
+  const baseQuery = {
+    tenantId:          tenant._id,
+    publishedOnPortal: true,
+    status:            'available',
+    _id:               { $ne: property._id },
+    operation:         property.operation,
+  };
+  let similar = await Property.find({ ...baseQuery, type: property.type })
+    .select(PUBLIC_PROPERTY_FIELDS.join(' ')).sort({ createdAt: -1 }).limit(8);
+  if (similar.length < 4) {
+    const extra = await Property.find({ ...baseQuery, _id: { $nin: [property._id, ...similar.map(s => s._id)] } })
+      .select(PUBLIC_PROPERTY_FIELDS.join(' ')).sort({ createdAt: -1 }).limit(8 - similar.length);
+    similar = [...similar, ...extra];
+  }
+
+  return { portal: buildPortalPublicConfig(tenant), property, similar };
 }
 
 /** Create a lead from a portal contact form */
