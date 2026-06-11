@@ -14,5 +14,6 @@ router.patch ('/config/properties/:id/publish', auth, tenantScope, controller.to
 router.get ('/:slug',              controller.getListing);
 router.get ('/:slug/property/:id', controller.getProperty);
 router.post('/:slug/contact',      controller.submitContact);
+router.post('/:slug/assistant',    controller.assistantAsk);
 
 export default router;

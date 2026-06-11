@@ -1,5 +1,6 @@
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as service from './portal.service.js';
+import * as assistant from './portal-assistant.service.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public endpoints — no authentication required
@@ -21,6 +22,11 @@ export const getProperty = asyncHandler(async (req, res) => {
 export const submitContact = asyncHandler(async (req, res) => {
   const lead = await service.createPortalLead(req.params.slug, req.body);
   res.status(201).json({ ok: true, leadId: lead._id });
+});
+
+/** POST /api/portal/:slug/assistant — per-portal AI assistant (captures leads) */
+export const assistantAsk = asyncHandler(async (req, res) => {
+  res.json(await assistant.ask(req.params.slug, req.body?.messages));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
