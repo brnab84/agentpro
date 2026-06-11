@@ -180,7 +180,7 @@
 <footer class="bg-gray-900 text-gray-400 py-10 px-4 text-center">
   <p id="footerAgency" class="font-bold text-white text-lg mb-1"></p>
   <p id="footerContact" class="text-sm mb-4"></p>
-  <p class="text-xs text-gray-500">Powered by <a href="/landing" class="text-indigo-400 hover:underline font-medium">AgentPro</a></p>
+  <p class="text-xs text-gray-500">Powered by <a href="/landing" class="text-indigo-400 hover:underline font-medium">AgentPro</a> <span id="appVersion" class="text-gray-600"></span></p>
 </footer>
 
 <!-- ── FLOATING WHATSAPP ──────────────────────────────────────────────────────── -->
@@ -500,6 +500,10 @@ document.getElementById('contactForm').onsubmit = async (e) => {
   } finally { btn.disabled=false; btn.textContent='Enviar consulta'; }
 };
 
+fetch(`${API}/api/version`).then(r => r.json()).then(d => {
+  const el = document.getElementById('appVersion');
+  if (el && d.version) el.textContent = '· v' + d.version;
+}).catch(() => {});
 init();
 </script>
 </body>
