@@ -14,6 +14,27 @@ export const login = asyncHandler(async (req, res) => {
   res.json(result);
 });
 
+const baseUrlOf = (req) =>
+  (env.appBaseUrl && env.appBaseUrl.replace(/\/$/, '')) || `${req.protocol}://${req.get('host')}`;
+
+/** POST /api/auth/forgot-password — start reset (emails a link when configured). */
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { emailed } = await service.forgotPassword(req.body?.email, baseUrlOf(req));
+  // Never reveal whether the email exists.
+  res.json({ ok: true, emailed });
+});
+
+/** POST /api/auth/reset-password — finish reset with the emailed token. */
+export const resetPassword = asyncHandler(async (req, res) => {
+  res.json(await service.resetPassword(req.body?.token, req.body?.password));
+});
+
+/** POST /api/auth/recover — break-glass reset using the RESET_SECRET. */
+export const recover = asyncHandler(async (req, res) => {
+  const { email, password, secret } = req.body || {};
+  res.json(await service.recoverWithSecret(email, password, secret));
+});
+
 /** GET /api/auth/me — current user with live-computed admin status. */
 export const me = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select('name email role').lean();

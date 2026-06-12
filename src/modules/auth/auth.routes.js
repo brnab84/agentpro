@@ -11,6 +11,9 @@ const router = Router();
 router.post('/register', authLimiter, validate(registerSchema), controller.register);
 router.post('/login',    authLimiter, validate(loginSchema),    controller.login);
 router.post('/google',   authLimiter, googleLogin); // Sign in / register with Google ID token
+router.post('/forgot-password', authLimiter, controller.forgotPassword);
+router.post('/reset-password',  authLimiter, controller.resetPassword);
+router.post('/recover',         authLimiter, controller.recover);
 router.get ('/me',       auth, controller.me);
 
 export default router;

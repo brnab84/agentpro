@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.21.0'; // security: webhook signature verification (MP/PayPal, gated) + hardened CSP + explicit CORS
+export const APP_VERSION = '3.22.0'; // feat: password recovery — email reset flow + break-glass key (RESET_SECRET)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
@@ -39,6 +39,9 @@ export const env = {
   // Super-admin panel — comma-separated list of authorized emails
   adminEmails:          (process.env.ADMIN_EMAILS || '')
                           .split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
+
+  // Break-glass password recovery (when email isn't configured). Set in Railway.
+  resetSecret:          process.env.RESET_SECRET || '',
 
   // Billing — Stripe
   stripeSecretKey:      process.env.STRIPE_SECRET_KEY || '',

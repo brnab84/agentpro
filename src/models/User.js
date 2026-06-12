@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema(
     lastLoginAt: { type: Date },
     lastSeenAt:  { type: Date }, // last authenticated activity (for online status)
     loginCount:  { type: Number, default: 0 },
+    resetTokenHash:    { type: String }, // sha256 of the password-reset token
+    resetTokenExpires: { type: Date },
   },
   { timestamps: true },
 );

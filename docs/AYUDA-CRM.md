@@ -166,6 +166,7 @@ Aparece "Admin" en el menú si tu email está autorizado (variable ADMIN_EMAILS)
 - "No veo el portal / dice no disponible": activá el toggle "Activo" en Mi Portal y guardá.
 - "El WhatsApp del portal no abre": cargá el número en formato internacional (+código país) y guardá.
 - "No aparece Admin": tu email debe estar en ADMIN_EMAILS y tenés que volver a iniciar sesión o refrescar.
+- "Olvidé mi contraseña": en la pantalla de login tocá "¿Olvidaste tu contraseña?". Si el email está configurado, te llega un enlace para crear una nueva. Si el email todavía no está configurado, usá la opción "Con clave de recuperación" (la clave que el administrador puso en la variable RESET_SECRET).
 - "Cambié el precio y no se ve en el landing": refrescá con Ctrl+Shift+R (el landing toma los precios del Admin).
 - "No me deja crear más propiedades/leads/usuarios": llegaste al límite de tu plan; mejoralo en Plan y facturación.
 - "Quiero conectar WhatsApp": configurá el Phone Number ID en Equipo → Configuración de canales.

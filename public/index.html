@@ -329,6 +329,9 @@
       </div>
       <button type="submit" id="loginBtn" class="w-full gradient-bg text-white font-semibold py-2.5 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2">Ingresar</button>
     </form>
+    <div class="mt-3 text-center">
+      <button onclick="openForgotModal()" class="text-xs text-gray-500 hover:text-gray-700 hover:underline">¿Olvidaste tu contraseña?</button>
+    </div>
     <div class="mt-5 flex items-center gap-3">
       <div class="flex-1 h-px bg-gray-200"></div>
       <span class="text-xs text-gray-400 whitespace-nowrap">o continuá con</span>
@@ -342,6 +345,58 @@
       <p class="text-sm text-gray-500 mb-3">¿No tenés cuenta?</p>
       <button onclick="showRegister()" class="text-blue-600 text-sm font-medium hover:underline">Crear cuenta gratis</button>
     </div>
+  </div>
+</div>
+
+<!-- ══════════════ FORGOT PASSWORD MODAL ══════════════ -->
+<div id="forgotModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" style="background:rgba(0,0,0,.45)">
+  <div class="card w-full max-w-md p-6 fade-in" style="background:#fff;max-height:92vh;overflow-y:auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-bold text-gray-900">Recuperar acceso</h3>
+      <button onclick="closeForgotModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+
+    <!-- Option A: email -->
+    <div class="mb-5">
+      <p class="text-sm font-semibold text-gray-700 mb-2">📧 Por email</p>
+      <p class="text-xs text-gray-400 mb-2">Te enviamos un enlace para crear una nueva contraseña.</p>
+      <div class="flex gap-2">
+        <input id="fpEmail" type="email" placeholder="tu@email.com" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        <button onclick="submitForgot()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition whitespace-nowrap">Enviar</button>
+      </div>
+      <p id="fpMsg" class="hidden text-xs mt-2"></p>
+    </div>
+
+    <div class="flex items-center gap-3 my-4"><div class="flex-1 h-px bg-gray-200"></div><span class="text-xs text-gray-400">o</span><div class="flex-1 h-px bg-gray-200"></div></div>
+
+    <!-- Option B: recovery key (break-glass) -->
+    <details>
+      <summary class="text-sm font-semibold text-gray-700 cursor-pointer">🔑 Con clave de recuperación</summary>
+      <div class="mt-2 space-y-2">
+        <p class="text-xs text-gray-400">Si todavía no configuraste el email, usá la clave de recuperación (la que pusiste en <code class="bg-gray-100 px-1 rounded">RESET_SECRET</code>).</p>
+        <input id="rcEmail" type="email" placeholder="Tu email" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        <input id="rcPass"  type="password" placeholder="Nueva contraseña (mín. 6)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        <input id="rcSecret" type="password" placeholder="Clave de recuperación (RESET_SECRET)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        <button onclick="submitRecover()" class="w-full gradient-bg text-white text-sm font-medium py-2 rounded-lg hover:opacity-90 transition">Cambiar contraseña</button>
+        <p id="rcMsg" class="hidden text-xs"></p>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- ══════════════ RESET PASSWORD (from email link) ══════════════ -->
+<div id="resetPage" class="hidden min-h-screen flex items-center justify-center gradient-bg p-4">
+  <div class="card w-full max-w-md p-8 fade-in">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Nueva contraseña</h1>
+      <p class="text-gray-500 text-sm mt-1">Elegí tu nueva contraseña</p>
+    </div>
+    <div id="resetError" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4"></div>
+    <div id="resetOk" class="hidden bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3 mb-4">✅ ¡Contraseña actualizada! Ya podés iniciar sesión.</div>
+    <input id="resetPass1" type="password" placeholder="Nueva contraseña (mín. 6)" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    <input id="resetPass2" type="password" placeholder="Repetí la contraseña" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    <button onclick="submitReset()" class="w-full gradient-bg text-white font-semibold py-2.5 rounded-lg hover:opacity-90 transition">Guardar contraseña</button>
+    <div class="mt-4 text-center"><button onclick="goToLogin()" class="text-blue-600 text-sm hover:underline">Volver a iniciar sesión</button></div>
   </div>
 </div>
 
@@ -2795,7 +2850,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.21.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.22.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -2842,8 +2897,70 @@ async function api(method, path, body) {
 function showLogin() {
   document.getElementById('loginPage').classList.remove('hidden');
   document.getElementById('registerPage').classList.add('hidden');
+  document.getElementById('resetPage')?.classList.add('hidden');
   document.getElementById('appPage').classList.add('hidden');
   document.getElementById('helpBot')?.classList.add('hidden');
+}
+
+// ── Password recovery ─────────────────────────────────────────────────────────
+let _resetToken = '';
+function openForgotModal() { document.getElementById('forgotModal').classList.remove('hidden'); }
+function closeForgotModal() { document.getElementById('forgotModal').classList.add('hidden'); }
+function goToLogin() { history.replaceState({}, '', location.pathname); showLogin(); }
+
+async function submitForgot() {
+  const email = document.getElementById('fpEmail').value.trim();
+  const msg = document.getElementById('fpMsg');
+  if (!email) return;
+  try {
+    const r = await api('POST', '/api/auth/forgot-password', { email });
+    msg.textContent = r.emailed
+      ? '✅ Si el email existe, te enviamos un enlace para restablecer la contraseña.'
+      : '✅ Si el email existe, te enviamos instrucciones. (Si el correo aún no está configurado, usá la clave de recuperación abajo.)';
+    msg.className = 'text-xs mt-2 text-green-600';
+    msg.classList.remove('hidden');
+  } catch (err) {
+    msg.textContent = err.message; msg.className = 'text-xs mt-2 text-red-500'; msg.classList.remove('hidden');
+  }
+}
+
+async function submitRecover() {
+  const email = document.getElementById('rcEmail').value.trim();
+  const password = document.getElementById('rcPass').value;
+  const secret = document.getElementById('rcSecret').value;
+  const msg = document.getElementById('rcMsg');
+  try {
+    await api('POST', '/api/auth/recover', { email, password, secret });
+    msg.textContent = '✅ ¡Contraseña cambiada! Ya podés iniciar sesión.';
+    msg.className = 'text-xs text-green-600'; msg.classList.remove('hidden');
+    setTimeout(() => { closeForgotModal(); document.getElementById('loginEmail').value = email; }, 1500);
+  } catch (err) {
+    msg.textContent = err.message; msg.className = 'text-xs text-red-500'; msg.classList.remove('hidden');
+  }
+}
+
+function showResetPage(token) {
+  _resetToken = token;
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('registerPage').classList.add('hidden');
+  document.getElementById('appPage').classList.add('hidden');
+  document.getElementById('resetPage').classList.remove('hidden');
+}
+
+async function submitReset() {
+  const p1 = document.getElementById('resetPass1').value;
+  const p2 = document.getElementById('resetPass2').value;
+  const err = document.getElementById('resetError');
+  err.classList.add('hidden');
+  if (p1.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres'; err.classList.remove('hidden'); return; }
+  if (p1 !== p2) { err.textContent = 'Las contraseñas no coinciden'; err.classList.remove('hidden'); return; }
+  try {
+    await api('POST', '/api/auth/reset-password', { token: _resetToken, password: p1 });
+    document.getElementById('resetOk').classList.remove('hidden');
+    setTimeout(goToLogin, 2000);
+  } catch (e) {
+    err.textContent = e.message; err.classList.remove('hidden');
+  }
 }
 function showRegister() {
   document.getElementById('loginPage').classList.add('hidden');
@@ -7349,6 +7466,9 @@ async function sendHelpBot() {
 initVersion();
 (function boot() {
   const params = new URLSearchParams(window.location.search);
+  // Password reset link from email → show the set-new-password screen.
+  const resetTok = params.get('reset');
+  if (resetTok) { showResetPage(resetTok); return; }
   const wantsSignup = params.get('registro') === '1' || params.get('signup') === '1';
   const plan = params.get('plan');
   if (plan) { try { sessionStorage.setItem('agentpro_intended_plan', plan); } catch {} }
