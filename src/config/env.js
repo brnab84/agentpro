@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.27.0'; // feat: portal shape controls — global radius, button style (solid/outline/pill), density
+export const APP_VERSION = '3.28.0'; // feat: hero layouts (centered/left/solid) + header style (solid/transparent-on-scroll)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

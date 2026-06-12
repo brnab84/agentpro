@@ -71,6 +71,17 @@
     .density-compact  #propGrid { gap:1rem }
     .density-spacious main { padding-top:3.5rem; padding-bottom:3.5rem }
     .density-spacious #propGrid { gap:2rem }
+    /* Hero layout */
+    .hero-left #heroContent { text-align:left }
+    .hero-left #heroLogo { margin-left:0; margin-right:0 }
+    .hero-left #heroTagline { margin-left:0 }
+    .hero-left #heroStats { justify-content:flex-start }
+    .hero-solid #heroCarousel { display:none !important }
+    /* Header transparent over hero (solidifies on scroll) */
+    .header-transparent #navbar { transition: background .25s ease, box-shadow .25s ease, border-color .25s ease }
+    .header-transparent:not(.header-scrolled) #navbar { background:transparent !important; border-color:transparent !important; box-shadow:none !important; backdrop-filter:none !important }
+    .header-transparent:not(.header-scrolled) #navAgencyName { color:#fff }
+    .header-transparent:not(.header-scrolled) #navWhatsApp { color:rgba(255,255,255,.92) }
     /* Dark mode (set via body.portal-dark) */
     body.portal-dark { background:#0f172a; color:#e2e8f0 }
     body.portal-dark .bg-white { background:#1e293b !important }
@@ -113,7 +124,7 @@
   <div id="heroOverlay" class="absolute inset-0" style="background:linear-gradient(135deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,.25) 100%)"></div>
   <div class="absolute inset-0 hero-pattern opacity-30"></div>
   <!-- Content -->
-  <div class="relative max-w-4xl mx-auto px-4 py-20 sm:py-28 text-center">
+  <div id="heroContent" class="relative max-w-4xl mx-auto px-4 py-20 sm:py-28 text-center">
     <div id="heroLogo" class="hidden w-16 h-16 rounded-2xl bg-white/15 backdrop-blur mx-auto mb-5 items-center justify-center overflow-hidden"></div>
     <h1 id="heroTitle" class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3 drop-shadow-lg">Nuestras Propiedades</h1>
     <p id="heroTagline" class="text-white/90 text-base sm:text-lg max-w-xl mx-auto drop-shadow"></p>
@@ -437,6 +448,16 @@ function applyLayout(lay) {
   // Density
   document.body.classList.remove('density-compact', 'density-comfortable', 'density-spacious');
   document.body.classList.add('density-' + (lay.density || 'comfortable'));
+  // Hero layout
+  document.body.classList.remove('hero-centered', 'hero-left', 'hero-solid');
+  document.body.classList.add('hero-' + (lay.heroLayout || 'centered'));
+  // Header style (transparent solidifies on scroll)
+  document.body.classList.toggle('header-transparent', lay.header === 'transparent');
+  if (lay.header === 'transparent') {
+    const onScroll = () => document.body.classList.toggle('header-scrolled', window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
   if (lay.showStats === false)   document.getElementById('heroStats')?.classList.add('hidden');
   if (lay.showContact === false) document.getElementById('contact')?.style.setProperty('display', 'none');
 }

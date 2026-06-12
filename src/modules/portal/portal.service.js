@@ -206,11 +206,15 @@ export async function savePortalConfig(tenantId, data) {
   const CARD_STYLES = ['rounded', 'sharp', 'flat'];
   const BUTTON_STYLES = ['solid', 'outline', 'pill'];
   const DENSITIES = ['compact', 'comfortable', 'spacious'];
+  const HERO_LAYOUTS = ['centered', 'left', 'solid'];
+  const HEADERS = ['solid', 'transparent'];
   const layout = {
     cardStyle:   CARD_STYLES.includes(lay.cardStyle) ? lay.cardStyle : 'rounded',
     radius:      clampNumber(lay.radius, 0, 28, 16),
     buttonStyle: BUTTON_STYLES.includes(lay.buttonStyle) ? lay.buttonStyle : 'solid',
     density:     DENSITIES.includes(lay.density) ? lay.density : 'comfortable',
+    heroLayout:  HERO_LAYOUTS.includes(lay.heroLayout) ? lay.heroLayout : 'centered',
+    header:      HEADERS.includes(lay.header) ? lay.header : 'solid',
     darkMode:    Boolean(lay.darkMode),
     showStats:   lay.showStats   !== false,
     showContact: lay.showContact !== false,
