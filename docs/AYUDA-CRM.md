@@ -126,6 +126,10 @@ Qué es: gestión del equipo y configuración general (la mayoría solo para el 
 Tu página pública para mostrar propiedades, con su propio link.
 1. Completá Nombre de la agencia y **Slug (URL)** (solo letras, números y guiones) → tu link queda `tudominio/portal/tu-slug`.
 2. Tagline (frase corta), WhatsApp de contacto (formato internacional, ej +50760000000), Email, Color principal y Logo.
+   - **Temas rápidos**: botones (Moderno, Elegante, Minimal, Audaz, Océano, Natura, Atardecer, Real) que aplican color principal + secundario + tipografía + animación de un saque. Después podés ajustar todo a mano.
+   - **Clonar estilo de un ejemplo**: pegás la URL de un sitio que te guste y tocás "Sugerir"; tomamos su paleta de colores y te la proponemos (no copia datos ni diseño, solo sugiere colores parecidos). Revisás la vista previa y Guardás.
+   - **Color principal y secundario**: el principal es tu color de marca; el secundario es el segundo color del degradado de la portada y los botones. Si dejás el secundario igual al principal, el degradado se genera solo.
+   - **Oscuridad de la portada**: control deslizante (0–80%) que regula cuánto se oscurece la foto de portada para que el título se lea bien.
    - **Logo / ícono de la agencia**: podés elegir un emoji inmobiliario (🏠🏢🔑…), subir una imagen o pegar una URL. Prioridad: imagen/URL > emoji > inicial del nombre.
    - **Tipografía del título**: elegís la fuente del nombre grande de la portada (Moderna, Display/impacto, Elegante serif, Redondeada, Monoespaciada).
    - **Animación de entrada**: efecto del título al cargar (Aparecer, Subir, Zoom, Máquina de escribir). Hay una vista previa en vivo en la misma pantalla.

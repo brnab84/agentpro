@@ -43,6 +43,11 @@ export const saveConfig = asyncHandler(async (req, res) => {
   res.json(await service.savePortalConfig(req.tenantId, req.body));
 });
 
+/** POST /api/portal-config/clone-style — suggest a palette from an example URL */
+export const cloneStyle = asyncHandler(async (req, res) => {
+  res.json(await service.suggestStyleFromUrl(req.body?.url));
+});
+
 /** PATCH /api/portal-config/properties/:id/publish — toggle publish */
 export const togglePublish = asyncHandler(async (req, res) => {
   const result = await service.togglePropertyPublished(

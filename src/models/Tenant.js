@@ -25,7 +25,9 @@ const tenantSchema = new mongoose.Schema(
       active:       { type: Boolean, default: false },
       agencyName:   { type: String, trim: true },
       tagline:      { type: String, trim: true },
-      primaryColor: { type: String, trim: true, default: '#6366F1' },
+      primaryColor:   { type: String, trim: true, default: '#6366F1' },
+      secondaryColor: { type: String, trim: true, default: '' }, // gradient accent (falls back to a darker primary)
+      heroOverlay:    { type: Number, default: 45 },             // hero darkness 0-80 (%)
       whatsapp:     { type: String, trim: true },
       email:        { type: String, trim: true },
       logoUrl:      { type: String, trim: true },

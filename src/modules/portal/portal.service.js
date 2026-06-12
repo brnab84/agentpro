@@ -3,6 +3,7 @@ import { Property } from '../../models/Property.js';
 import { Lead }     from '../../models/Lead.js';
 import { AppError } from '../../utils/AppError.js';
 import { escapeRegex } from '../../utils/escapeRegex.js';
+import { assertPublicUrl, safeFetch } from '../../utils/ssrf.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -19,6 +20,13 @@ const PUBLIC_PROPERTY_FIELDS = [
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Clamp a number into [min,max], falling back to `def` when not a finite number. */
+function clampNumber(v, min, max, def) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return def;
+  return Math.min(max, Math.max(min, n));
+}
 
 /** Generate a URL-safe slug from a string */
 export function buildSlug(text) {
@@ -198,7 +206,9 @@ export async function savePortalConfig(tenantId, data) {
     active:       Boolean(p.active),
     agencyName:   p.agencyName?.trim()   || tenant.name,
     tagline:      p.tagline?.trim()       || '',
-    primaryColor: p.primaryColor?.trim()  || '#6366F1',
+    primaryColor:   p.primaryColor?.trim()   || '#6366F1',
+    secondaryColor: p.secondaryColor?.trim() || '',
+    heroOverlay:    clampNumber(p.heroOverlay, 0, 80, 45),
     whatsapp:     p.whatsapp?.trim()      || '',
     email:        p.email?.trim()         || '',
     logoUrl:      p.logoUrl?.trim()       || '',
@@ -232,6 +242,74 @@ export async function togglePropertyPublished(tenantId, propertyId, published) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// "Clonar estilo" — suggest a palette from an example page (no scraping of data,
+// only the visual style: dominant brand colours).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A near-neutral colour (white/black/grey) is not a usable brand colour. */
+function isNeutralHex(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const sat = max - min;
+  return sat < 28 || max < 30 || min > 232; // grey-ish, too dark, or too light
+}
+
+/** Darken/lighten a #rrggbb hex by `pct` (-100..100). */
+function shadeHex(hex, pct) {
+  const num = parseInt(hex.slice(1), 16);
+  const amt = Math.round(2.55 * pct);
+  const clamp = (n) => Math.max(0, Math.min(255, n));
+  const r = clamp((num >> 16) + amt);
+  const g = clamp(((num >> 8) & 0xff) + amt);
+  const b = clamp((num & 0xff) + amt);
+  return '#' + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+/**
+ * Fetch an example page and propose a primary/secondary colour from its CSS.
+ * SSRF-guarded. Returns suggested colours for the user to review (not auto-applied).
+ */
+export async function suggestStyleFromUrl(url) {
+  const target = (url || '').trim();
+  if (!target) throw new AppError('Ingresá una URL de ejemplo', 400);
+  await assertPublicUrl(target);
+
+  let html = '';
+  try {
+    const res = await safeFetch(target, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AgentProBot/1.0)' },
+      timeoutMs: 15_000,
+    });
+    html = await res.text();
+  } catch {
+    throw new AppError('No pudimos leer esa página. Probá con otra URL.', 422);
+  }
+
+  // Prefer the brand <meta name="theme-color"> when present.
+  const themeMeta = html.match(/<meta[^>]+name=["']theme-color["'][^>]*content=["'](#[0-9a-fA-F]{6})["']/i)
+                 || html.match(/<meta[^>]+content=["'](#[0-9a-fA-F]{6})["'][^>]*name=["']theme-color["']/i);
+
+  // Count hex colours across the markup/CSS, ignoring neutrals.
+  const counts = {};
+  for (const m of html.matchAll(/#([0-9a-fA-F]{6})\b/g)) {
+    const hex = '#' + m[1].toLowerCase();
+    if (isNeutralHex(hex)) continue;
+    counts[hex] = (counts[hex] || 0) + 1;
+  }
+  const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([h]) => h);
+
+  const primary = (themeMeta && themeMeta[1].toLowerCase()) || ranked[0];
+  if (!primary) throw new AppError('No encontramos colores de marca en esa página.', 422);
+
+  // Secondary: the next distinct strong colour, else a darker shade of primary.
+  const secondary = ranked.find(h => h !== primary) || shadeHex(primary, -18);
+
+  return { primaryColor: primary, secondaryColor: secondary, source: target };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Private helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -239,7 +317,9 @@ function buildPortalPublicConfig(tenant) {
   return {
     agencyName:   tenant.portal?.agencyName   || tenant.name,
     tagline:      tenant.portal?.tagline       || '',
-    primaryColor: tenant.portal?.primaryColor  || '#6366F1',
+    primaryColor:   tenant.portal?.primaryColor   || '#6366F1',
+    secondaryColor: tenant.portal?.secondaryColor || '',
+    heroOverlay:    typeof tenant.portal?.heroOverlay === 'number' ? tenant.portal.heroOverlay : 45,
     whatsapp:     tenant.portal?.whatsapp      || '',
     email:        tenant.portal?.email         || '',
     logoUrl:      tenant.portal?.logoUrl       || '',

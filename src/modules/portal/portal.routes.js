@@ -9,6 +9,7 @@ const router = Router();
 // ── CRM / authenticated (must be before /:slug wildcard) ────────────────────
 router.get   ('/config/me',                     auth, tenantScope, controller.getConfig);
 router.put   ('/config/me',                     auth, tenantScope, controller.saveConfig);
+router.post  ('/config/clone-style',            auth, tenantScope, controller.cloneStyle);
 router.patch ('/config/properties/:id/publish', auth, tenantScope, controller.togglePublish);
 
 // ── Public (no auth) ─────────────────────────────────────────────────────────

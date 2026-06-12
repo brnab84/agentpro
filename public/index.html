@@ -1691,17 +1691,48 @@
                 <input id="portalEmail" type="email" placeholder="info@agencia.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
             </div>
+            <!-- Quick themes -->
+            <div>
+              <label class="text-xs text-gray-500 font-medium">🎨 Temas rápidos <span class="htip" title="Aplican color, color secundario, tipografía y animación de un saque. Después podés ajustar todo manualmente.">?</span></label>
+              <div id="themePicker" class="flex flex-wrap gap-2 mt-1.5"></div>
+            </div>
+
+            <!-- Clone style from an example URL -->
+            <div class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3">
+              <label class="text-xs text-indigo-700 font-semibold">✨ Clonar estilo de un ejemplo <span class="htip" title="Pegá la URL de un sitio que te guste. Tomamos su paleta de colores (no copia datos ni diseño, solo te sugiere colores parecidos) para que tu portal tenga un look similar.">?</span></label>
+              <p class="text-xs text-gray-500 mt-0.5 mb-2">Pegá una página que te guste y te sugerimos su paleta de colores.</p>
+              <div class="flex gap-2">
+                <input id="cloneUrl" type="url" placeholder="https://sitio-que-me-gusta.com" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                <button type="button" onclick="cloneStyleFromUrl()" id="cloneBtn" class="px-3 py-2 text-sm font-medium rounded-lg gradient-bg text-white hover:opacity-90 transition flex-shrink-0">Sugerir</button>
+              </div>
+              <p id="cloneMsg" class="hidden text-xs mt-2"></p>
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="text-xs text-gray-500 font-medium">Color principal <span class="htip" title="El color de marca de tu portal. Se aplica a botones, encabezado y detalles. Elegí el color de tu logo o marca.">?</span></label>
                 <div class="flex items-center gap-3 mt-1">
-                  <input id="portalColor" type="color" value="#6366F1" class="h-9 w-16 rounded-lg border border-gray-300 cursor-pointer p-1" />
-                  <span class="text-xs text-gray-400">Color del portal</span>
+                  <input id="portalColor" type="color" value="#6366F1" onchange="applyHeroPreview()" class="h-9 w-16 rounded-lg border border-gray-300 cursor-pointer p-1" />
+                  <span class="text-xs text-gray-400">Principal</span>
                 </div>
               </div>
               <div>
+                <label class="text-xs text-gray-500 font-medium">Color secundario <span class="htip" title="El segundo color del degradado de la portada y los botones. Si lo dejás igual al principal, el degradado se genera solo.">?</span></label>
+                <div class="flex items-center gap-3 mt-1">
+                  <input id="portalSecondaryColor" type="color" value="#7c3aed" onchange="applyHeroPreview()" class="h-9 w-16 rounded-lg border border-gray-300 cursor-pointer p-1" />
+                  <span class="text-xs text-gray-400">Acento / degradado</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
                 <label class="text-xs text-gray-500 font-medium">Logo (URL, opcional) <span class="htip" title="Link a la imagen de tu logo (PNG/JPG). Tiene prioridad sobre el emoji. Si dejás todo vacío, usamos la inicial de tu agencia.">?</span></label>
                 <input id="portalLogo" type="url" placeholder="https://...logo.png" oninput="updateLogoPreview()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 font-medium">Oscuridad de la portada: <span id="overlayVal" class="font-semibold text-indigo-600">45%</span> <span class="htip" title="Cuánto se oscurece la foto de portada para que el título se lea bien. 0% = foto a pleno, 80% = muy oscuro.">?</span></label>
+                <input id="portalHeroOverlay" type="range" min="0" max="80" value="45" oninput="document.getElementById('overlayVal').textContent=this.value+'%';applyHeroPreview()" class="w-full mt-3 accent-indigo-600" />
               </div>
             </div>
 
@@ -1749,8 +1780,8 @@
               </div>
             </div>
             <!-- Hero live preview -->
-            <div id="heroPreviewBox" class="rounded-xl overflow-hidden border border-gray-200" style="background:linear-gradient(135deg,var(--accent,#6366F1),#7c3aed)">
-              <div class="py-6 px-4 text-center text-white">
+            <div id="heroPreviewBox" class="rounded-xl overflow-hidden border border-gray-200" style="background:linear-gradient(135deg,#6366F1,#7c3aed)">
+              <div id="heroPreviewInner" class="py-6 px-4 text-center text-white">
                 <p id="heroPreviewTitle" class="text-2xl font-extrabold">Tu Agencia</p>
                 <p class="text-white/80 text-xs mt-1">Vista previa del título de la portada</p>
               </div>
@@ -2852,7 +2883,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.22.1'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.23.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -6904,11 +6935,71 @@ function applyHeroPreview() {
   if (!t) return;
   const font = document.getElementById('portalHeroFont').value;
   const anim = document.getElementById('portalHeroAnim').value;
+  const c1   = document.getElementById('portalColor').value || '#6366F1';
+  const c2   = document.getElementById('portalSecondaryColor')?.value || c1;
+  const overlay = Number(document.getElementById('portalHeroOverlay')?.value ?? 45);
   t.textContent = document.getElementById('portalAgencyName').value.trim() || 'Tu Agencia';
   t.className = 'text-2xl font-extrabold ' + (font ? 'hf-' + font : '');
   // restart animation
   t.classList.remove('ha-fade','ha-slide','ha-zoom','ha-typewriter');
   if (anim) { void t.offsetWidth; t.classList.add('ha-' + anim); }
+  const box = document.getElementById('heroPreviewBox');
+  if (box) box.style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+  const inner = document.getElementById('heroPreviewInner');
+  if (inner) inner.style.background = `rgba(0,0,0,${(overlay / 100).toFixed(2)})`;
+}
+
+// ── Portal themes (presets) ──────────────────────────────────────────────────
+const PORTAL_THEMES = [
+  { id:'modern',  name:'Moderno',   c1:'#6366F1', c2:'#7c3aed', font:'',        anim:'fade'  },
+  { id:'elegant', name:'Elegante',  c1:'#0f172a', c2:'#334155', font:'serif',   anim:'fade'  },
+  { id:'minimal', name:'Minimal',   c1:'#111827', c2:'#374151', font:'rounded', anim:''      },
+  { id:'bold',    name:'Audaz',     c1:'#dc2626', c2:'#f59e0b', font:'display', anim:'zoom'  },
+  { id:'ocean',   name:'Océano',    c1:'#0ea5e9', c2:'#2563eb', font:'rounded', anim:'slide' },
+  { id:'nature',  name:'Natura',    c1:'#059669', c2:'#10b981', font:'',        anim:'fade'  },
+  { id:'sunset',  name:'Atardecer', c1:'#f97316', c2:'#db2777', font:'display', anim:'fade'  },
+  { id:'royal',   name:'Real',      c1:'#7c3aed', c2:'#c026d3', font:'serif',   anim:'zoom'  },
+];
+
+function renderThemePicker() {
+  const box = document.getElementById('themePicker');
+  if (!box) return;
+  box.innerHTML = PORTAL_THEMES.map(t =>
+    `<button type="button" onclick="applyTheme('${t.id}')" title="${t.name}" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:border-indigo-400 hover:shadow-sm transition text-xs font-medium">
+      <span class="w-4 h-4 rounded-full flex-shrink-0" style="background:linear-gradient(135deg,${t.c1},${t.c2})"></span>${t.name}
+    </button>`).join('');
+}
+
+function applyTheme(id) {
+  const t = PORTAL_THEMES.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('portalColor').value          = t.c1;
+  document.getElementById('portalSecondaryColor').value = t.c2;
+  document.getElementById('portalHeroFont').value       = t.font;
+  document.getElementById('portalHeroAnim').value       = t.anim;
+  applyHeroPreview();
+  showToast(`Tema "${t.name}" aplicado. Acordate de Guardar.`, 'success');
+}
+
+async function cloneStyleFromUrl() {
+  const url = document.getElementById('cloneUrl').value.trim();
+  const msg = document.getElementById('cloneMsg');
+  const btn = document.getElementById('cloneBtn');
+  if (!url) { msg.textContent = 'Pegá una URL primero.'; msg.className = 'text-xs text-red-500'; msg.classList.remove('hidden'); return; }
+  btn.disabled = true; const prev = btn.textContent; btn.textContent = '…';
+  try {
+    const r = await api('POST', '/api/portal/config/clone-style', { url });
+    document.getElementById('portalColor').value          = r.primaryColor;
+    document.getElementById('portalSecondaryColor').value = r.secondaryColor;
+    applyHeroPreview();
+    msg.innerHTML = `Aplicamos: principal <b>${r.primaryColor}</b> + secundario <b>${r.secondaryColor}</b>. Revisá la vista previa y tocá Guardar.`;
+    msg.className = 'text-xs text-green-600';
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'text-xs text-red-500';
+  } finally {
+    msg.classList.remove('hidden'); btn.disabled = false; btn.textContent = prev;
+  }
 }
 
 async function loadPortalConfig() {
@@ -6922,10 +7013,15 @@ async function loadPortalConfig() {
     document.getElementById('portalWhatsapp').value    = cfg.portal?.whatsapp || '';
     document.getElementById('portalEmail').value       = cfg.portal?.email || '';
     document.getElementById('portalColor').value       = cfg.portal?.primaryColor || '#6366F1';
+    document.getElementById('portalSecondaryColor').value = cfg.portal?.secondaryColor || '#7c3aed';
+    const ov = (typeof cfg.portal?.heroOverlay === 'number') ? cfg.portal.heroOverlay : 45;
+    document.getElementById('portalHeroOverlay').value = ov;
+    document.getElementById('overlayVal').textContent = ov + '%';
     document.getElementById('portalLogo').value        = cfg.portal?.logoUrl || '';
     _portalLogoEmoji = cfg.portal?.logoEmoji || '';
     document.getElementById('portalHeroFont').value = cfg.portal?.heroFont || '';
     document.getElementById('portalHeroAnim').value = cfg.portal?.heroAnimation || '';
+    renderThemePicker();
     renderEmojiPicker();
     updateLogoPreview();
     applyHeroPreview();
@@ -6980,7 +7076,9 @@ async function savePortalConfig(e) {
       active:       _portalActive,
       agencyName:   document.getElementById('portalAgencyName').value.trim(),
       tagline:      document.getElementById('portalTagline').value.trim(),
-      primaryColor: document.getElementById('portalColor').value,
+      primaryColor:   document.getElementById('portalColor').value,
+      secondaryColor: document.getElementById('portalSecondaryColor').value,
+      heroOverlay:    Number(document.getElementById('portalHeroOverlay').value),
       whatsapp:     document.getElementById('portalWhatsapp').value.trim(),
       email:        document.getElementById('portalEmail').value.trim(),
       logoUrl:      document.getElementById('portalLogo').value.trim(),

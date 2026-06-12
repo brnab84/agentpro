@@ -304,7 +304,8 @@ function renderSimilar(items) {
 function applyBranding(p) {
   portalCfg = p;
   document.documentElement.style.setProperty('--primary', p.primaryColor || '#6366F1');
-  document.documentElement.style.setProperty('--primary-dark', shade(p.primaryColor || '#6366F1', -18));
+  document.documentElement.style.setProperty('--primary-dark',
+    (p.secondaryColor && p.secondaryColor.trim()) ? p.secondaryColor : shade(p.primaryColor || '#6366F1', -18));
   document.getElementById('navAgencyName').textContent = p.agencyName || '';
   document.getElementById('navLogoImg').textContent    = (p.agencyName||'A')[0].toUpperCase();
   document.getElementById('backLink').href = `/portal/${slug}`;
