@@ -35,6 +35,28 @@ const tenantSchema = new mongoose.Schema(
       heroImages:   { type: [String], default: [] },
       heroFont:     { type: String, trim: true, default: '' },     // '', serif, display, rounded, mono
       heroAnimation:{ type: String, trim: true, default: '' },     // '', fade, slide, zoom, typewriter
+      // ── Layout & visibility ────────────────────────────────────────────────
+      layout: {
+        cardStyle:   { type: String, trim: true, default: 'rounded' }, // rounded | sharp | flat
+        darkMode:    { type: Boolean, default: false },
+        showStats:   { type: Boolean, default: true },  // hero stats (listing)
+        showContact: { type: Boolean, default: true },  // contact form
+        showMap:     { type: Boolean, default: true },  // property map
+        showSimilar: { type: Boolean, default: true },  // similar listings (property)
+      },
+      // ── Extra content sections ─────────────────────────────────────────────
+      sections: {
+        about:        { type: String, trim: true, default: '' },   // "Sobre nosotros"
+        whyUs:        { type: [String], default: [] },             // "Por qué elegirnos" bullets
+        hours:        { type: String, trim: true, default: '' },   // horarios de atención
+        testimonials: { type: [{ name: String, text: String }], default: [] },
+        social: {
+          instagram: { type: String, trim: true, default: '' },
+          facebook:  { type: String, trim: true, default: '' },
+          tiktok:    { type: String, trim: true, default: '' },
+          website:   { type: String, trim: true, default: '' },
+        },
+      },
       seo: {
         metaTitle:       { type: String, trim: true },
         metaDescription: { type: String, trim: true },

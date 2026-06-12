@@ -201,6 +201,41 @@ export async function savePortalConfig(tenantId, data) {
 
   const seo = p.seo || {};
 
+  // Layout & visibility
+  const lay = p.layout || {};
+  const CARD_STYLES = ['rounded', 'sharp', 'flat'];
+  const layout = {
+    cardStyle:   CARD_STYLES.includes(lay.cardStyle) ? lay.cardStyle : 'rounded',
+    darkMode:    Boolean(lay.darkMode),
+    showStats:   lay.showStats   !== false,
+    showContact: lay.showContact !== false,
+    showMap:     lay.showMap     !== false,
+    showSimilar: lay.showSimilar !== false,
+  };
+
+  // Extra content sections
+  const sec = p.sections || {};
+  const soc = sec.social || {};
+  const sections = {
+    about: (sec.about || '').trim().slice(0, 1500),
+    hours: (sec.hours || '').trim().slice(0, 400),
+    whyUs: Array.isArray(sec.whyUs)
+      ? sec.whyUs.map(s => (s || '').trim()).filter(Boolean).slice(0, 6)
+      : [],
+    testimonials: Array.isArray(sec.testimonials)
+      ? sec.testimonials
+          .map(t => ({ name: (t?.name || '').trim().slice(0, 80), text: (t?.text || '').trim().slice(0, 400) }))
+          .filter(t => t.text)
+          .slice(0, 6)
+      : [],
+    social: {
+      instagram: (soc.instagram || '').trim(),
+      facebook:  (soc.facebook  || '').trim(),
+      tiktok:    (soc.tiktok    || '').trim(),
+      website:   (soc.website   || '').trim(),
+    },
+  };
+
   tenant.slug = rawSlug;
   tenant.portal = {
     active:       Boolean(p.active),
@@ -216,6 +251,8 @@ export async function savePortalConfig(tenantId, data) {
     heroFont:     p.heroFont?.trim()      || '',
     heroAnimation:p.heroAnimation?.trim() || '',
     heroImages,
+    layout,
+    sections,
     seo: {
       metaTitle:       seo.metaTitle?.trim()       || '',
       metaDescription: seo.metaDescription?.trim() || '',
@@ -327,6 +364,8 @@ function buildPortalPublicConfig(tenant) {
     heroFont:     tenant.portal?.heroFont      || '',
     heroAnimation:tenant.portal?.heroAnimation || '',
     heroImages:   tenant.portal?.heroImages    || [],
+    layout:       tenant.portal?.layout        || {},
+    sections:     tenant.portal?.sections      || {},
     seo:          tenant.portal?.seo           || {},
     slug:         tenant.slug,
   };

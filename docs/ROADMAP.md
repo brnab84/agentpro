@@ -22,7 +22,8 @@ Estado al **2026-06-12** (v3.22.1). Lista viva: marcá lo que se vaya completand
 - [ ] **GA4 — evento de conversión** cuando el portal captura un lead (no implementado aún).
 
 ## 🏠 Portal público (mejoras)
-- [ ] **Más personalización** (en curso): temas/plantillas, clonar estilo de un ejemplo, secciones extra, layout, colores secundarios, etc.
+- [x] **Personalización Fase A** (v3.23.0): temas rápidos, clonar estilo desde URL, color secundario, oscuridad del hero.
+- [x] **Personalización Fase B** (v3.24.0): modo oscuro, estilo de tarjetas, mostrar/ocultar secciones, "Sobre nosotros", "Por qué elegirnos", testimonios, horarios y redes sociales.
 - [ ] Galería mosaico: ajustes finos (proporciones, cantidad visible).
 
 ## 🤖 IA

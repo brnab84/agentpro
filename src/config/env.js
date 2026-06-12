@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.23.0'; // feat: portal customization A — themes, clone-from-URL palette, secondary color, hero darkness
+export const APP_VERSION = '3.24.0'; // feat: portal customization B — dark mode, card style, section toggles, about/why-us/testimonials/hours/social
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

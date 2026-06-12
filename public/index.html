@@ -1811,6 +1811,79 @@
               </div>
             </div>
 
+            <!-- Diseño y visibilidad (layout) -->
+            <details class="rounded-lg border border-gray-200 bg-gray-50/50">
+              <summary class="cursor-pointer select-none px-3 py-2.5 text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+                Diseño y visibilidad
+                <span class="ml-auto text-xs font-normal text-gray-400">opcional</span>
+              </summary>
+              <div class="px-3 pb-3 pt-1 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-xs text-gray-500 font-medium">Estilo de tarjetas <span class="htip" title="La forma de las fichas de propiedad en el portal.">?</span></label>
+                    <select id="portalCardStyle" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                      <option value="rounded">Redondeadas (default)</option>
+                      <option value="sharp">Rectas / modernas</option>
+                      <option value="flat">Planas (sin sombra)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-500 font-medium">Tema de color <span class="htip" title="Modo claro (default) o modo oscuro para todo el portal.">?</span></label>
+                    <label class="flex items-center gap-2 mt-2.5 cursor-pointer">
+                      <input id="portalDarkMode" type="checkbox" class="accent-indigo-600 w-4 h-4" />
+                      <span class="text-sm text-gray-600">🌙 Modo oscuro</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Secciones visibles <span class="htip" title="Mostrá u ocultá secciones del portal según lo que necesites.">?</span></label>
+                  <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-1.5">
+                    <label class="flex items-center gap-2 cursor-pointer"><input id="portalShowStats"   type="checkbox" checked class="accent-indigo-600 w-4 h-4"/><span class="text-sm text-gray-600">Contador en portada</span></label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input id="portalShowContact" type="checkbox" checked class="accent-indigo-600 w-4 h-4"/><span class="text-sm text-gray-600">Formulario de contacto</span></label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input id="portalShowMap"     type="checkbox" checked class="accent-indigo-600 w-4 h-4"/><span class="text-sm text-gray-600">Mapa en la propiedad</span></label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input id="portalShowSimilar" type="checkbox" checked class="accent-indigo-600 w-4 h-4"/><span class="text-sm text-gray-600">Propiedades similares</span></label>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <!-- Secciones de contenido -->
+            <details class="rounded-lg border border-gray-200 bg-gray-50/50">
+              <summary class="cursor-pointer select-none px-3 py-2.5 text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                Secciones del portal (Sobre nosotros, redes…)
+                <span class="ml-auto text-xs font-normal text-gray-400">opcional</span>
+              </summary>
+              <div class="px-3 pb-3 pt-1 space-y-3">
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Sobre nosotros <span class="htip" title="Un párrafo sobre tu agencia. Aparece en el portal debajo de las propiedades.">?</span></label>
+                  <textarea id="portalAbout" rows="3" maxlength="1500" placeholder="Somos una inmobiliaria con 15 años de experiencia en la zona…" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"></textarea>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Por qué elegirnos <span class="text-gray-300">(una por línea)</span> <span class="htip" title="Puntos fuertes de tu agencia. Escribí uno por línea; se muestran como lista con check.">?</span></label>
+                  <textarea id="portalWhyUs" rows="3" placeholder="Atención personalizada&#10;Tasaciones gratuitas&#10;Más de 500 operaciones cerradas" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"></textarea>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Horarios de atención <span class="htip" title="Tus horarios. Se muestran en el pie del portal.">?</span></label>
+                  <input id="portalHours" type="text" maxlength="400" placeholder="Lun a Vie 9–18 hs · Sáb 9–13 hs" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Testimonios <span class="text-gray-300">(formato: Nombre | comentario — uno por línea)</span> <span class="htip" title="Opiniones de clientes. Formato por línea: Nombre | comentario. Ej: María G. | Excelente atención, vendí mi casa en 2 semanas.">?</span></label>
+                  <textarea id="portalTestimonials" rows="3" placeholder="María G. | Excelente atención, vendí en 2 semanas&#10;Juan P. | Me ayudaron a encontrar mi primer depto" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"></textarea>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Redes sociales <span class="htip" title="Links a tus redes. Aparecen como íconos en el pie del portal. Podés pegar la URL completa o el usuario.">?</span></label>
+                  <div class="grid grid-cols-2 gap-2 mt-1.5">
+                    <input id="portalSocialIg"  type="text" placeholder="Instagram (URL o @usuario)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                    <input id="portalSocialFb"  type="text" placeholder="Facebook (URL)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                    <input id="portalSocialTk"  type="text" placeholder="TikTok (URL o @usuario)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                    <input id="portalSocialWeb" type="url"  placeholder="Sitio web (https://…)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                  </div>
+                </div>
+              </div>
+            </details>
+
             <!-- SEO / visibilidad en Google -->
             <details class="rounded-lg border border-gray-200 bg-gray-50/50">
               <summary class="cursor-pointer select-none px-3 py-2.5 text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -2883,7 +2956,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.23.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.24.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -7027,6 +7100,26 @@ async function loadPortalConfig() {
     applyHeroPreview();
     _portalHeroImages = Array.isArray(cfg.portal?.heroImages) ? [...cfg.portal.heroImages] : [];
     renderHeroThumbs();
+    // Layout & visibility
+    const lay = cfg.portal?.layout || {};
+    document.getElementById('portalCardStyle').value  = lay.cardStyle || 'rounded';
+    document.getElementById('portalDarkMode').checked = !!lay.darkMode;
+    document.getElementById('portalShowStats').checked   = lay.showStats   !== false;
+    document.getElementById('portalShowContact').checked = lay.showContact !== false;
+    document.getElementById('portalShowMap').checked     = lay.showMap     !== false;
+    document.getElementById('portalShowSimilar').checked = lay.showSimilar !== false;
+    // Content sections
+    const sec = cfg.portal?.sections || {};
+    document.getElementById('portalAbout').value = sec.about || '';
+    document.getElementById('portalWhyUs').value = (sec.whyUs || []).join('\n');
+    document.getElementById('portalHours').value = sec.hours || '';
+    document.getElementById('portalTestimonials').value =
+      (sec.testimonials || []).map(t => `${t.name ? t.name + ' | ' : ''}${t.text || ''}`).join('\n');
+    const soc = sec.social || {};
+    document.getElementById('portalSocialIg').value  = soc.instagram || '';
+    document.getElementById('portalSocialFb').value  = soc.facebook  || '';
+    document.getElementById('portalSocialTk').value  = soc.tiktok    || '';
+    document.getElementById('portalSocialWeb').value = soc.website   || '';
     // SEO
     const seo = cfg.portal?.seo || {};
     _portalAllowIndexing = seo.allowIndexing !== false;
@@ -7086,6 +7179,31 @@ async function savePortalConfig(e) {
       heroFont:     document.getElementById('portalHeroFont').value,
       heroAnimation:document.getElementById('portalHeroAnim').value,
       heroImages:   _portalHeroImages,
+      layout: {
+        cardStyle:   document.getElementById('portalCardStyle').value,
+        darkMode:    document.getElementById('portalDarkMode').checked,
+        showStats:   document.getElementById('portalShowStats').checked,
+        showContact: document.getElementById('portalShowContact').checked,
+        showMap:     document.getElementById('portalShowMap').checked,
+        showSimilar: document.getElementById('portalShowSimilar').checked,
+      },
+      sections: {
+        about: document.getElementById('portalAbout').value.trim(),
+        hours: document.getElementById('portalHours').value.trim(),
+        whyUs: document.getElementById('portalWhyUs').value.split('\n').map(s => s.trim()).filter(Boolean),
+        testimonials: document.getElementById('portalTestimonials').value.split('\n').map(line => {
+          const i = line.indexOf('|');
+          return i >= 0
+            ? { name: line.slice(0, i).trim(), text: line.slice(i + 1).trim() }
+            : { name: '', text: line.trim() };
+        }).filter(t => t.text),
+        social: {
+          instagram: document.getElementById('portalSocialIg').value.trim(),
+          facebook:  document.getElementById('portalSocialFb').value.trim(),
+          tiktok:    document.getElementById('portalSocialTk').value.trim(),
+          website:   document.getElementById('portalSocialWeb').value.trim(),
+        },
+      },
       seo: {
         metaTitle:       document.getElementById('portalMetaTitle').value.trim(),
         metaDescription: document.getElementById('portalMetaDesc').value.trim(),

@@ -137,6 +137,13 @@ Tu página pública para mostrar propiedades, con su propio link.
 4. Activá el toggle **Activo** y tocá **Guardar portal**. Si está apagado, el portal muestra "no disponible".
 5. Copiá tu link con el botón "Copiar".
 6. Publicá propiedades activando el toggle "Portal público" en cada una (sección Propiedades).
+- **Diseño y visibilidad** (desplegable): estilo de tarjetas (Redondeadas/Rectas/Planas), **modo oscuro** del portal, y casillas para mostrar/ocultar secciones (contador en portada, formulario de contacto, mapa de la propiedad, propiedades similares).
+- **Secciones del portal** (desplegable): contenido extra que aparece en tu portal:
+  - **Sobre nosotros**: un párrafo sobre tu agencia (debajo de las propiedades).
+  - **Por qué elegirnos**: puntos fuertes, uno por línea; se muestran como lista con check.
+  - **Horarios de atención**: aparece en el pie del portal.
+  - **Testimonios**: opiniones de clientes, formato por línea `Nombre | comentario`.
+  - **Redes sociales**: Instagram, Facebook, TikTok y sitio web; salen como íconos en el pie. Podés pegar la URL completa o el usuario.
 - **SEO y visibilidad en Google** (desplegable): permitir indexación, meta título, meta descripción, palabras clave, ID de Google Analytics (G-XXXX) y Meta Pixel ID (para retargeting). Botón "Guía" con instructivo. El sitemap está en `tudominio/sitemap.xml`.
 
 ### Plan y facturación (dentro de Equipo)
