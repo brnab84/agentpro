@@ -96,6 +96,29 @@ async function applySubscription(subscriptionId) {
   await tenant.save();
 }
 
+/**
+ * Verify a PayPal webhook via PayPal's verify-webhook-signature API.
+ * Returns true if no webhook id is configured (re-fetch by id already protects us).
+ */
+export async function verifyWebhook(headers, event) {
+  if (!env.paypalWebhookId) return true;
+  try {
+    const data = await ppFetch('/v1/notifications/verify-webhook-signature', {
+      method: 'POST',
+      body: {
+        auth_algo:         headers['paypal-auth-algo'],
+        cert_url:          headers['paypal-cert-url'],
+        transmission_id:   headers['paypal-transmission-id'],
+        transmission_sig:  headers['paypal-transmission-sig'],
+        transmission_time: headers['paypal-transmission-time'],
+        webhook_id:        env.paypalWebhookId,
+        webhook_event:     event,
+      },
+    });
+    return data.verification_status === 'SUCCESS';
+  } catch { return false; }
+}
+
 /** Handle a PayPal webhook event. */
 export async function handleWebhook(event) {
   const type = event?.event_type || '';

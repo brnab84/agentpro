@@ -36,6 +36,7 @@ export const mercadopagoCheckout = asyncHandler(async (req, res) => {
 
 /** POST|GET /api/billing/mercadopago/webhook — MercadoPago IPN/webhook (no auth) */
 export const mercadopagoWebhook = asyncHandler(async (req, res) => {
+  if (!mp.verifySignature(req)) return res.sendStatus(401);
   const q = req.query || {};
   const b = req.body || {};
   try {
@@ -57,6 +58,7 @@ export const paypalCheckout = asyncHandler(async (req, res) => {
 
 /** POST /api/billing/paypal/webhook — PayPal events (no auth) */
 export const paypalWebhook = asyncHandler(async (req, res) => {
+  if (!(await paypal.verifyWebhook(req.headers, req.body))) return res.sendStatus(401);
   try { await paypal.handleWebhook(req.body); } catch { /* always 200 */ }
   res.sendStatus(200);
 });

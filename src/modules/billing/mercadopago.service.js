@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { env } from '../../config/env.js';
 import { Tenant }   from '../../models/Tenant.js';
 import { Settings } from '../../models/Settings.js';
@@ -5,6 +6,26 @@ import { AppError } from '../../utils/AppError.js';
 
 // MercadoPago subscriptions (preapproval) via REST API — no SDK needed.
 const MP_API = 'https://api.mercadopago.com';
+
+/**
+ * Verify the MercadoPago webhook x-signature (HMAC-SHA256 of a manifest).
+ * Returns true if no secret is configured (re-fetch by id already protects us).
+ */
+export function verifySignature(req) {
+  if (!env.mpWebhookSecret) return true;
+  try {
+    const sig = String(req.headers['x-signature'] || '');
+    const reqId = String(req.headers['x-request-id'] || '');
+    const parts = Object.fromEntries(sig.split(',').map(kv => kv.split('=').map(s => s.trim())));
+    const { ts, v1 } = parts;
+    if (!ts || !v1) return false;
+    const dataId = String(req.query['data.id'] || req.body?.data?.id || '').toLowerCase();
+    const manifest = `id:${dataId};request-id:${reqId};ts:${ts};`;
+    const hmac = crypto.createHmac('sha256', env.mpWebhookSecret).update(manifest).digest('hex');
+    const a = Buffer.from(hmac), b = Buffer.from(v1);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  } catch { return false; }
+}
 
 export function isEnabled() {
   return !!env.mpAccessToken;

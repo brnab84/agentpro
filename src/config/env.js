@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.20.0'; // security: SSRF guard, rate limiting, regex/XSS escaping + clean-code (token util, whitelist, lastSeen cache)
+export const APP_VERSION = '3.21.0'; // security: webhook signature verification (MP/PayPal, gated) + hardened CSP + explicit CORS
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
@@ -46,11 +46,13 @@ export const env = {
 
   // Billing — MercadoPago (suscripciones / preapproval)
   mpAccessToken:        process.env.MP_ACCESS_TOKEN || '',
+  mpWebhookSecret:      process.env.MP_WEBHOOK_SECRET || '', // optional: verify x-signature
 
   // Billing — PayPal (subscriptions)
   paypalClientId:       process.env.PAYPAL_CLIENT_ID || '',
   paypalSecret:         process.env.PAYPAL_SECRET || '',
   paypalEnv:            process.env.PAYPAL_ENV || 'live', // 'live' | 'sandbox'
+  paypalWebhookId:      process.env.PAYPAL_WEBHOOK_ID || '', // optional: verify webhook signature
 
   // Lead capture — Meta Lead Ads webhook verify token
   metaVerifyToken:      process.env.META_VERIFY_TOKEN || 'agentpro_leads',

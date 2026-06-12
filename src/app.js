@@ -49,8 +49,32 @@ export function createApp() {
   const app = express();
 
   app.set('trust proxy', 1); // behind Railway's proxy — needed for correct client IPs
-  app.use(helmet({ contentSecurityPolicy: false }));
-  app.use(cors());
+
+  // Hardened-but-permissive CSP: allows the inline scripts/styles + external
+  // CDNs/fonts/maps the app already uses, while locking down plugins, <base>
+  // hijacking and framing (clickjacking).
+  app.use(helmet({
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc:  ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https:'],
+        styleSrc:   ["'self'", "'unsafe-inline'", 'https:'],
+        imgSrc:     ["'self'", 'data:', 'blob:', 'https:'],
+        fontSrc:    ["'self'", 'https:', 'data:'],
+        connectSrc: ["'self'", 'https:'],
+        frameSrc:   ["'self'", 'https:'],
+        objectSrc:  ["'none'"],
+        baseUri:    ["'self'"],
+        frameAncestors: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  }));
+
+  // CORS: allow any origin (the bookmarklet posts from arbitrary listing sites)
+  // but WITHOUT credentials — the API authenticates via Bearer tokens, not cookies.
+  app.use(cors({ origin: true, credentials: false, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] }));
   app.use('/api', apiLimiter); // generous global rate limit
 
   // Stripe webhook needs the raw body for signature verification — mount BEFORE json parser.
