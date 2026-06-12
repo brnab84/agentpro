@@ -283,6 +283,8 @@ export async function togglePropertyPublished(tenantId, propertyId, published) {
 // only the visual style: dominant brand colours).
 // ─────────────────────────────────────────────────────────────────────────────
 
+const CLONE_UA = 'Mozilla/5.0 (compatible; AgentProBot/1.0)';
+
 /** A near-neutral colour (white/black/grey) is not a usable brand colour. */
 function isNeutralHex(hex) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -304,9 +306,58 @@ function shadeHex(hex, pct) {
   return '#' + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
+const clampByte = (n) => Math.max(0, Math.min(255, Math.round(n)));
+const rgbToHex  = (r, g, b) => '#' + [r, g, b].map(x => clampByte(x).toString(16).padStart(2, '0')).join('');
+
+/** Convert a #rgb shorthand to #rrggbb; pass #rrggbb through. */
+function normalizeHex(h) {
+  h = h.toLowerCase();
+  if (/^#[0-9a-f]{3}$/.test(h)) return '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+  return h;
+}
+
+/** HSL (h 0-360, s/l 0-100) → #rrggbb. */
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return rgbToHex(f(0) * 255, f(8) * 255, f(4) * 255);
+}
+
+/** Rank non-neutral brand colours found in markup + CSS (hex, rgb(), hsl()). */
+function extractColors(text) {
+  const counts = {};
+  const add = (raw) => {
+    const hex = normalizeHex(raw);
+    if (!/^#[0-9a-f]{6}$/.test(hex) || isNeutralHex(hex)) return;
+    counts[hex] = (counts[hex] || 0) + 1;
+  };
+  for (const m of text.matchAll(/#[0-9a-fA-F]{6}\b/g)) add(m[0]);
+  for (const m of text.matchAll(/#[0-9a-fA-F]{3}\b/g))  add(m[0]);
+  for (const m of text.matchAll(/rgba?\(\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})/gi))
+    add(rgbToHex(+m[1], +m[2], +m[3]));
+  for (const m of text.matchAll(/hsla?\(\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})%\s*[,\s]\s*(\d{1,3})%/gi))
+    add(hslToHex(+m[1], +m[2], +m[3]));
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([h]) => h);
+}
+
+/** Most-used font families declared in the CSS (skipping generic keywords). */
+function extractFonts(css) {
+  const GENERIC = new Set(['inherit', 'initial', 'unset', 'sans-serif', 'serif', 'monospace',
+    'system-ui', '-apple-system', 'blinkmacsystemfont', 'ui-sans-serif', 'ui-serif', 'cursive', 'fantasy']);
+  const counts = {};
+  for (const m of css.matchAll(/font-family\s*:\s*([^;}{!]+)/gi)) {
+    const fam = m[1].split(',')[0].trim().replace(/^["']|["']$/g, '');
+    if (!fam || GENERIC.has(fam.toLowerCase())) continue;
+    counts[fam] = (counts[fam] || 0) + 1;
+  }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([f]) => f).slice(0, 4);
+}
+
 /**
- * Fetch an example page and propose a primary/secondary colour from its CSS.
- * SSRF-guarded. Returns suggested colours for the user to review (not auto-applied).
+ * Fetch an example page (+ its linked CSS) and propose a full style: palette,
+ * fonts and logo. SSRF-guarded. Nothing is applied — the CRM previews it first.
  */
 export async function suggestStyleFromUrl(url) {
   const target = (url || '').trim();
@@ -315,35 +366,50 @@ export async function suggestStyleFromUrl(url) {
 
   let html = '';
   try {
-    const res = await safeFetch(target, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AgentProBot/1.0)' },
-      timeoutMs: 15_000,
-    });
+    const res = await safeFetch(target, { headers: { 'User-Agent': CLONE_UA }, timeoutMs: 15_000 });
     html = await res.text();
   } catch {
     throw new AppError('No pudimos leer esa página. Probá con otra URL.', 422);
   }
 
-  // Prefer the brand <meta name="theme-color"> when present.
-  const themeMeta = html.match(/<meta[^>]+name=["']theme-color["'][^>]*content=["'](#[0-9a-fA-F]{6})["']/i)
-                 || html.match(/<meta[^>]+content=["'](#[0-9a-fA-F]{6})["'][^>]*name=["']theme-color["']/i);
-
-  // Count hex colours across the markup/CSS, ignoring neutrals.
-  const counts = {};
-  for (const m of html.matchAll(/#([0-9a-fA-F]{6})\b/g)) {
-    const hex = '#' + m[1].toLowerCase();
-    if (isNeutralHex(hex)) continue;
-    counts[hex] = (counts[hex] || 0) + 1;
+  // Collect linked stylesheets (most brand colours live in external CSS).
+  let css = '';
+  const hrefs = [];
+  for (const m of html.matchAll(/<link\b[^>]*>/gi)) {
+    const tag = m[0];
+    if (!/rel\s*=\s*["']?[^"'>]*stylesheet/i.test(tag)) continue;
+    const href = (tag.match(/href\s*=\s*["']([^"']+)["']/i) || [])[1];
+    if (href) hrefs.push(href);
   }
-  const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([h]) => h);
+  for (const href of hrefs.slice(0, 6)) {
+    try {
+      const abs = new URL(href, target).toString();
+      const r = await safeFetch(abs, { headers: { 'User-Agent': CLONE_UA }, timeoutMs: 10_000 });
+      css += (await r.text()).slice(0, 400_000);
+      if (css.length > 1_200_000) break;
+    } catch { /* skip individual stylesheet */ }
+  }
+  // Inline <style> blocks too.
+  for (const m of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) css += '\n' + m[1];
 
-  const primary = (themeMeta && themeMeta[1].toLowerCase()) || ranked[0];
-  if (!primary) throw new AppError('No encontramos colores de marca en esa página.', 422);
+  const themeMeta = (html.match(/<meta[^>]+name=["']theme-color["'][^>]*content=["'](#[0-9a-fA-F]{3,6})["']/i) || [])[1];
 
-  // Secondary: the next distinct strong colour, else a darker shade of primary.
+  const ranked = extractColors(html + '\n' + css);
+  const primary = (themeMeta && normalizeHex(themeMeta)) || ranked[0];
+  if (!primary) throw new AppError('No encontramos colores de marca en esa página. Probá con otra URL.', 422);
   const secondary = ranked.find(h => h !== primary) || shadeHex(primary, -18);
+  const accent    = ranked.find(h => h !== primary && h !== secondary) || shadeHex(primary, 22);
+  const palette   = [...new Set([primary, secondary, accent, ...ranked])].slice(0, 6);
 
-  return { primaryColor: primary, secondaryColor: secondary, source: target };
+  const fonts = extractFonts(css);
+
+  // Logo: prefer og:image, fall back to a declared icon.
+  const logoRaw = (html.match(/<meta[^>]+property=["']og:image["'][^>]*content=["']([^"']+)["']/i) || [])[1]
+               || (html.match(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]*href=["']([^"']+)["']/i) || [])[1] || '';
+  let logo = '';
+  try { if (logoRaw) logo = new URL(logoRaw, target).toString(); } catch { /* ignore */ }
+
+  return { primaryColor: primary, secondaryColor: secondary, accentColor: accent, palette, fonts, logo, source: target };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

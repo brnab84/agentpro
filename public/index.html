@@ -386,6 +386,53 @@
   </div>
 </div>
 
+<!-- ══════════════ CLONE STYLE — PREVIEW ══════════════ -->
+<div id="cloneModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" style="background:rgba(0,0,0,.5)">
+  <div class="card w-full max-w-lg p-6 fade-in" style="background:#fff;max-height:92vh;overflow-y:auto">
+    <div class="flex items-center justify-between mb-1">
+      <h3 class="text-lg font-bold text-gray-900">✨ Propuesta de estilo</h3>
+      <button onclick="closeCloneModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <p id="cloneSource" class="text-xs text-gray-400 mb-4 truncate"></p>
+
+    <!-- Palette -->
+    <p class="text-xs font-semibold text-gray-500 mb-1.5">Paleta detectada</p>
+    <div id="clonePalette" class="flex flex-wrap gap-2 mb-4"></div>
+
+    <!-- Live mini-preview -->
+    <p class="text-xs font-semibold text-gray-500 mb-1.5">Así quedaría tu portal</p>
+    <div class="rounded-xl overflow-hidden border border-gray-200 mb-4">
+      <div id="clonePrevHero" class="px-4 py-6 text-center text-white" style="background:linear-gradient(135deg,#6366F1,#7c3aed)">
+        <p id="clonePrevTitle" class="text-2xl font-extrabold">Tu Agencia</p>
+        <p class="text-white/80 text-xs mt-1">Encontrá tu próxima propiedad</p>
+        <span id="clonePrevBtn" class="inline-block mt-3 text-xs font-bold px-4 py-1.5 rounded-full bg-white/20">Ver propiedades</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 p-2 bg-gray-50">
+        <div class="bg-white rounded-lg overflow-hidden border border-gray-100">
+          <div class="h-14" style="background:linear-gradient(135deg,#e0e7ff,#ede9fe)"></div>
+          <div class="p-2"><p class="text-[10px] text-gray-400">DEPTO · Centro</p><p id="clonePrevCardPrice" class="text-sm font-extrabold">USD 120.000</p></div>
+        </div>
+        <div class="bg-white rounded-lg overflow-hidden border border-gray-100">
+          <div class="h-14" style="background:linear-gradient(135deg,#e0e7ff,#ede9fe)"></div>
+          <div class="p-2"><p class="text-[10px] text-gray-400">CASA · Norte</p><p class="text-sm font-extrabold" style="color:var(--clone-accent,#111)">USD 240.000</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detected fonts -->
+    <div id="cloneFontsBox" class="hidden mb-4">
+      <p class="text-xs font-semibold text-gray-500 mb-1">Tipografía detectada</p>
+      <p id="cloneFonts" class="text-sm text-gray-700"></p>
+    </div>
+
+    <div class="flex gap-2">
+      <button onclick="applyClonedStyle()" class="flex-1 gradient-bg text-white text-sm font-semibold py-2.5 rounded-lg hover:opacity-90 transition">Aplicar al portal</button>
+      <button onclick="closeCloneModal()" class="px-4 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-lg border border-gray-200">Descartar</button>
+    </div>
+    <p class="text-[11px] text-gray-400 mt-2 text-center">No se guarda nada hasta que apliques y luego toques “Guardar portal”.</p>
+  </div>
+</div>
+
 <!-- ══════════════ RESET PASSWORD (from email link) ══════════════ -->
 <div id="resetPage" class="hidden min-h-screen flex items-center justify-center gradient-bg p-4">
   <div class="card w-full max-w-md p-8 fade-in">
@@ -2956,7 +3003,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.24.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.25.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -7054,25 +7101,67 @@ function applyTheme(id) {
   showToast(`Tema "${t.name}" aplicado. Acordate de Guardar.`, 'success');
 }
 
+let _cloneProposal = null;
+
 async function cloneStyleFromUrl() {
   const url = document.getElementById('cloneUrl').value.trim();
   const msg = document.getElementById('cloneMsg');
   const btn = document.getElementById('cloneBtn');
   if (!url) { msg.textContent = 'Pegá una URL primero.'; msg.className = 'text-xs text-red-500'; msg.classList.remove('hidden'); return; }
-  btn.disabled = true; const prev = btn.textContent; btn.textContent = '…';
+  btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Leyendo…';
+  msg.classList.add('hidden');
   try {
     const r = await api('POST', '/api/portal/config/clone-style', { url });
-    document.getElementById('portalColor').value          = r.primaryColor;
-    document.getElementById('portalSecondaryColor').value = r.secondaryColor;
-    applyHeroPreview();
-    msg.innerHTML = `Aplicamos: principal <b>${r.primaryColor}</b> + secundario <b>${r.secondaryColor}</b>. Revisá la vista previa y tocá Guardar.`;
-    msg.className = 'text-xs text-green-600';
+    _cloneProposal = r;
+    openCloneModal(r);
   } catch (err) {
     msg.textContent = err.message;
     msg.className = 'text-xs text-red-500';
+    msg.classList.remove('hidden');
   } finally {
-    msg.classList.remove('hidden'); btn.disabled = false; btn.textContent = prev;
+    btn.disabled = false; btn.textContent = prev;
   }
+}
+
+function openCloneModal(r) {
+  document.getElementById('cloneSource').textContent = r.source || '';
+  // Palette swatches
+  document.getElementById('clonePalette').innerHTML = (r.palette || [r.primaryColor, r.secondaryColor])
+    .filter(Boolean)
+    .map(c => `<div class="flex flex-col items-center gap-1">
+        <span class="w-9 h-9 rounded-lg border border-gray-200" style="background:${c}"></span>
+        <span class="text-[9px] text-gray-400 font-mono">${c}</span>
+      </div>`).join('');
+  // Mini preview
+  const hero = document.getElementById('clonePrevHero');
+  hero.style.background = `linear-gradient(135deg, ${r.primaryColor}, ${r.secondaryColor})`;
+  document.getElementById('clonePrevBtn').style.background = 'rgba(255,255,255,.22)';
+  document.getElementById('clonePrevCardPrice').style.color = r.primaryColor;
+  document.documentElement.style.setProperty('--clone-accent', r.accentColor || r.primaryColor);
+  // Fonts
+  const fb = document.getElementById('cloneFontsBox');
+  if (r.fonts && r.fonts.length) {
+    document.getElementById('cloneFonts').textContent = r.fonts.slice(0, 3).join(', ');
+    fb.classList.remove('hidden');
+  } else { fb.classList.add('hidden'); }
+  document.getElementById('cloneModal').classList.remove('hidden');
+}
+
+function closeCloneModal() {
+  document.getElementById('cloneModal').classList.add('hidden');
+}
+
+function applyClonedStyle() {
+  if (!_cloneProposal) return;
+  document.getElementById('portalColor').value          = _cloneProposal.primaryColor;
+  document.getElementById('portalSecondaryColor').value = _cloneProposal.secondaryColor;
+  applyHeroPreview();
+  closeCloneModal();
+  const msg = document.getElementById('cloneMsg');
+  msg.innerHTML = `Estilo aplicado (${_cloneProposal.primaryColor} + ${_cloneProposal.secondaryColor}). Acordate de tocar <b>Guardar portal</b>.`;
+  msg.className = 'text-xs text-green-600';
+  msg.classList.remove('hidden');
+  showToast('Estilo aplicado. Acordate de Guardar.', 'success');
 }
 
 async function loadPortalConfig() {
