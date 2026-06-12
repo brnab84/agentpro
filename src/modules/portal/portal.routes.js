@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { auth }        from '../../middleware/auth.js';
 import { tenantScope } from '../../middleware/tenant.js';
+import { aiLimiter }   from '../../middleware/rateLimit.js';
 import * as controller from './portal.controller.js';
 
 const router = Router();
@@ -13,7 +14,7 @@ router.patch ('/config/properties/:id/publish', auth, tenantScope, controller.to
 // ── Public (no auth) ─────────────────────────────────────────────────────────
 router.get ('/:slug',              controller.getListing);
 router.get ('/:slug/property/:id', controller.getProperty);
-router.post('/:slug/contact',      controller.submitContact);
-router.post('/:slug/assistant',    controller.assistantAsk);
+router.post('/:slug/contact',      aiLimiter, controller.submitContact);
+router.post('/:slug/assistant',    aiLimiter, controller.assistantAsk);
 
 export default router;

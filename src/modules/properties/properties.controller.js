@@ -2,6 +2,8 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/AppError.js';
 import { getAnthropic } from '../../config/anthropic.js';
 import { env } from '../../config/env.js';
+import { assertPublicUrl, safeFetch } from '../../utils/ssrf.js';
+import { randomToken } from '../../utils/randomToken.js';
 import { renderPageHtml, headlessStatus } from './render.service.js';
 import * as service from './properties.service.js';
 
@@ -412,6 +414,7 @@ async function parseHtmlToProperty(html, url, providedImages = []) {
 export const importFromUrl = asyncHandler(async (req, res) => {
   const { url } = req.body;
   if (!url) throw new AppError('url is required', 400);
+  await assertPublicUrl(url); // SSRF guard (blocks internal/metadata hosts)
 
   const headers = buildFetchHeaders(url);
   const { html, method, renderedImages } = await fetchHtml(url, headers);
@@ -439,7 +442,7 @@ export const getImportKey = asyncHandler(async (req, res) => {
   const tenant = await Tenant.findById(req.tenantId);
   if (!tenant) throw new AppError('Cuenta no encontrada', 404);
   if (!tenant.importKey) {
-    tenant.importKey = randomKey();
+    tenant.importKey = randomToken();
     await tenant.save();
   }
   res.json({ importKey: tenant.importKey });
@@ -450,7 +453,7 @@ export const regenerateImportKey = asyncHandler(async (req, res) => {
   const { Tenant } = await import('../../models/Tenant.js');
   const tenant = await Tenant.findById(req.tenantId);
   if (!tenant) throw new AppError('Cuenta no encontrada', 404);
-  tenant.importKey = randomKey();
+  tenant.importKey = randomToken();
   await tenant.save();
   res.json({ importKey: tenant.importKey });
 });
@@ -472,7 +475,9 @@ export const importFromHtml = asyncHandler(async (req, res) => {
   await assertCanAddProperty(tenant._id);
 
   const { merged, photos } = await parseHtmlToProperty(html, url || '', Array.isArray(images) ? images : []);
-  const data = { ...merged, photos, sourceUrl: url || '' };
+  const data = pickPropertyFields(merged);
+  data.photos = photos;
+  data.sourceUrl = url || '';
   if (!data.title) data.title = 'Propiedad importada';
 
   const property = await service.create(tenant._id, data);
@@ -480,11 +485,13 @@ export const importFromHtml = asyncHandler(async (req, res) => {
   res.json({ ok: true, id: property._id, title: property.title, photos: photos.length });
 });
 
-function randomKey() {
-  const a = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let s = '';
-  for (let i = 0; i < 28; i++) s += a[Math.floor(Math.random() * a.length)];
-  return s;
+/** Whitelist only known property fields from extracted data (prevents mass assignment). */
+function pickPropertyFields(obj) {
+  const ALLOWED = ['title','zone','address','price','currency','operation','type',
+    'description','area','areaTotal','beds','baths','parking','floor','age','features'];
+  const out = {};
+  for (const k of ALLOWED) if (obj[k] != null && obj[k] !== '') out[k] = obj[k];
+  return out;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -552,16 +559,13 @@ async function fetchHtml(url, headers) {
       console.warn('import-url: scraping provider failed, falling back to direct fetch:', err.message);
     }
   }
-  // 3) Plain direct fetch
+  // 3) Plain direct fetch (SSRF-safe: validates every redirect hop)
   try {
-    const response = await fetch(url, {
-      headers,
-      signal:   AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      redirect: 'follow',
-    });
+    const response = await safeFetch(url, { headers, timeoutMs: FETCH_TIMEOUT_MS });
     if (!response.ok) console.warn(`import-url: HTTP ${response.status} for ${url} (proceeding anyway)`);
     return { html: await response.text(), method: 'direct', renderedImages: [] };
   } catch (err) {
+    if (err instanceof AppError) throw err;
     throw new AppError(`No se pudo acceder a la URL: ${err.message}`, 422);
   }
 }

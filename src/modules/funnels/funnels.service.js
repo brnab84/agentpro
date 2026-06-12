@@ -1,4 +1,5 @@
 import { AppError } from '../../utils/AppError.js';
+import { escapeRegex } from '../../utils/escapeRegex.js';
 import { Funnel } from '../../models/Funnel.js';
 import { FunnelExecution } from '../../models/FunnelExecution.js';
 import { Conversation } from '../../models/Conversation.js';
@@ -71,7 +72,7 @@ export const findActiveByKeyword = (tenantId, keyword) =>
   Funnel.findOne({
     tenantId,
     status: 'active',
-    'trigger.keyword': { $regex: new RegExp(`^${keyword}$`, 'i') },
+    'trigger.keyword': { $regex: new RegExp(`^${escapeRegex(keyword)}$`, 'i') },
   });
 
 export const findRunningExecution = (tenantId, externalId) =>

@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.19.1'; // chore: admin connection cell shows exact date/time (hour), not just relative
+export const APP_VERSION = '3.20.0'; // security: SSRF guard, rate limiting, regex/XSS escaping + clean-code (token util, whitelist, lastSeen cache)
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import { randomToken } from '../../utils/randomToken.js';
 import { Tenant }   from '../../models/Tenant.js';
 import { User }     from '../../models/User.js';
 import { Property } from '../../models/Property.js';
@@ -208,19 +209,11 @@ export async function deleteTenant(tenantId, currentTenantId) {
   return { deleted: true, name: tenant.name, recordsRemoved: removed };
 }
 
-/** Generate a readable temporary password. */
-function genTempPassword() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-  let out = '';
-  for (let i = 0; i < 10; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
-}
-
 /** Reset the owner's password to a generated temporary one (admin shares it). */
 export async function resetTenantPassword(tenantId) {
   const owner = await User.findOne({ tenantId, role: 'owner' }).sort({ createdAt: 1 });
   if (!owner) throw new AppError('No se encontró el dueño de la cuenta', 404);
-  const tempPassword = genTempPassword();
+  const tempPassword = randomToken(10);
   owner.passwordHash = await bcrypt.hash(tempPassword, 10);
   await owner.save();
   return { email: owner.email, tempPassword };

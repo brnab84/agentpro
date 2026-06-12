@@ -2,6 +2,7 @@ import { Tenant }   from '../../models/Tenant.js';
 import { Property } from '../../models/Property.js';
 import { Lead }     from '../../models/Lead.js';
 import { AppError } from '../../utils/AppError.js';
+import { escapeRegex } from '../../utils/escapeRegex.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -100,7 +101,6 @@ export async function getPortalListing(slug, filters = {}) {
   };
 }
 
-function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 /** Return a single property detail */
 export async function getPropertyDetail(slug, propertyId) {

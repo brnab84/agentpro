@@ -1,5 +1,6 @@
 import { existsSync } from 'fs';
 import { env } from '../../config/env.js';
+import { assertPublicUrl } from '../../utils/ssrf.js';
 
 // Self-hosted headless Chromium renderer with stealth. Renders the page like a
 // real browser (executes JS, loads the gallery), evades basic bot detection, and
@@ -40,6 +41,7 @@ async function getPuppeteer() {
  */
 export async function renderPageHtml(url) {
   if (!env.useHeadless || _unavailable) return { html: null, images: [] };
+  await assertPublicUrl(url); // SSRF guard before navigating
   if (env.chromiumPath && !existsSync(env.chromiumPath)) {
     _unavailable = true;
     console.warn('headless: Chromium not found at', env.chromiumPath);

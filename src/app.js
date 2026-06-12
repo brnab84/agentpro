@@ -29,6 +29,7 @@ import billingRoutes from './modules/billing/billing.routes.js';
 import { webhook as billingWebhook } from './modules/billing/billing.controller.js';
 import { Settings } from './models/Settings.js';
 import { renderListingHtml, renderPropertyHtml, buildRobotsTxt, buildSitemap } from './modules/portal/portal.seo.js';
+import { apiLimiter } from './middleware/rateLimit.js';
 
 /** Public base URL for canonical/OG tags. Prefers APP_BASE_URL, else the request host. */
 const baseUrlOf = (req) =>
@@ -47,8 +48,10 @@ const portalPropertyHtml = readHtml('portal-property.html', indexHtml);
 export function createApp() {
   const app = express();
 
+  app.set('trust proxy', 1); // behind Railway's proxy — needed for correct client IPs
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors());
+  app.use('/api', apiLimiter); // generous global rate limit
 
   // Stripe webhook needs the raw body for signature verification — mount BEFORE json parser.
   app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billingWebhook);

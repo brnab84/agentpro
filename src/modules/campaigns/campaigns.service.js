@@ -1,4 +1,5 @@
 import { AppError } from '../../utils/AppError.js';
+import { escapeRegex } from '../../utils/escapeRegex.js';
 import { Campaign } from '../../models/Campaign.js';
 import { Lead } from '../../models/Lead.js';
 import { Conversation } from '../../models/Conversation.js';
@@ -44,7 +45,7 @@ async function resolveTargets(tenantId, filter) {
   if (filter.funnelProfile) {
     const executions = await FunnelExecution.find({
       tenantId,
-      profile: { $regex: new RegExp(`^${filter.funnelProfile}$`, 'i') },
+      profile: { $regex: new RegExp(`^${escapeRegex(filter.funnelProfile)}$`, 'i') },
       status: 'completed',
     })
       .select('leadId')

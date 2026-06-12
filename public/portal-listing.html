@@ -249,6 +249,8 @@ let _heroTimer = null;
 let _heroIdx   = 0;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+/** Escape text before inserting into innerHTML (prevents stored XSS). */
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 /** Normalize a phone string into a wa.me-compatible international number. */
 function waNumber(raw) { return (raw || '').replace(/\D/g, '').replace(/^0+/, ''); }
 function waLink(raw, text) {
@@ -342,7 +344,7 @@ function applyBranding(p) {
     hl.classList.remove('hidden'); hl.classList.add('flex');
   } else if (p.logoEmoji) {
     navLogo.textContent = p.logoEmoji;
-    hl.innerHTML = `<span style="font-size:34px">${p.logoEmoji}</span>`;
+    hl.innerHTML = `<span style="font-size:34px">${esc(p.logoEmoji)}</span>`;
     hl.classList.remove('hidden'); hl.classList.add('flex');
   }
 
@@ -420,21 +422,21 @@ function renderProperties(props, pagination) {
   empty.classList.add('hidden');
 
   grid.innerHTML = props.map((p, i) => {
-    const photo    = p.photos?.[0] || '';
+    const photo    = esc(p.photos?.[0] || '');
     const opBg     = OP_COLORS[p.operation] || 'bg-gray-500';
-    const opLabel  = OP_LABELS[p.operation] || p.operation;
-    const typeLabel= TYPE_LABELS[p.type] || p.type;
+    const opLabel  = esc(OP_LABELS[p.operation] || p.operation);
+    const typeLabel= esc(TYPE_LABELS[p.type] || p.type);
     return `
     <a href="/portal/${slug}/propiedad/${p._id}" class="group block card-hover bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm fade-up" style="animation-delay:${i*40}ms">
       <div class="relative h-52 overflow-hidden ${photo ? '' : 'photo-placeholder'}">
-        ${photo ? `<img src="${photo}" alt="${p.title}" class="card-img w-full h-full object-cover" loading="lazy" onerror="this.parentElement.className='relative h-52 photo-placeholder';this.remove()"/>` : '<div class="h-52 photo-placeholder flex items-center justify-center"><svg class="w-10 h-10 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg></div>'}
+        ${photo ? `<img src="${photo}" alt="${esc(p.title)}" class="card-img w-full h-full object-cover" loading="lazy" onerror="this.parentElement.className='relative h-52 photo-placeholder';this.remove()"/>` : '<div class="h-52 photo-placeholder flex items-center justify-center"><svg class="w-10 h-10 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10.5L12 4l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg></div>'}
         <span class="absolute top-3 left-3 text-xs font-bold px-3 py-1 rounded-full text-white ${opBg} shadow-sm">${opLabel}</span>
         <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent"></div>
-        <p class="absolute bottom-3 left-3 text-lg font-extrabold text-white drop-shadow">${formatPrice(p.price, p.currency)}</p>
+        <p class="absolute bottom-3 left-3 text-lg font-extrabold text-white drop-shadow">${esc(formatPrice(p.price, p.currency))}</p>
       </div>
       <div class="p-4">
-        <p class="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">${typeLabel}${p.zone ? ' · ' + p.zone : ''}</p>
-        <h3 class="font-bold text-gray-900 text-sm leading-snug mb-3 line-clamp-2 group-hover:text-[color:var(--primary)] transition">${p.title}</h3>
+        <p class="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">${typeLabel}${p.zone ? ' · ' + esc(p.zone) : ''}</p>
+        <h3 class="font-bold text-gray-900 text-sm leading-snug mb-3 line-clamp-2 group-hover:text-[color:var(--primary)] transition">${esc(p.title)}</h3>
         <div class="flex items-center gap-3 text-xs text-gray-500 pt-3 border-t border-gray-100">
           ${p.beds    ? `<span class="flex items-center gap-1">🛏 ${p.beds}</span>` : ''}
           ${p.baths   ? `<span class="flex items-center gap-1">🚿 ${p.baths}</span>` : ''}
