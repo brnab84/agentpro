@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.25.0'; // feat: robust clone-from-URL (HTML+CSS, hex/rgb/hsl, fonts, logo) with preview-before-apply modal
+export const APP_VERSION = '3.26.0'; // feat: real Google Font pairs (heading+body) across portal; clone applies detected font
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

@@ -1806,13 +1806,16 @@
             <!-- Hero personalization: font + animation -->
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="text-xs text-gray-500 font-medium">Tipografía del título <span class="htip" title="La fuente del nombre grande en la portada del portal.">?</span></label>
+                <label class="text-xs text-gray-500 font-medium">Tipografía (Google Fonts) <span class="htip" title="Combinaciones título + cuerpo profesionales, con fuentes reales de Google. Se aplican a todo el portal.">?</span></label>
                 <select id="portalHeroFont" onchange="applyHeroPreview()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                  <option value="">Moderna (default)</option>
-                  <option value="display">Display / impacto</option>
-                  <option value="serif">Elegante (serif)</option>
-                  <option value="rounded">Redondeada / amigable</option>
-                  <option value="mono">Monoespaciada</option>
+                  <option value="">Moderna · Plus Jakarta + Inter</option>
+                  <option value="elegante">Elegante · Playfair + Lora</option>
+                  <option value="impacto">Impacto · Montserrat + Roboto</option>
+                  <option value="lujo">Lujo · Cormorant + Montserrat</option>
+                  <option value="amigable">Amigable · Poppins + Inter</option>
+                  <option value="clasica">Clásica · Lora + Montserrat</option>
+                  <option value="creativa">Creativa · Space Grotesk + Inter</option>
+                  <option value="minimal">Minimal · Inter</option>
                 </select>
               </div>
               <div>
@@ -3003,7 +3006,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.25.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.26.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -7050,6 +7053,32 @@ async function uploadLogo(input) {
   } catch (err) { showToast('Error al procesar imagen: ' + err.message, 'error'); }
 }
 
+// ── Google Font pairs (shared with the portal) ───────────────────────────────
+const FONT_PAIRS = {
+  '':         { heading:'Plus Jakarta Sans',  body:'Inter',      g:'Plus+Jakarta+Sans:wght@500;700;800|Inter:wght@400;500;600' },
+  'elegante': { heading:'Playfair Display',   body:'Lora',       g:'Playfair+Display:wght@600;700;800|Lora:wght@400;500' },
+  'impacto':  { heading:'Montserrat',         body:'Roboto',     g:'Montserrat:wght@600;700;800|Roboto:wght@400;500' },
+  'lujo':     { heading:'Cormorant Garamond', body:'Montserrat', g:'Cormorant+Garamond:wght@600;700|Montserrat:wght@400;500' },
+  'amigable': { heading:'Poppins',            body:'Inter',      g:'Poppins:wght@500;600;700;800|Inter:wght@400;500' },
+  'clasica':  { heading:'Lora',               body:'Montserrat', g:'Lora:wght@500;600;700|Montserrat:wght@400;500' },
+  'creativa': { heading:'Space Grotesk',      body:'Inter',      g:'Space+Grotesk:wght@500;600;700|Inter:wght@400;500' },
+  'minimal':  { heading:'Inter',              body:'Inter',      g:'Inter:wght@400;600;700;800' },
+};
+
+/** Inject a Google Fonts <link> once per pair key. */
+function loadGoogleFontPair(key) {
+  const fp = FONT_PAIRS[key] || FONT_PAIRS[''];
+  if (!fp.g) return fp;
+  const id = 'gfont-' + (key || 'default');
+  if (!document.getElementById(id)) {
+    const l = document.createElement('link');
+    l.id = id; l.rel = 'stylesheet';
+    l.href = `https://fonts.googleapis.com/css2?family=${fp.g}&display=swap`;
+    document.head.appendChild(l);
+  }
+  return fp;
+}
+
 function applyHeroPreview() {
   const t = document.getElementById('heroPreviewTitle');
   if (!t) return;
@@ -7059,7 +7088,9 @@ function applyHeroPreview() {
   const c2   = document.getElementById('portalSecondaryColor')?.value || c1;
   const overlay = Number(document.getElementById('portalHeroOverlay')?.value ?? 45);
   t.textContent = document.getElementById('portalAgencyName').value.trim() || 'Tu Agencia';
-  t.className = 'text-2xl font-extrabold ' + (font ? 'hf-' + font : '');
+  t.className = 'text-2xl font-extrabold';
+  const fp = loadGoogleFontPair(font);
+  t.style.fontFamily = `'${fp.heading}', system-ui, sans-serif`;
   // restart animation
   t.classList.remove('ha-fade','ha-slide','ha-zoom','ha-typewriter');
   if (anim) { void t.offsetWidth; t.classList.add('ha-' + anim); }
@@ -7071,14 +7102,14 @@ function applyHeroPreview() {
 
 // ── Portal themes (presets) ──────────────────────────────────────────────────
 const PORTAL_THEMES = [
-  { id:'modern',  name:'Moderno',   c1:'#6366F1', c2:'#7c3aed', font:'',        anim:'fade'  },
-  { id:'elegant', name:'Elegante',  c1:'#0f172a', c2:'#334155', font:'serif',   anim:'fade'  },
-  { id:'minimal', name:'Minimal',   c1:'#111827', c2:'#374151', font:'rounded', anim:''      },
-  { id:'bold',    name:'Audaz',     c1:'#dc2626', c2:'#f59e0b', font:'display', anim:'zoom'  },
-  { id:'ocean',   name:'Océano',    c1:'#0ea5e9', c2:'#2563eb', font:'rounded', anim:'slide' },
-  { id:'nature',  name:'Natura',    c1:'#059669', c2:'#10b981', font:'',        anim:'fade'  },
-  { id:'sunset',  name:'Atardecer', c1:'#f97316', c2:'#db2777', font:'display', anim:'fade'  },
-  { id:'royal',   name:'Real',      c1:'#7c3aed', c2:'#c026d3', font:'serif',   anim:'zoom'  },
+  { id:'modern',  name:'Moderno',   c1:'#6366F1', c2:'#7c3aed', font:'',         anim:'fade'  },
+  { id:'elegant', name:'Elegante',  c1:'#0f172a', c2:'#334155', font:'elegante', anim:'fade'  },
+  { id:'minimal', name:'Minimal',   c1:'#111827', c2:'#374151', font:'minimal',  anim:''      },
+  { id:'bold',    name:'Audaz',     c1:'#dc2626', c2:'#f59e0b', font:'impacto',  anim:'zoom'  },
+  { id:'ocean',   name:'Océano',    c1:'#0ea5e9', c2:'#2563eb', font:'amigable', anim:'slide' },
+  { id:'nature',  name:'Natura',    c1:'#059669', c2:'#10b981', font:'',         anim:'fade'  },
+  { id:'sunset',  name:'Atardecer', c1:'#f97316', c2:'#db2777', font:'creativa', anim:'fade'  },
+  { id:'royal',   name:'Real',      c1:'#7c3aed', c2:'#c026d3', font:'lujo',     anim:'zoom'  },
 ];
 
 function renderThemePicker() {
@@ -7151,14 +7182,34 @@ function closeCloneModal() {
   document.getElementById('cloneModal').classList.add('hidden');
 }
 
+// Map a detected font family to one of our Google Font pairs.
+function matchFontPair(fonts) {
+  const map = [
+    ['playfair', 'elegante'], ['cormorant', 'lujo'], ['poppins', 'amigable'],
+    ['space grotesk', 'creativa'], ['montserrat', 'impacto'], ['lora', 'clasica'],
+    ['jakarta', ''], ['inter', 'minimal'],
+  ];
+  for (const f of (fonts || [])) {
+    const low = f.toLowerCase();
+    for (const [needle, key] of map) if (low.includes(needle)) return key;
+  }
+  return null;
+}
+
 function applyClonedStyle() {
   if (!_cloneProposal) return;
   document.getElementById('portalColor').value          = _cloneProposal.primaryColor;
   document.getElementById('portalSecondaryColor').value = _cloneProposal.secondaryColor;
+  const pairKey = matchFontPair(_cloneProposal.fonts);
+  let fontNote = '';
+  if (pairKey !== null) {
+    document.getElementById('portalHeroFont').value = pairKey;
+    fontNote = ' + tipografía';
+  }
   applyHeroPreview();
   closeCloneModal();
   const msg = document.getElementById('cloneMsg');
-  msg.innerHTML = `Estilo aplicado (${_cloneProposal.primaryColor} + ${_cloneProposal.secondaryColor}). Acordate de tocar <b>Guardar portal</b>.`;
+  msg.innerHTML = `Estilo aplicado (${_cloneProposal.primaryColor} + ${_cloneProposal.secondaryColor}${fontNote}). Acordate de tocar <b>Guardar portal</b>.`;
   msg.className = 'text-xs text-green-600';
   msg.classList.remove('hidden');
   showToast('Estilo aplicado. Acordate de Guardar.', 'success');

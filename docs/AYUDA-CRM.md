@@ -131,7 +131,8 @@ Tu página pública para mostrar propiedades, con su propio link.
    - **Color principal y secundario**: el principal es tu color de marca; el secundario es el segundo color del degradado de la portada y los botones. Si dejás el secundario igual al principal, el degradado se genera solo.
    - **Oscuridad de la portada**: control deslizante (0–80%) que regula cuánto se oscurece la foto de portada para que el título se lea bien.
    - **Logo / ícono de la agencia**: podés elegir un emoji inmobiliario (🏠🏢🔑…), subir una imagen o pegar una URL. Prioridad: imagen/URL > emoji > inicial del nombre.
-   - **Tipografía del título**: elegís la fuente del nombre grande de la portada (Moderna, Display/impacto, Elegante serif, Redondeada, Monoespaciada).
+   - **Tipografía (Google Fonts)**: combinaciones profesionales título+cuerpo con fuentes reales de Google (Moderna · Plus Jakarta+Inter, Elegante · Playfair+Lora, Impacto · Montserrat+Roboto, Lujo · Cormorant+Montserrat, Amigable · Poppins+Inter, Clásica · Lora+Montserrat, Creativa · Space Grotesk+Inter, Minimal · Inter). Se aplican a todo el portal.
+   - **Clonar estilo (mejorado)**: al tocar "Sugerir" se abre una **vista previa** con la paleta detectada y un mini-portal de ejemplo; tocás **Aplicar** o **Descartar**. Lee el HTML y los CSS de la página, detecta colores (hex/rgb/hsl), tipografía y logo. Nada se guarda hasta que aplicás y tocás Guardar.
    - **Animación de entrada**: efecto del título al cargar (Aparecer, Subir, Zoom, Máquina de escribir). Hay una vista previa en vivo en la misma pantalla.
 3. Imágenes de portada (carrusel): subí fotos con "Subir" o pegá URLs. Si no agregás ninguna, se usan imágenes por defecto.
 4. Activá el toggle **Activo** y tocá **Guardar portal**. Si está apagado, el portal muestra "no disponible".

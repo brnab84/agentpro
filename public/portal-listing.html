@@ -16,7 +16,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html { scroll-behavior:smooth }
-    body { font-family:'Plus Jakarta Sans', system-ui, sans-serif }
+    body { font-family: var(--font-body, 'Plus Jakarta Sans'), system-ui, sans-serif }
+    h1,h2,h3,.font-heading { font-family: var(--font-heading, 'Plus Jakarta Sans'), system-ui, sans-serif }
     /* Hero font + entrance-animation options (set from Mi Portal) */
     .hf-serif{font-family:'Playfair Display',Georgia,serif}
     .hf-display{font-family:'Oswald','Arial Narrow',sans-serif;letter-spacing:.5px;text-transform:uppercase}
@@ -375,13 +376,40 @@ function applyBranding(p) {
     hl.classList.remove('hidden'); hl.classList.add('flex');
   }
 
-  // Hero font + entrance animation
+  // Typography (Google Font pair) + hero entrance animation
+  applyFontPair(p.heroFont);
   const title = document.getElementById('heroTitle');
-  if (p.heroFont)      title.classList.add('hf-' + p.heroFont);
   if (p.heroAnimation) { void title.offsetWidth; title.classList.add('ha-' + p.heroAnimation); }
 
   applyLayout(p.layout || {});
   renderSections(p.sections || {}, p);
+}
+
+// ── Typography: Google Font pairs ─────────────────────────────────────────────
+const FONT_PAIRS = {
+  '':         { heading:'Plus Jakarta Sans',  body:'Inter',      g:'Plus+Jakarta+Sans:wght@500;700;800|Inter:wght@400;500;600' },
+  'elegante': { heading:'Playfair Display',   body:'Lora',       g:'Playfair+Display:wght@600;700;800|Lora:wght@400;500' },
+  'impacto':  { heading:'Montserrat',         body:'Roboto',     g:'Montserrat:wght@600;700;800|Roboto:wght@400;500' },
+  'lujo':     { heading:'Cormorant Garamond', body:'Montserrat', g:'Cormorant+Garamond:wght@600;700|Montserrat:wght@400;500' },
+  'amigable': { heading:'Poppins',            body:'Inter',      g:'Poppins:wght@500;600;700;800|Inter:wght@400;500' },
+  'clasica':  { heading:'Lora',               body:'Montserrat', g:'Lora:wght@500;600;700|Montserrat:wght@400;500' },
+  'creativa': { heading:'Space Grotesk',      body:'Inter',      g:'Space+Grotesk:wght@500;600;700|Inter:wght@400;500' },
+  'minimal':  { heading:'Inter',              body:'Inter',      g:'Inter:wght@400;600;700;800' },
+};
+
+function applyFontPair(key) {
+  const fp = FONT_PAIRS[key] || FONT_PAIRS[''];
+  if (fp.g) {
+    const id = 'gfont-' + (key || 'default');
+    if (!document.getElementById(id)) {
+      const l = document.createElement('link');
+      l.id = id; l.rel = 'stylesheet';
+      l.href = `https://fonts.googleapis.com/css2?family=${fp.g}&display=swap`;
+      document.head.appendChild(l);
+    }
+  }
+  document.documentElement.style.setProperty('--font-heading', `'${fp.heading}'`);
+  document.documentElement.style.setProperty('--font-body', `'${fp.body}'`);
 }
 
 // ── Layout & visibility ───────────────────────────────────────────────────────
