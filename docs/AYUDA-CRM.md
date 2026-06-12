@@ -138,7 +138,7 @@ Tu página pública para mostrar propiedades, con su propio link.
 4. Activá el toggle **Activo** y tocá **Guardar portal**. Si está apagado, el portal muestra "no disponible".
 5. Copiá tu link con el botón "Copiar".
 6. Publicá propiedades activando el toggle "Portal público" en cada una (sección Propiedades).
-- **Diseño y visibilidad** (desplegable): estilo de tarjetas (Redondeadas/Rectas/Planas), **modo oscuro** del portal, y casillas para mostrar/ocultar secciones (contador en portada, formulario de contacto, mapa de la propiedad, propiedades similares).
+- **Diseño y visibilidad** (desplegable): estilo de tarjetas (Redondeadas/Rectas/Planas), **estilo de botones** (relleno/contorno/pastilla), **densidad** (compacta/cómoda/amplia), **estilo de portada** (centrado/izquierda/color sólido), **encabezado** (sólido/transparente), **redondeo de esquinas** (slider), **modo oscuro**, casillas para mostrar/ocultar secciones (contador, formulario, mapa, similares) y **orden de las secciones** (subir/bajar cada bloque). Hay **16 temas** rápidos arriba.
 - **Secciones del portal** (desplegable): contenido extra que aparece en tu portal:
   - **Sobre nosotros**: un párrafo sobre tu agencia (debajo de las propiedades).
   - **Por qué elegirnos**: puntos fuertes, uno por línea; se muestran como lista con check.

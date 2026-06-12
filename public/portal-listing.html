@@ -145,7 +145,7 @@
 </section>
 
 <!-- ── FILTERS ────────────────────────────────────────────────────────────────── -->
-<section class="bg-white border-b border-gray-100 sticky top-16 z-30 shadow-sm">
+<section id="filtersSection" class="bg-white border-b border-gray-100 sticky top-16 z-30 shadow-sm">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 space-y-2.5">
     <!-- Row 1: operation chips + search + sort -->
     <div class="flex flex-wrap items-center gap-2.5">
@@ -469,7 +469,7 @@ function renderSections(sec, p) {
 
   // Sobre nosotros
   if (sec.about) {
-    html += `<section class="py-14 px-4 bg-gray-50 border-t border-gray-100">
+    html += `<section id="sec-about" class="py-14 px-4 bg-gray-50 border-t border-gray-100">
       <div class="max-w-3xl mx-auto text-center">
         <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4">Sobre nosotros</h2>
         <p class="text-gray-600 leading-relaxed whitespace-pre-line">${esc(sec.about)}</p>
@@ -478,7 +478,7 @@ function renderSections(sec, p) {
 
   // Por qué elegirnos
   if (Array.isArray(sec.whyUs) && sec.whyUs.length) {
-    html += `<section class="py-14 px-4 bg-white border-t border-gray-100">
+    html += `<section id="sec-whyUs" class="py-14 px-4 bg-white border-t border-gray-100">
       <div class="max-w-4xl mx-auto">
         <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-8 text-center">¿Por qué elegirnos?</h2>
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -491,7 +491,7 @@ function renderSections(sec, p) {
 
   // Testimonios
   if (Array.isArray(sec.testimonials) && sec.testimonials.length) {
-    html += `<section class="py-14 px-4 bg-gray-50 border-t border-gray-100">
+    html += `<section id="sec-testimonials" class="py-14 px-4 bg-gray-50 border-t border-gray-100">
       <div class="max-w-4xl mx-auto">
         <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-8 text-center">Lo que dicen nuestros clientes</h2>
         <div class="grid sm:grid-cols-2 gap-4">
@@ -512,6 +512,28 @@ function renderSections(sec, p) {
     fh.classList.remove('hidden');
   }
   renderSocial(sec.social || {});
+
+  // Reorder the main blocks per the agency's chosen order
+  applySectionOrder((p && p.layout && p.layout.sectionOrder) || []);
+}
+
+// Move the top-level blocks (properties / about / why-us / testimonials / contact)
+// into the agency's chosen order, just before the footer.
+function applySectionOrder(order) {
+  if (!Array.isArray(order) || !order.length) return;
+  const footer = document.querySelector('footer');
+  if (!footer) return;
+  const blocks = {
+    properties:   [document.getElementById('filtersSection'), document.querySelector('main')],
+    about:        document.getElementById('sec-about'),
+    whyUs:        document.getElementById('sec-whyUs'),
+    testimonials: document.getElementById('sec-testimonials'),
+    contact:      document.getElementById('contact'),
+  };
+  order.forEach(key => {
+    const b = blocks[key];
+    (Array.isArray(b) ? b : [b]).forEach(n => { if (n) document.body.insertBefore(n, footer); });
+  });
 }
 
 function renderSocial(soc) {

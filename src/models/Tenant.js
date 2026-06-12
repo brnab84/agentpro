@@ -43,6 +43,7 @@ const tenantSchema = new mongoose.Schema(
         density:     { type: String, trim: true, default: 'comfortable' }, // compact | comfortable | spacious
         heroLayout:  { type: String, trim: true, default: 'centered' }, // centered | left | solid
         header:      { type: String, trim: true, default: 'solid' },    // solid | transparent
+        sectionOrder:{ type: [String], default: ['properties', 'about', 'whyUs', 'testimonials', 'contact'] },
         darkMode:    { type: Boolean, default: false },
         showStats:   { type: Boolean, default: true },  // hero stats (listing)
         showContact: { type: Boolean, default: true },  // contact form

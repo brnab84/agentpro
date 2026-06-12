@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.28.0'; // feat: hero layouts (centered/left/solid) + header style (solid/transparent-on-scroll)
+export const APP_VERSION = '3.29.0'; // feat: 16 themes + drag-free section reordering (up/down) on the portal
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

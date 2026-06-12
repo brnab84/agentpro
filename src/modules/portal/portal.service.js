@@ -21,6 +21,18 @@ const PUBLIC_PROPERTY_FIELDS = [
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
+const SECTION_KEYS = ['properties', 'about', 'whyUs', 'testimonials', 'contact'];
+/** Validate the section order: only known keys, de-duplicated, all keys present. */
+function sanitizeSectionOrder(arr) {
+  const seen = new Set();
+  const out = [];
+  for (const k of Array.isArray(arr) ? arr : []) {
+    if (SECTION_KEYS.includes(k) && !seen.has(k)) { seen.add(k); out.push(k); }
+  }
+  for (const k of SECTION_KEYS) if (!seen.has(k)) out.push(k); // append any missing
+  return out;
+}
+
 /** Clamp a number into [min,max], falling back to `def` when not a finite number. */
 function clampNumber(v, min, max, def) {
   const n = Number(v);
@@ -215,6 +227,7 @@ export async function savePortalConfig(tenantId, data) {
     density:     DENSITIES.includes(lay.density) ? lay.density : 'comfortable',
     heroLayout:  HERO_LAYOUTS.includes(lay.heroLayout) ? lay.heroLayout : 'centered',
     header:      HEADERS.includes(lay.header) ? lay.header : 'solid',
+    sectionOrder: sanitizeSectionOrder(lay.sectionOrder),
     darkMode:    Boolean(lay.darkMode),
     showStats:   lay.showStats   !== false,
     showContact: lay.showContact !== false,

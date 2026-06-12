@@ -1934,6 +1934,10 @@
                     <label class="flex items-center gap-2 cursor-pointer"><input id="portalShowSimilar" type="checkbox" checked class="accent-indigo-600 w-4 h-4"/><span class="text-sm text-gray-600">Propiedades similares</span></label>
                   </div>
                 </div>
+                <div>
+                  <label class="text-xs text-gray-500 font-medium">Orden de las secciones <span class="htip" title="Subí o bajá cada bloque para cambiar el orden en que aparecen en el portal.">?</span></label>
+                  <div id="sectionOrderList" class="mt-1.5 space-y-1.5"></div>
+                </div>
               </div>
             </details>
 
@@ -3045,7 +3049,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.28.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.29.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -7149,6 +7153,14 @@ const PORTAL_THEMES = [
   { id:'nature',  name:'Natura',    c1:'#059669', c2:'#10b981', font:'',         anim:'fade'  },
   { id:'sunset',  name:'Atardecer', c1:'#f97316', c2:'#db2777', font:'creativa', anim:'fade'  },
   { id:'royal',   name:'Real',      c1:'#7c3aed', c2:'#c026d3', font:'lujo',     anim:'zoom'  },
+  { id:'midnight',name:'Medianoche',c1:'#1e1b4b', c2:'#4338ca', font:'minimal',  anim:'fade'  },
+  { id:'emerald', name:'Esmeralda', c1:'#065f46', c2:'#0d9488', font:'clasica',  anim:'fade'  },
+  { id:'rose',    name:'Rosa',      c1:'#be123c', c2:'#e11d48', font:'elegante', anim:'fade'  },
+  { id:'slate',   name:'Pizarra',   c1:'#334155', c2:'#64748b', font:'minimal',  anim:''      },
+  { id:'amber',   name:'Ámbar',     c1:'#b45309', c2:'#f59e0b', font:'impacto',  anim:'fade'  },
+  { id:'teal',    name:'Turquesa',  c1:'#0f766e', c2:'#14b8a6', font:'amigable', anim:'slide' },
+  { id:'wine',    name:'Vino',      c1:'#7f1d1d', c2:'#b91c1c', font:'lujo',     anim:'fade'  },
+  { id:'forest',  name:'Bosque',    c1:'#14532d', c2:'#16a34a', font:'clasica',  anim:'fade'  },
 ];
 
 function renderThemePicker() {
@@ -7169,6 +7181,29 @@ function applyTheme(id) {
   document.getElementById('portalHeroAnim').value       = t.anim;
   applyHeroPreview();
   showToast(`Tema "${t.name}" aplicado. Acordate de Guardar.`, 'success');
+}
+
+// ── Section order ─────────────────────────────────────────────────────────────
+const SECTION_LABELS = { properties:'🏠 Propiedades', about:'📝 Sobre nosotros', whyUs:'✓ Por qué elegirnos', testimonials:'⭐ Testimonios', contact:'✉️ Contacto' };
+const SECTION_KEYS = ['properties', 'about', 'whyUs', 'testimonials', 'contact'];
+let _sectionOrder = [...SECTION_KEYS];
+
+function renderSectionOrder() {
+  const box = document.getElementById('sectionOrderList');
+  if (!box) return;
+  box.innerHTML = _sectionOrder.map((k, i) =>
+    `<div class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
+       <span class="text-sm text-gray-700 flex-1">${SECTION_LABELS[k] || k}</span>
+       <button type="button" onclick="moveSection(${i},-1)" ${i === 0 ? 'disabled' : ''} class="text-gray-400 hover:text-indigo-600 disabled:opacity-25 text-xs px-1" title="Subir">▲</button>
+       <button type="button" onclick="moveSection(${i},1)" ${i === _sectionOrder.length - 1 ? 'disabled' : ''} class="text-gray-400 hover:text-indigo-600 disabled:opacity-25 text-xs px-1" title="Bajar">▼</button>
+     </div>`).join('');
+}
+
+function moveSection(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= _sectionOrder.length) return;
+  [_sectionOrder[i], _sectionOrder[j]] = [_sectionOrder[j], _sectionOrder[i]];
+  renderSectionOrder();
 }
 
 let _cloneProposal = null;
@@ -7286,6 +7321,11 @@ async function loadPortalConfig() {
     document.getElementById('portalDensity').value     = lay.density || 'comfortable';
     document.getElementById('portalHeroLayout').value  = lay.heroLayout || 'centered';
     document.getElementById('portalHeader').value      = lay.header || 'solid';
+    _sectionOrder = (Array.isArray(lay.sectionOrder) && lay.sectionOrder.length)
+      ? SECTION_KEYS.filter(k => lay.sectionOrder.includes(k)).sort((a, b) => lay.sectionOrder.indexOf(a) - lay.sectionOrder.indexOf(b))
+      : [...SECTION_KEYS];
+    SECTION_KEYS.forEach(k => { if (!_sectionOrder.includes(k)) _sectionOrder.push(k); });
+    renderSectionOrder();
     const rad = (typeof lay.radius === 'number') ? lay.radius : 16;
     document.getElementById('portalRadius').value = rad;
     document.getElementById('radiusVal').textContent = rad + 'px';
@@ -7371,6 +7411,7 @@ async function savePortalConfig(e) {
         density:     document.getElementById('portalDensity').value,
         heroLayout:  document.getElementById('portalHeroLayout').value,
         header:      document.getElementById('portalHeader').value,
+        sectionOrder: _sectionOrder,
         radius:      Number(document.getElementById('portalRadius').value),
         darkMode:    document.getElementById('portalDarkMode').checked,
         showStats:   document.getElementById('portalShowStats').checked,
