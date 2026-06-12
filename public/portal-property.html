@@ -43,6 +43,15 @@
     body.portal-dark input, body.portal-dark textarea, body.portal-dark select { background:#1e293b; color:#e2e8f0 }
     .cards-sharp .sim-card { border-radius:0 !important }
     .cards-flat  .sim-card { box-shadow:none !important }
+    /* Global corner radius */
+    :root { --radius: 16px }
+    .sim-card, #contactCard input, #contactCard textarea, #contactBtn { border-radius: var(--radius) !important }
+    /* Button styles */
+    .btn-outline #contactBtn { background:#fff !important; color:var(--primary) !important; border:2px solid var(--primary) }
+    .btn-pill #contactBtn { border-radius:9999px !important }
+    /* Density */
+    .density-spacious main { padding-top:2rem }
+    .density-compact  main { padding-top:.5rem }
     /* ZonaProp-style photo mosaic */
     .gallery-mosaic { display: grid; gap: 8px; height: clamp(300px, 46vh, 460px); grid-template-columns: 1fr; border-radius: 16px; overflow: hidden }
     .gallery-mosaic img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease }
@@ -346,11 +355,16 @@ function applyBranding(p) {
   // Typography (Google Font pair)
   applyFontPair(p.heroFont);
 
-  // Layout: dark mode + card style + visibility
+  // Layout: dark mode + card style + radius/buttons/density + visibility
   const lay = p.layout || {};
   document.body.classList.toggle('portal-dark', !!lay.darkMode);
   document.body.classList.remove('cards-rounded', 'cards-sharp', 'cards-flat');
   document.body.classList.add('cards-' + (lay.cardStyle || 'rounded'));
+  document.documentElement.style.setProperty('--radius', ((typeof lay.radius === 'number') ? lay.radius : 16) + 'px');
+  document.body.classList.remove('btn-solid', 'btn-outline', 'btn-pill');
+  document.body.classList.add('btn-' + (lay.buttonStyle || 'solid'));
+  document.body.classList.remove('density-compact', 'density-comfortable', 'density-spacious');
+  document.body.classList.add('density-' + (lay.density || 'comfortable'));
   if (lay.showContact === false) document.getElementById('contactCard')?.classList.add('hidden');
 
   // Footer social icons

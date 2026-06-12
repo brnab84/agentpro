@@ -38,6 +38,9 @@ const tenantSchema = new mongoose.Schema(
       // ── Layout & visibility ────────────────────────────────────────────────
       layout: {
         cardStyle:   { type: String, trim: true, default: 'rounded' }, // rounded | sharp | flat
+        radius:      { type: Number, default: 16 },     // global corner radius (px, 0-28)
+        buttonStyle: { type: String, trim: true, default: 'solid' },   // solid | outline | pill
+        density:     { type: String, trim: true, default: 'comfortable' }, // compact | comfortable | spacious
         darkMode:    { type: Boolean, default: false },
         showStats:   { type: Boolean, default: true },  // hero stats (listing)
         showContact: { type: Boolean, default: true },  // contact form

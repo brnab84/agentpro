@@ -204,8 +204,13 @@ export async function savePortalConfig(tenantId, data) {
   // Layout & visibility
   const lay = p.layout || {};
   const CARD_STYLES = ['rounded', 'sharp', 'flat'];
+  const BUTTON_STYLES = ['solid', 'outline', 'pill'];
+  const DENSITIES = ['compact', 'comfortable', 'spacious'];
   const layout = {
     cardStyle:   CARD_STYLES.includes(lay.cardStyle) ? lay.cardStyle : 'rounded',
+    radius:      clampNumber(lay.radius, 0, 28, 16),
+    buttonStyle: BUTTON_STYLES.includes(lay.buttonStyle) ? lay.buttonStyle : 'solid',
+    density:     DENSITIES.includes(lay.density) ? lay.density : 'comfortable',
     darkMode:    Boolean(lay.darkMode),
     showStats:   lay.showStats   !== false,
     showContact: lay.showContact !== false,

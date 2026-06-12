@@ -57,9 +57,20 @@
     .hero-slide.active { opacity:1; transform:scale(1.12) }
     .hero-dot { width:8px; height:8px; border-radius:999px; background:rgba(255,255,255,.5); cursor:pointer; transition:all .2s }
     .hero-dot.active { width:22px; background:#fff }
+    /* Global corner radius (set via --radius) */
+    :root { --radius: 16px }
+    .prop-card, #contact input, #contact textarea, #contact button { border-radius: var(--radius) !important }
     /* Card styles (set via body class) */
     .cards-sharp .prop-card { border-radius:0 !important }
     .cards-flat  .prop-card { box-shadow:none !important }
+    /* Button styles (set via body class) */
+    .btn-outline #contact button[type=submit], .btn-outline .brand-grad-btn { background:#fff !important; color:var(--primary) !important; border:2px solid var(--primary) }
+    .btn-pill #contact button[type=submit], .btn-pill .brand-grad-btn { border-radius:9999px !important }
+    /* Density (set via body class) */
+    .density-compact  main { padding-top:1.25rem; padding-bottom:1.25rem }
+    .density-compact  #propGrid { gap:1rem }
+    .density-spacious main { padding-top:3.5rem; padding-bottom:3.5rem }
+    .density-spacious #propGrid { gap:2rem }
     /* Dark mode (set via body.portal-dark) */
     body.portal-dark { background:#0f172a; color:#e2e8f0 }
     body.portal-dark .bg-white { background:#1e293b !important }
@@ -417,6 +428,15 @@ function applyLayout(lay) {
   document.body.classList.toggle('portal-dark', !!lay.darkMode);
   document.body.classList.remove('cards-rounded', 'cards-sharp', 'cards-flat');
   document.body.classList.add('cards-' + (lay.cardStyle || 'rounded'));
+  // Global radius
+  const rad = (typeof lay.radius === 'number') ? lay.radius : 16;
+  document.documentElement.style.setProperty('--radius', rad + 'px');
+  // Button style
+  document.body.classList.remove('btn-solid', 'btn-outline', 'btn-pill');
+  document.body.classList.add('btn-' + (lay.buttonStyle || 'solid'));
+  // Density
+  document.body.classList.remove('density-compact', 'density-comfortable', 'density-spacious');
+  document.body.classList.add('density-' + (lay.density || 'comfortable'));
   if (lay.showStats === false)   document.getElementById('heroStats')?.classList.add('hidden');
   if (lay.showContact === false) document.getElementById('contact')?.style.setProperty('display', 'none');
 }
