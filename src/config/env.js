@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.22.0'; // feat: password recovery — email reset flow + break-glass key (RESET_SECRET)
+export const APP_VERSION = '3.22.1'; // feat: list account emails (gated by RESET_SECRET) to find your login email
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

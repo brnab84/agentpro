@@ -108,6 +108,18 @@ export async function forgotPassword(email, baseUrl) {
   return { emailed, link };
 }
 
+/** List account owner emails — gated by the RESET_SECRET (to find your login email). */
+export async function listAccountsWithSecret(secret) {
+  if (!env.resetSecret) throw new AppError('La recuperación por clave no está habilitada', 403);
+  const a = Buffer.from(String(secret || ''));
+  const b = Buffer.from(env.resetSecret);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    throw new AppError('Clave de recuperación incorrecta', 403);
+  }
+  const users = await User.find().select('name email role createdAt').sort({ createdAt: 1 }).lean();
+  return users.map(u => ({ name: u.name, email: u.email, role: u.role }));
+}
+
 /** Finish a password reset with the token from the email link. */
 export async function resetPassword(token, newPassword) {
   if (!token || !newPassword || newPassword.length < 6) {

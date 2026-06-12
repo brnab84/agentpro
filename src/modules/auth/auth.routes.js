@@ -13,7 +13,8 @@ router.post('/login',    authLimiter, validate(loginSchema),    controller.login
 router.post('/google',   authLimiter, googleLogin); // Sign in / register with Google ID token
 router.post('/forgot-password', authLimiter, controller.forgotPassword);
 router.post('/reset-password',  authLimiter, controller.resetPassword);
-router.post('/recover',         authLimiter, controller.recover);
+router.post('/recover',          authLimiter, controller.recover);
+router.post('/recover-accounts', authLimiter, controller.recoverAccounts);
 router.get ('/me',       auth, controller.me);
 
 export default router;

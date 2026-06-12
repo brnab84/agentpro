@@ -35,6 +35,11 @@ export const recover = asyncHandler(async (req, res) => {
   res.json(await service.recoverWithSecret(email, password, secret));
 });
 
+/** POST /api/auth/recover-accounts — list account emails (gated by RESET_SECRET). */
+export const recoverAccounts = asyncHandler(async (req, res) => {
+  res.json({ accounts: await service.listAccountsWithSecret(req.body?.secret) });
+});
+
 /** GET /api/auth/me — current user with live-computed admin status. */
 export const me = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select('name email role').lean();
