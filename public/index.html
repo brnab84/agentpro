@@ -3098,7 +3098,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.31.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.31.1'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -4467,9 +4467,13 @@ function buildBulkBookmarklet(key, origin) {
     "javascript:(function(){try{" +
     "var K=" + JSON.stringify(key) + ",A=" + JSON.stringify(origin) + ",H=location.hostname;" +
     "function abs(u){try{return new URL(u,location.href).href}catch(e){return''}}" +
-    "var DET=/propiedad|inmueble|venta|alquiler|posting|clasificado|aviso|listing|property|detalle|ficha|departamento|terreno|\\/p-|MLA\\d|MLM\\d|MLU\\d|MLC\\d|\\d{6,}/i;" +
-    "var BAD=/buscar|\\bsearch\\b|login|registro|favorito|contacto|ayuda|terminos|nosotros|\\/blog|page=|pagina-|ordenar|filtro|sucursal/i;" +
-    "var st=new Set();document.querySelectorAll('a[href]').forEach(function(a){var u=abs(a.getAttribute('href'));if(!u)return;var x;try{x=new URL(u)}catch(e){return}if(x.hostname!==H)return;if(BAD.test(u))return;if(!DET.test(u))return;st.add(u.split('#')[0])});" +
+    "var DET=/aviso|propiedad|inmueble|venta|alquiler|posting|clasificado|listing|property|detalle|ficha|departamento|apartamento|terreno|\\/p-|MLA\\d|MLM\\d|MLU\\d|MLC\\d|\\d{6,}/i;" +
+    "var DTS=/aviso|propiedad|inmueble|posting|clasificado|departamento|apartamento|\\/p-|MLA\\d|MLM\\d|MLU\\d|MLC\\d/i;" +
+    "var BAD=/buscar|\\bsearch\\b|login|registro|favorito|\\/contacto|ayuda|terminos|nosotros|\\/blog|page=|pagina-|ordenar|sucursal|\\/filtro|whatsapp|facebook|twitter|instagram|youtube|politica|cookies/i;" +
+    "var EXT=/\\.(?:js|css|png|jpe?g|webp|svg|gif|woff2?|ico|mp4|json|xml|map|pdf)(\\?|$)/i;" +
+    "var st=new Set();function ad(u,s){if(!u)return;u=abs(u);if(!u)return;var x;try{x=new URL(u)}catch(e){return}if(x.hostname!==H)return;var c=x.origin+x.pathname;if(EXT.test(c)||BAD.test(c))return;if(!(s?DTS:DET).test(c))return;st.add(c)}" +
+    "document.querySelectorAll('a[href],[data-href],[data-url],[data-link]').forEach(function(a){ad(a.getAttribute('href')||a.getAttribute('data-href')||a.getAttribute('data-url')||a.getAttribute('data-link'),false)});" +
+    "try{var raw=document.documentElement.outerHTML;var re=/(?:https?:\\/\\/[^\"'<>\\s\\\\]+|\\/[a-zA-Z0-9][\\w\\-\\/]{5,})/g;var m,n=0;while((m=re.exec(raw))&&n++<20000){ad(m[0],true)}}catch(e){}" +
     "var urls=[].slice.call(st).slice(0,40);" +
     "var ov=document.createElement('div');ov.style.cssText='position:fixed;top:12px;right:12px;z-index:2147483647;background:#111;color:#fff;padding:14px 16px;border-radius:12px;font:14px sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:300px';document.body.appendChild(ov);" +
     "if(!urls.length){ov.textContent='AgentPro: no encontramos fichas. Abr\\u00ed una p\\u00e1gina de resultados o tu perfil de avisos.';setTimeout(function(){ov.remove()},8000);return}" +

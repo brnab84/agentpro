@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.31.0'; // feat: bulk bookmarklet — import all listings from a results/profile page (generic, iframe + fetch)
+export const APP_VERSION = '3.31.1'; // fix: bulk bookmarklet collector also scans raw HTML/JSON (data-attrs + embedded URLs), excludes assets
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,
