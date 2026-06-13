@@ -2715,14 +2715,20 @@
           <div class="bm-demo-cursor">👆</div>
         </div>
 
-        <p class="text-xs text-gray-500 mb-2 text-center">👇 Ahora <b>arrastrá ESTE botón</b> a tu barra de favoritos:</p>
-        <div class="text-center">
+        <p class="text-xs text-gray-500 mb-2 text-center">👇 Ahora <b>arrastrá ESTOS botones</b> a tu barra de favoritos:</p>
+        <div class="text-center flex flex-col sm:flex-row items-center justify-center gap-2">
           <a id="bookmarkletLink" href="#" onclick="return false" draggable="true"
-             class="bm-drag inline-flex items-center gap-2 gradient-bg text-white font-bold px-6 py-3 rounded-xl cursor-grab select-none shadow-lg">
+             class="bm-drag inline-flex items-center gap-2 gradient-bg text-white font-bold px-5 py-3 rounded-xl cursor-grab select-none shadow-lg">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
             Importar a AgentPro
           </a>
+          <a id="bookmarkletBulkLink" href="#" onclick="return false" draggable="true"
+             class="bm-drag inline-flex items-center gap-2 bg-gray-800 text-white font-bold px-5 py-3 rounded-xl cursor-grab select-none shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h10"/></svg>
+            Importar VARIAS
+          </a>
         </div>
+        <p class="text-[11px] text-gray-400 text-center mt-1.5"><b>Importar a AgentPro</b>: una ficha (estando en el aviso). <b>Importar VARIAS</b>: estando en una página de <b>resultados</b> o tu <b>perfil de avisos</b>, importa todas las de esa página.</p>
         <details class="mt-3">
           <summary class="text-xs text-indigo-500 cursor-pointer font-medium">¿No ves la barra de favoritos?</summary>
           <p class="text-xs text-gray-500 mt-1.5 pl-1">Presioná <b>Ctrl+Shift+B</b> (Windows) o <b>⌘+Shift+B</b> (Mac) para mostrarla. Es la barra fina que aparece justo debajo de donde escribís la dirección web.</p>
@@ -3092,7 +3098,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.30.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.31.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -4453,6 +4459,33 @@ function buildBookmarklet(key, origin) {
   return code;
 }
 
+function buildBulkBookmarklet(key, origin) {
+  // Runs on a results / profile page (user's own browser & IP). Collects candidate
+  // detail links, loads each in a hidden same-origin iframe to read the rendered
+  // DOM (images), and imports them one by one. Falls back to a raw fetch.
+  var code =
+    "javascript:(function(){try{" +
+    "var K=" + JSON.stringify(key) + ",A=" + JSON.stringify(origin) + ",H=location.hostname;" +
+    "function abs(u){try{return new URL(u,location.href).href}catch(e){return''}}" +
+    "var DET=/propiedad|inmueble|venta|alquiler|posting|clasificado|aviso|listing|property|detalle|ficha|departamento|terreno|\\/p-|MLA\\d|MLM\\d|MLU\\d|MLC\\d|\\d{6,}/i;" +
+    "var BAD=/buscar|\\bsearch\\b|login|registro|favorito|contacto|ayuda|terminos|nosotros|\\/blog|page=|pagina-|ordenar|filtro|sucursal/i;" +
+    "var st=new Set();document.querySelectorAll('a[href]').forEach(function(a){var u=abs(a.getAttribute('href'));if(!u)return;var x;try{x=new URL(u)}catch(e){return}if(x.hostname!==H)return;if(BAD.test(u))return;if(!DET.test(u))return;st.add(u.split('#')[0])});" +
+    "var urls=[].slice.call(st).slice(0,40);" +
+    "var ov=document.createElement('div');ov.style.cssText='position:fixed;top:12px;right:12px;z-index:2147483647;background:#111;color:#fff;padding:14px 16px;border-radius:12px;font:14px sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:300px';document.body.appendChild(ov);" +
+    "if(!urls.length){ov.textContent='AgentPro: no encontramos fichas. Abr\\u00ed una p\\u00e1gina de resultados o tu perfil de avisos.';setTimeout(function(){ov.remove()},8000);return}" +
+    "ov.innerHTML='<b>AgentPro</b><br>Encontramos '+urls.length+' fichas en esta p\\u00e1gina.<br><button id=agpGo style=\"margin-top:8px;background:#6366F1;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600\">Importar '+urls.length+'</button> <button id=agpX style=\"margin-top:8px;background:#444;color:#fff;border:0;padding:8px 10px;border-radius:8px;cursor:pointer\">Cancelar</button>';" +
+    "document.getElementById('agpX').onclick=function(){ov.remove()};" +
+    "document.getElementById('agpGo').onclick=function(){var ok=0,fail=0,i=0;" +
+    "function ci(doc){var S=new Set();doc.querySelectorAll('img').forEach(function(im){var a=[im.currentSrc,im.src,im.getAttribute('data-src'),im.getAttribute('data-lazy'),im.getAttribute('data-original')];if(im.srcset)im.srcset.split(',').forEach(function(s){a.push(s.trim().split(' ')[0])});var big=(im.naturalWidth||im.width||0)>=350;a.forEach(function(u){if(u&&u.indexOf('http')===0&&(big||/encuentra24|mlstatic|cloudinary|f_auto/i.test(u)))S.add(u)})});return [].slice.call(S).slice(0,40)}" +
+    "function post(u,html,imgs){return fetch(A+'/api/properties/import-from-html?key='+K,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u,html:html,images:imgs})}).then(function(r){return r.json()})}" +
+    "function frame(u){return new Promise(function(res){var f=document.createElement('iframe');f.style.cssText='position:fixed;left:-9999px;top:0;width:1200px;height:1000px;border:0';var done=false;var to=setTimeout(function(){fin(null)},9000);function fin(doc){if(done)return;done=true;clearTimeout(to);var html='',imgs=[];try{if(doc){html=doc.documentElement.outerHTML;imgs=ci(doc)}}catch(e){}try{f.remove()}catch(e){}res({html:html,imgs:imgs})}f.onload=function(){setTimeout(function(){var d=null;try{d=f.contentWindow.document}catch(e){}fin(d)},1800)};f.src=u;document.body.appendChild(f)})}" +
+    "function step(){if(i>=urls.length){ov.innerHTML='<b>AgentPro</b><br>\\u2705 Listo: '+ok+' importadas'+(fail?(' \\u00b7 '+fail+' con error'):'');setTimeout(function(){ov.remove()},9000);return}var u=urls[i++];ov.innerHTML='<b>AgentPro</b><br>Importando '+i+'/'+urls.length+'\\u2026<br>'+ok+' ok'+(fail?(', '+fail+' err'):'');" +
+    "frame(u).then(function(r){if(r.html)return post(u,r.html,r.imgs);return fetch(u,{credentials:'include'}).then(function(x){return x.text()}).then(function(t){return post(u,t,[])})}).then(function(d){if(d&&!d.error)ok++;else fail++}).catch(function(){fail++}).then(function(){setTimeout(step,700)})}" +
+    "step()};" +
+    "}catch(e){alert('AgentPro: '+e.message)}})();";
+  return code;
+}
+
 let _bmCode = '';
 async function openBookmarkletModal() {
   try {
@@ -4460,6 +4493,8 @@ async function openBookmarkletModal() {
     document.getElementById('bmKey').textContent = importKey;
     _bmCode = buildBookmarklet(importKey, window.location.origin);
     document.getElementById('bookmarkletLink').href = _bmCode;
+    const bulk = document.getElementById('bookmarkletBulkLink');
+    if (bulk) bulk.href = buildBulkBookmarklet(importKey, window.location.origin);
     document.getElementById('bookmarkletModal').classList.remove('hidden');
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
 }
@@ -4477,7 +4512,9 @@ async function regenerateBookmarklet() {
     document.getElementById('bmKey').textContent = importKey;
     _bmCode = buildBookmarklet(importKey, window.location.origin);
     document.getElementById('bookmarkletLink').href = _bmCode;
-    showToast('Clave regenerada — arrastrá el botón de nuevo');
+    const bulk = document.getElementById('bookmarkletBulkLink');
+    if (bulk) bulk.href = buildBulkBookmarklet(importKey, window.location.origin);
+    showToast('Clave regenerada — arrastrá los botones de nuevo');
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
 }
 

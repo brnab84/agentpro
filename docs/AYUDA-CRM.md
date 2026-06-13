@@ -152,6 +152,7 @@ Tu página pública para mostrar propiedades, con su propio link.
 - Descargá la **plantilla CSV**, completala en Excel/Google Sheets y guardala como CSV. Columnas: titulo, precio, moneda, operacion (venta/alquiler), tipo (casa/departamento/terreno/local/oficina/deposito), zona, direccion, ambientes, banos, superficie, descripcion, fotos (varias URLs separadas por `;`).
 - Subí el archivo o pegá el texto → te muestra cuántas detectó → **Importar**. Respeta el límite de tu plan (si lo alcanzás, avisa cuántas entraron).
 - Para traer una propiedad puntual desde un link (con fotos), usá la barra **"Importar desde URL"** o el **importador de navegador** (bookmarklet).
+- **Importar VARIAS (bookmarklet masivo)**: en el modal del importador de navegador hay 2 botones para arrastrar a favoritos: **"Importar a AgentPro"** (una ficha, estando en el aviso) e **"Importar VARIAS"** (estando en una **página de resultados** o tu **perfil de avisos**, importa todas las fichas de esa página desde tu navegador). Funciona en cualquier portal; te muestra cuántas encontró y un progreso. Si un sitio bloquea la lectura, igual intenta una importación básica.
 
 ### Plan y facturación (dentro de Equipo)
 - Muestra tu plan actual (Free/Pro/Business) y el uso: propiedades, leads y usuarios contra el límite del plan.
