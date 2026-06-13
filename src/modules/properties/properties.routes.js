@@ -18,6 +18,7 @@ router.get('/', controller.list);
 router.get('/import-key', controller.getImportKey);
 router.post('/import-key/regenerate', controller.regenerateImportKey);
 router.post('/import-url', aiLimiter, controller.importFromUrl);
+router.post('/bulk', controller.bulkImport);
 router.post('/', validate(createPropertySchema), controller.create);
 router.get('/:id', controller.getById);
 router.patch('/:id', validate(updatePropertySchema), controller.update);

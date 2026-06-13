@@ -24,6 +24,10 @@ Estado al **2026-06-12** (v3.22.1). Lista viva: marcá lo que se vaya completand
 ## 🏠 Portal público (mejoras)
 - [x] **Personalización Fase A** (v3.23.0): temas rápidos, clonar estilo desde URL, color secundario, oscuridad del hero.
 - [x] **Personalización Fase B** (v3.24.0): modo oscuro, estilo de tarjetas, mostrar/ocultar secciones, "Sobre nosotros", "Por qué elegirnos", testimonios, horarios y redes sociales.
+- [x] **Clonado robusto** (v3.25.0): lee HTML+CSS, colores hex/rgb/hsl, fuentes y logo, con vista previa antes de aplicar.
+- [x] **Tipografías Google** (v3.26.0), **forma/botones/densidad** (v3.27.0), **portada/encabezado** (v3.28.0), **16 temas + reordenar secciones** (v3.29.0).
+- [x] **Importación masiva por CSV** (v3.30.0): plantilla + parseo + carga masiva respetando límite de plan.
+- [ ] **Importación masiva — bookmarklet "modo masivo"**: importar todas las fichas de una página de resultados/perfil desde el navegador del usuario (pendiente).
 - [ ] Galería mosaico: ajustes finos (proporciones, cantidad visible).
 
 ## 🤖 IA

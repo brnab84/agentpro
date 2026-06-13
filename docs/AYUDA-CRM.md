@@ -147,6 +147,12 @@ Tu página pública para mostrar propiedades, con su propio link.
   - **Redes sociales**: Instagram, Facebook, TikTok y sitio web; salen como íconos en el pie. Podés pegar la URL completa o el usuario.
 - **SEO y visibilidad en Google** (desplegable): permitir indexación, meta título, meta descripción, palabras clave, ID de Google Analytics (G-XXXX) y Meta Pixel ID (para retargeting). Botón "Guía" con instructivo. El sitemap está en `tudominio/sitemap.xml`.
 
+### Importar propiedades por CSV (carga masiva)
+- En **Propiedades**, botón **"Importar CSV"** (al lado de "Nueva Propiedad").
+- Descargá la **plantilla CSV**, completala en Excel/Google Sheets y guardala como CSV. Columnas: titulo, precio, moneda, operacion (venta/alquiler), tipo (casa/departamento/terreno/local/oficina/deposito), zona, direccion, ambientes, banos, superficie, descripcion, fotos (varias URLs separadas por `;`).
+- Subí el archivo o pegá el texto → te muestra cuántas detectó → **Importar**. Respeta el límite de tu plan (si lo alcanzás, avisa cuántas entraron).
+- Para traer una propiedad puntual desde un link (con fotos), usá la barra **"Importar desde URL"** o el **importador de navegador** (bookmarklet).
+
 ### Plan y facturación (dentro de Equipo)
 - Muestra tu plan actual (Free/Pro/Business) y el uso: propiedades, leads y usuarios contra el límite del plan.
 - Para mejorar: aparecen botones de pago según los métodos activos (Stripe, PayPal, MercadoPago, Yappy).

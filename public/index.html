@@ -949,10 +949,16 @@
               Ver portal público
             </button>
           </div>
-          <button onclick="openNewPropertyModal()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Nueva Propiedad
-          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="openCsvImportModal()" class="text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.9A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+              Importar CSV
+            </button>
+            <button onclick="openNewPropertyModal()" class="gradient-bg text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Nueva Propiedad
+            </button>
+          </div>
         </div>
         <div id="propertiesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         <div id="propsEmpty" class="hidden text-center py-12 text-gray-400">No hay propiedades aún.</div>
@@ -2758,6 +2764,43 @@
   </div>
 </div>
 
+<!-- ── CSV BULK IMPORT MODAL ─────────────────────────────────────────────────── -->
+<div id="csvImportModal" class="modal-overlay hidden fixed inset-0 z-[55] flex items-center justify-center p-4 sm:p-6">
+  <div class="card w-full max-w-lg fade-in flex flex-col" style="max-height:90vh;background:#fff">
+    <div class="flex items-center justify-between px-6 pt-6 pb-3 border-b border-gray-100">
+      <h3 class="text-lg font-semibold text-gray-900">Importar propiedades (CSV)</h3>
+      <button onclick="closeCsvImportModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="overflow-y-auto px-6 py-4 space-y-4">
+      <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-700">
+        <p class="font-semibold mb-1">¿Cómo funciona?</p>
+        <p>1) Descargá la plantilla, completala en Excel/Google Sheets y guardala como <b>CSV</b>. 2) Subila o pegala acá. 3) Importás todas de una vez.</p>
+        <button onclick="downloadCsvTemplate()" class="mt-2 inline-flex items-center gap-1.5 font-semibold text-indigo-600 hover:text-indigo-800">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-8-2V4m0 10l-4-4m4 4l4-4"/></svg>
+          Descargar plantilla CSV
+        </button>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 font-medium">Subir archivo CSV</label>
+        <input id="csvFile" type="file" accept=".csv,text/csv" onchange="handleCsvFile(this)" class="block w-full text-sm mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer" />
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 font-medium">…o pegá el CSV acá</label>
+        <textarea id="csvText" rows="5" oninput="previewCsv()" placeholder="titulo,precio,moneda,operacion,tipo,zona,direccion,ambientes,banos,superficie,descripcion,fotos" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-mono mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"></textarea>
+      </div>
+
+      <div id="csvPreview" class="hidden text-sm bg-gray-50 border border-gray-100 rounded-lg p-3"></div>
+      <div id="csvResult" class="hidden text-sm rounded-lg p-3"></div>
+    </div>
+    <div class="px-6 py-4 border-t border-gray-100 flex gap-2">
+      <button onclick="confirmCsvImport()" id="csvImportBtn" class="flex-1 gradient-bg text-white text-sm font-semibold py-2.5 rounded-lg hover:opacity-90 transition disabled:opacity-40" disabled>Importar</button>
+      <button onclick="closeCsvImportModal()" class="px-4 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-lg border border-gray-200">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div id="propertyModal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
   <div class="card w-full max-w-2xl fade-in flex flex-col" style="max-height:90vh">
     <!-- Header -->
@@ -3049,7 +3092,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.29.0'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.30.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -4217,6 +4260,121 @@ function addPhotoUrl() {
 function removePhoto(i) {
   propPhotos.splice(i, 1);
   renderPhotosPreview();
+}
+
+// ── CSV bulk import ───────────────────────────────────────────────────────────
+let _csvItems = [];
+const CSV_FIELD_MAP = {
+  titulo:'title', title:'title', nombre:'title',
+  precio:'price', price:'price',
+  moneda:'currency', currency:'currency',
+  operacion:'operation', operation:'operation',
+  tipo:'type', type:'type',
+  zona:'zone', barrio:'zone', zone:'zone',
+  direccion:'address', address:'address',
+  ambientes:'beds', habitaciones:'beds', dormitorios:'beds', cuartos:'beds', beds:'beds',
+  banos:'baths', baths:'baths',
+  superficie:'area', area:'area', m2:'area', metros:'area',
+  cocheras:'parking', parking:'parking', garage:'parking',
+  descripcion:'description', description:'description',
+  fotos:'photos', imagenes:'photos', photos:'photos', images:'photos',
+  caracteristicas:'features', features:'features',
+};
+const csvNorm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+
+/** Minimal RFC-4180-ish CSV parser (handles quotes, commas, newlines). */
+function parseCsv(text) {
+  const rows = []; let row = [], field = '', inQ = false;
+  text = text.replace(/\r\n?/g, '\n');
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; }
+      else field += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+    else field += c;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ''));
+}
+
+function csvToItems(text) {
+  const rows = parseCsv(text);
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(h => CSV_FIELD_MAP[csvNorm(h)] || null);
+  return rows.slice(1).map(r => {
+    const obj = {};
+    headers.forEach((key, i) => { if (key && r[i] != null && String(r[i]).trim() !== '') obj[key] = String(r[i]).trim(); });
+    return obj;
+  }).filter(o => o.title);
+}
+
+function previewCsv() {
+  const text = document.getElementById('csvText').value;
+  const box = document.getElementById('csvPreview');
+  const btn = document.getElementById('csvImportBtn');
+  _csvItems = text.trim() ? csvToItems(text) : [];
+  if (!_csvItems.length) {
+    box.classList.add('hidden'); btn.disabled = true; return;
+  }
+  const sample = _csvItems.slice(0, 3).map(p => `• ${esc(p.title)}${p.price ? ' — ' + esc(p.price) : ''}`).join('<br>');
+  box.innerHTML = `<p class="font-semibold text-gray-700 mb-1">${_csvItems.length} propiedad(es) detectada(s)</p><div class="text-xs text-gray-500">${sample}${_csvItems.length > 3 ? '<br>…' : ''}</div>`;
+  box.classList.remove('hidden');
+  btn.disabled = false;
+}
+
+function handleCsvFile(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { document.getElementById('csvText').value = reader.result; previewCsv(); };
+  reader.readAsText(file);
+}
+
+function downloadCsvTemplate() {
+  const csv = 'titulo,precio,moneda,operacion,tipo,zona,direccion,ambientes,banos,superficie,descripcion,fotos\n' +
+    '"Depto 2 amb en Palermo",120000,USD,venta,departamento,Palermo,"Av. Santa Fe 1234",2,1,55,"Luminoso con balcón","https://ejemplo.com/1.jpg;https://ejemplo.com/2.jpg"\n' +
+    '"Casa 3 dorm con jardín",240000,USD,venta,casa,"Villa Crespo","Calle Falsa 123",3,2,140,"Patio y cochera",""\n';
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'plantilla-propiedades.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function openCsvImportModal() {
+  document.getElementById('csvText').value = '';
+  document.getElementById('csvFile').value = '';
+  document.getElementById('csvPreview').classList.add('hidden');
+  document.getElementById('csvResult').classList.add('hidden');
+  document.getElementById('csvImportBtn').disabled = true;
+  _csvItems = [];
+  document.getElementById('csvImportModal').classList.remove('hidden');
+}
+function closeCsvImportModal() { document.getElementById('csvImportModal').classList.add('hidden'); }
+
+async function confirmCsvImport() {
+  if (!_csvItems.length) return;
+  const btn = document.getElementById('csvImportBtn');
+  const res = document.getElementById('csvResult');
+  btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Importando…';
+  try {
+    const r = await api('POST', '/api/properties/bulk', { items: _csvItems });
+    res.className = 'text-sm rounded-lg p-3 bg-green-50 border border-green-100 text-green-700';
+    res.innerHTML = `✅ Importadas: <b>${r.created}</b>${r.skipped ? ` · Omitidas: ${r.skipped}` : ''}${r.limitReached ? '<br>⚠️ Alcanzaste el límite de tu plan. Mejorá el plan para cargar más.' : ''}`;
+    res.classList.remove('hidden');
+    if (typeof loadProperties === 'function') loadProperties();
+    if (r.created) showToast(`${r.created} propiedades importadas`, 'success');
+  } catch (err) {
+    res.className = 'text-sm rounded-lg p-3 bg-red-50 border border-red-100 text-red-600';
+    res.textContent = err.message;
+    res.classList.remove('hidden');
+  } finally {
+    btn.disabled = false; btn.textContent = prev;
+  }
 }
 
 async function importPropertyFromUrl() {

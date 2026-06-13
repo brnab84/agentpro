@@ -66,6 +66,11 @@ export const remove = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
+/** POST /api/properties/bulk — create many properties from parsed CSV rows. */
+export const bulkImport = asyncHandler(async (req, res) =>
+  res.json(await service.bulkCreate(req.tenantId, req.body?.items)),
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Utility helpers
 // ─────────────────────────────────────────────────────────────────────────────
