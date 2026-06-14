@@ -147,6 +147,12 @@ Tu página pública para mostrar propiedades, con su propio link.
   - **Redes sociales**: Instagram, Facebook, TikTok y sitio web; salen como íconos en el pie. Podés pegar la URL completa o el usuario.
 - **SEO y visibilidad en Google** (desplegable): permitir indexación, meta título, meta descripción, palabras clave, ID de Google Analytics (G-XXXX) y Meta Pixel ID (para retargeting). Botón "Guía" con instructivo. El sitemap está en `tudominio/sitemap.xml`.
 
+### Asistente IA (puede hacer acciones)
+- El botón del asistente (abajo a la derecha) responde dudas de uso **y además puede actuar sobre tus leads**.
+- Ejemplos: "agregá un lead Juan Pérez, teléfono 3001234567, busca alquiler en Cali", "buscá los leads en etapa visita", "pasá a Juan Pérez a calificado".
+- Antes de **crear o modificar** te pide confirmación (te muestra los datos y esperás tu "sí"). Buscar no requiere confirmación.
+- Etapas válidas: nuevo, calificado, visita, cerrado, perdido. Las acciones siempre quedan dentro de tu cuenta.
+
 ### Importar propiedades por CSV (carga masiva)
 - En **Propiedades**, botón **"Importar CSV"** (al lado de "Nueva Propiedad").
 - Descargá la **plantilla CSV**, completala en Excel/Google Sheets y guardala como CSV. Columnas: titulo, precio, moneda, operacion (venta/alquiler), tipo (casa/departamento/terreno/local/oficina/deposito), zona, direccion, ambientes, banos, superficie, descripcion, fotos (varias URLs separadas por `;`).

@@ -7,7 +7,7 @@ for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
-export const APP_VERSION = '3.32.0'; // feat: de-dup on import (skip already-imported listings by sourceUrl/listing-id); bookmarklets show "repetidas"
+export const APP_VERSION = '3.33.0'; // feat: AI assistant tool use (Fase 1) — create/search/update-stage leads from chat with confirmation
 
 export const env = {
   port:                 Number(process.env.PORT) || 3000,

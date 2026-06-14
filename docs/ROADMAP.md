@@ -30,7 +30,7 @@ Estado al **2026-06-12** (v3.22.1). Lista viva: marcá lo que se vaya completand
 - [x] **Importación masiva — bookmarklet "modo masivo"** (v3.31.0): importa todas las fichas de una página de resultados/perfil desde el navegador del usuario (genérico, con iframe + fallback fetch).
 - [x] **De-duplicación al importar** (v3.32.0): omite avisos ya importados por `sourceUrl` o por el id del aviso (vp…/ML…/número); el bookmarklet muestra "repetidas".
 - [ ] **Bulk en FincaRaíz (elpais) sigue dando "0 fichas"** — pendiente: en esa página los avisos probablemente se cargan por API/cliente y no están en el HTML al hacer clic. A investigar: leer el endpoint/JSON interno o disparar scroll antes de recolectar. (Diagnóstico: correr el snippet de consola que cuenta `/aviso/` en el HTML.)
-- [ ] **Asistente IA con acciones** (function calling / tool use): que el asistente no solo lea ayuda sino que ejecute acciones — crear lead, agendar cita en Google Calendar, etc. Ver plan abajo.
+- [x] **Asistente IA con acciones — Fase 1 (leads)** (v3.33.0): crear, buscar y cambiar etapa de leads desde el chat, con confirmación previa. Pendiente Fase 2 (Calendar) y Fase 3 (propiedades). Ver plan abajo.
 - [ ] Galería mosaico: ajustes finos (proporciones, cantidad visible).
 
 ## 🤖 IA
