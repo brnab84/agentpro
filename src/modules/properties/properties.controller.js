@@ -475,6 +475,12 @@ export const importFromHtml = asyncHandler(async (req, res) => {
   const { url, html, images } = req.body || {};
   if (!html || html.length < MIN_HTML_LENGTH) throw new AppError('No se recibió el contenido de la página', 400);
 
+  // Skip if this listing was already imported (avoids duplicates on re-runs).
+  const dup = await service.findImportDuplicate(tenant._id, url || '');
+  if (dup) {
+    return res.json({ ok: true, duplicate: true, id: dup._id, title: dup.title, photos: 0 });
+  }
+
   // Respect the plan's property limit.
   const { assertCanAddProperty } = await import('../billing/limits.service.js');
   await assertCanAddProperty(tenant._id);

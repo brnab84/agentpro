@@ -3098,7 +3098,7 @@ window.onerror = function(msg, src, line) {
 
 // ── Global constants ──────────────────────────────────────────────────────────
 const API         = window.location.origin;
-const APP_VERSION = '3.31.1'; // fallback; authoritative value fetched from /api/version
+const APP_VERSION = '3.32.0'; // fallback; authoritative value fetched from /api/version
 
 // Status color/label maps — single source of truth, used across campaigns/funnels/channels
 const CAMPAIGN_STATUS_COLORS = { draft:'bg-gray-100 text-gray-600', sending:'bg-blue-100 text-blue-700', sent:'bg-green-100 text-green-700', failed:'bg-red-100 text-red-700' };
@@ -4453,7 +4453,7 @@ function buildBookmarklet(key, origin) {
     "b.style.cssText='position:fixed;top:12px;right:12px;z-index:2147483647;background:#111;color:#fff;padding:10px 14px;border-radius:10px;font:14px sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3)';" +
     "document.body.appendChild(b);" +
     "fetch(A+'/api/properties/import-from-html?key='+K,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:location.href,html:document.documentElement.outerHTML,images:[].slice.call(S).slice(0,40)})})" +
-    ".then(function(r){return r.json()}).then(function(d){b.textContent=d.error?('AgentPro: '+d.error):('\\u2705 Importado: '+(d.title||'propiedad')+' \\u00b7 '+(d.photos||0)+' fotos');setTimeout(function(){b.remove()},6000)})" +
+    ".then(function(r){return r.json()}).then(function(d){b.textContent=d.error?('AgentPro: '+d.error):(d.duplicate?('AgentPro: ya estaba en tu CRM \\u00b7 '+(d.title||'propiedad')):('\\u2705 Importado: '+(d.title||'propiedad')+' \\u00b7 '+(d.photos||0)+' fotos'));setTimeout(function(){b.remove()},6000)})" +
     ".catch(function(e){b.textContent='AgentPro error: '+e.message;setTimeout(function(){b.remove()},6000)})" +
     "}catch(e){alert('AgentPro: '+e.message)}})();";
   return code;
@@ -4479,12 +4479,12 @@ function buildBulkBookmarklet(key, origin) {
     "if(!urls.length){ov.textContent='AgentPro: no encontramos fichas. Abr\\u00ed una p\\u00e1gina de resultados o tu perfil de avisos.';setTimeout(function(){ov.remove()},8000);return}" +
     "ov.innerHTML='<b>AgentPro</b><br>Encontramos '+urls.length+' fichas en esta p\\u00e1gina.<br><button id=agpGo style=\"margin-top:8px;background:#6366F1;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600\">Importar '+urls.length+'</button> <button id=agpX style=\"margin-top:8px;background:#444;color:#fff;border:0;padding:8px 10px;border-radius:8px;cursor:pointer\">Cancelar</button>';" +
     "document.getElementById('agpX').onclick=function(){ov.remove()};" +
-    "document.getElementById('agpGo').onclick=function(){var ok=0,fail=0,i=0;" +
+    "document.getElementById('agpGo').onclick=function(){var ok=0,fail=0,dup=0,i=0;" +
     "function ci(doc){var S=new Set();doc.querySelectorAll('img').forEach(function(im){var a=[im.currentSrc,im.src,im.getAttribute('data-src'),im.getAttribute('data-lazy'),im.getAttribute('data-original')];if(im.srcset)im.srcset.split(',').forEach(function(s){a.push(s.trim().split(' ')[0])});var big=(im.naturalWidth||im.width||0)>=350;a.forEach(function(u){if(u&&u.indexOf('http')===0&&(big||/encuentra24|mlstatic|cloudinary|f_auto/i.test(u)))S.add(u)})});return [].slice.call(S).slice(0,40)}" +
     "function post(u,html,imgs){return fetch(A+'/api/properties/import-from-html?key='+K,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u,html:html,images:imgs})}).then(function(r){return r.json()})}" +
     "function frame(u){return new Promise(function(res){var f=document.createElement('iframe');f.style.cssText='position:fixed;left:-9999px;top:0;width:1200px;height:1000px;border:0';var done=false;var to=setTimeout(function(){fin(null)},9000);function fin(doc){if(done)return;done=true;clearTimeout(to);var html='',imgs=[];try{if(doc){html=doc.documentElement.outerHTML;imgs=ci(doc)}}catch(e){}try{f.remove()}catch(e){}res({html:html,imgs:imgs})}f.onload=function(){setTimeout(function(){var d=null;try{d=f.contentWindow.document}catch(e){}fin(d)},1800)};f.src=u;document.body.appendChild(f)})}" +
-    "function step(){if(i>=urls.length){ov.innerHTML='<b>AgentPro</b><br>\\u2705 Listo: '+ok+' importadas'+(fail?(' \\u00b7 '+fail+' con error'):'');setTimeout(function(){ov.remove()},9000);return}var u=urls[i++];ov.innerHTML='<b>AgentPro</b><br>Importando '+i+'/'+urls.length+'\\u2026<br>'+ok+' ok'+(fail?(', '+fail+' err'):'');" +
-    "frame(u).then(function(r){if(r.html)return post(u,r.html,r.imgs);return fetch(u,{credentials:'include'}).then(function(x){return x.text()}).then(function(t){return post(u,t,[])})}).then(function(d){if(d&&!d.error)ok++;else fail++}).catch(function(){fail++}).then(function(){setTimeout(step,700)})}" +
+    "function step(){if(i>=urls.length){ov.innerHTML='<b>AgentPro</b><br>\\u2705 Listo: '+ok+' importadas'+(dup?(' \\u00b7 '+dup+' repetidas'):'')+(fail?(' \\u00b7 '+fail+' con error'):'');setTimeout(function(){ov.remove()},9000);return}var u=urls[i++];ov.innerHTML='<b>AgentPro</b><br>Importando '+i+'/'+urls.length+'\\u2026<br>'+ok+' ok'+(dup?(', '+dup+' rep'):'')+(fail?(', '+fail+' err'):'');" +
+    "frame(u).then(function(r){if(r.html)return post(u,r.html,r.imgs);return fetch(u,{credentials:'include'}).then(function(x){return x.text()}).then(function(t){return post(u,t,[])})}).then(function(d){if(d&&d.duplicate)dup++;else if(d&&!d.error)ok++;else fail++}).catch(function(){fail++}).then(function(){setTimeout(step,700)})}" +
     "step()};" +
     "}catch(e){alert('AgentPro: '+e.message)}})();";
   return code;

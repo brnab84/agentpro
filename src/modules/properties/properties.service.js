@@ -1,6 +1,31 @@
 import { AppError } from '../../utils/AppError.js';
 import { Property } from '../../models/Property.js';
 import { assertCanAddProperty } from '../billing/limits.service.js';
+import { escapeRegex } from '../../utils/escapeRegex.js';
+
+// ── Import de-duplication ─────────────────────────────────────────────────────
+/** Pull a stable listing id from a source URL (FincaRaíz vp…, ML MLA…, or a long number). */
+function listingIdFromUrl(url) {
+  const m = String(url || '').match(/vp\d{4,}|ML[A-Z]\d{4,}|\d{6,}/i);
+  return m ? m[0] : '';
+}
+
+/**
+ * Find an already-imported property that matches this source URL — by exact URL
+ * or by the listing id embedded in it (so the same aviso under two URLs/slugs is
+ * detected). Returns the existing doc or null.
+ */
+export async function findImportDuplicate(tenantId, url) {
+  if (!url) return null;
+  const exact = await Property.findOne({ tenantId, sourceUrl: url }).select('_id title');
+  if (exact) return exact;
+  const id = listingIdFromUrl(url);
+  if (id) {
+    const byId = await Property.findOne({ tenantId, sourceUrl: new RegExp(escapeRegex(id), 'i') }).select('_id title');
+    if (byId) return byId;
+  }
+  return null;
+}
 
 export const list = (tenantId, filter = {}) =>
   Property.find({ tenantId, ...filter }).sort({ createdAt: -1 });
